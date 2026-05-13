@@ -1,18 +1,18 @@
 .main {
-  min-height: 100vh;
+  min-height: calc(100vh - 56px);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 16px;
 }
 
 .panel {
   width: 100%;
-  max-width: 900px;
+  max-width: 980px;
   padding: 40px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(20, 33, 61, 0.08);
-  box-shadow: 0 24px 80px rgba(20, 33, 61, 0.12);
+  background: var(--app-panel);
+  border: 1px solid var(--app-panel-border);
+  box-shadow: var(--app-shadow);
   backdrop-filter: blur(10px);
   display: grid;
   gap: 24px;
@@ -23,7 +23,7 @@
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #5c677d;
+  color: var(--app-muted);
 }
 
 .title {
@@ -35,7 +35,7 @@
 .description {
   margin: 0;
   font-size: 18px;
-  color: #33415c;
+  color: var(--app-muted);
 }
 
 .metricsGrid {
@@ -49,14 +49,14 @@
   gap: 16px;
   padding: 24px;
   border-radius: 20px;
-  background: #f8fafc;
-  border: 1px solid rgba(20, 33, 61, 0.08);
+  background: var(--app-panel-strong);
+  border: 1px solid var(--app-panel-border);
 }
 
 .sectionLabel {
   margin: 0 0 8px;
   font-size: 13px;
-  color: #5c677d;
+  color: var(--app-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -64,14 +64,15 @@
 .sectionText {
   margin: 0;
   font-size: 16px;
-  color: #33415c;
+  color: var(--app-muted);
 }
 
 .fileInput {
-  border: 1px dashed #9fb3d1;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: 14px;
   padding: 16px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--app-text);
 }
 
 .button {
@@ -79,20 +80,23 @@
   border: 0;
   border-radius: 999px;
   padding: 12px 20px;
-  background: #14213d;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
   color: #ffffff;
   font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 14px 30px rgba(47, 128, 237, 0.24);
 }
 
 .button:disabled {
   background: #98a2b3;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .helperText {
   margin: 0;
-  color: #33415c;
+  color: var(--app-muted);
   font-size: 14px;
 }
 
@@ -107,14 +111,14 @@
   gap: 12px;
   padding: 24px;
   border-radius: 20px;
-  background: #fffdf7;
-  border: 1px solid rgba(244, 162, 97, 0.25);
+  background: var(--app-panel-strong);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .sessionLabel {
   margin: 0;
   font-size: 13px;
-  color: #8a5a00;
+  color: var(--accent-strong);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -122,7 +126,7 @@
 .sessionDetails {
   display: grid;
   gap: 8px;
-  color: #33415c;
+  color: var(--app-text);
 }
 
 .detailText {
@@ -131,14 +135,14 @@
 
 .emptyText {
   margin: 0;
-  color: #5c677d;
+  color: var(--app-muted);
 }
 
 .metricCard {
   padding: 20px;
   border-radius: 18px;
-  background: #f8fafc;
-  border: 1px solid rgba(20, 33, 61, 0.12);
+  background: var(--app-panel-strong);
+  border: 1px solid var(--app-panel-border);
 }
 
 .metricHealthy {
@@ -160,7 +164,7 @@
 .metricLabel {
   margin: 0 0 8px;
   font-size: 13px;
-  color: #5c677d;
+  color: var(--app-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -169,6 +173,6 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #14213d;
+  color: var(--app-text);
   word-break: break-word;
 }

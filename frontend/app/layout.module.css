@@ -11,11 +11,11 @@
 .body {
   margin: 0;
   min-height: 100vh;
-  font-family: Arial, Helvetica, sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(55, 114, 255, 0.14), transparent 35%),
-    linear-gradient(180deg, #f8fbff 0%, #eef3fb 100%);
-  color: #14213d;
+  font-family:
+    "Avenir Next",
+    "Segoe UI",
+    "Helvetica Neue",
+    sans-serif;
 }
 
 .body :global(a) {

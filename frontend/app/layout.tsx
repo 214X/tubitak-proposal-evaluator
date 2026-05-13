@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppShell } from "../components/layout/app-shell";
 import styles from "./layout.module.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,9 @@ type RootLayoutProps = Readonly<{
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="tr" className={styles.html}>
-      <body className={styles.body}>{children}</body>
+      <body className={styles.body}>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }
