@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import styles from "./layout.module.css";
 
 export const metadata: Metadata = {
   title: "TUBITAK Proposal Evaluator",
@@ -12,8 +12,8 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="tr">
-      <body>{children}</body>
+    <html lang="tr" className={styles.html}>
+      <body className={styles.body}>{children}</body>
     </html>
   );
 }

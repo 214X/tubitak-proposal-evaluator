@@ -3,7 +3,13 @@ import { Homepage } from "../../components/pages/homepage";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-async function getHealthStatus() {
+export type HealthStatus = {
+  status: string;
+  service: string;
+  version: string;
+};
+
+async function getHealthStatus(): Promise<HealthStatus> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/health`, {
       cache: "no-store",
@@ -29,5 +35,5 @@ async function getHealthStatus() {
 
 export default async function HomePage() {
   const health = await getHealthStatus();
-  return <Homepage health={health} />;
+  return <Homepage health={health} apiBaseUrl={API_BASE_URL} />;
 }
