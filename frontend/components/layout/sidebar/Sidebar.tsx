@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import styles from "./sidebar.module.css";
@@ -21,6 +23,10 @@ export function Sidebar({
   onToggleSidebarSide,
 }: SidebarProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isHomePage = pathname === "/home" || pathname === "/";
+  const isDebugFlowPage = pathname === "/debug-flow";
 
   return (
     <aside className={styles.sidebar} data-sidebar>
@@ -35,23 +41,29 @@ export function Sidebar({
         </div>
 
         <nav className={styles.navGroup} aria-label="Primary navigation">
-          <button type="button" className={`${styles.navButton} ${styles.navButtonActive}`}>
+          <Link
+            href="/home"
+            className={`${styles.navButton} ${isHomePage ? styles.navButtonActive : ""}`}
+          >
             <span className={styles.navIcon}>
               <HomeIcon />
             </span>
             <span className={styles.navText}>
               <span className={styles.navTitle}>Ana Sayfa</span>
             </span>
-          </button>
+          </Link>
 
-          <button type="button" className={styles.navButton}>
+          <Link
+            href="/debug-flow"
+            className={`${styles.navButton} ${isDebugFlowPage ? styles.navButtonActive : ""}`}
+          >
             <span className={styles.navIcon}>
               <LayersIcon />
             </span>
             <span className={styles.navText}>
               <span className={styles.navTitle}>Debug Akışı</span>
             </span>
-          </button>
+          </Link>
         </nav>
 
         <section className={styles.settingsPanel} aria-label="Ayarlar">
