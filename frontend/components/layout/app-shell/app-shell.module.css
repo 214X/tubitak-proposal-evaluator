@@ -5,33 +5,35 @@
   --sidebar-inline-padding: 10px;
   --sidebar-control-size: 48px;
   --sidebar-control-radius: 18px;
-  --app-bg-start: #e4f0f8;
-  --app-bg-end: #c8dff0;
-  --app-text: #10243f;
-  --app-muted: #60718b;
-  --app-panel: rgba(255, 255, 255, 0.74);
-  --app-panel-strong: rgba(255, 255, 255, 0.9);
-  --app-panel-border: rgba(255, 255, 255, 0.42);
-  --app-shadow: 0 24px 80px rgba(20, 36, 63, 0.16);
-  --sidebar-bg-top: rgba(53, 78, 104, 0.9);
-  --sidebar-bg-bottom: rgba(19, 31, 47, 0.92);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-text: #f5fbff;
-  --sidebar-muted: rgba(230, 241, 255, 0.72);
-  --sidebar-hover: rgba(255, 255, 255, 0.08);
-  --sidebar-active: rgba(10, 20, 35, 0.36);
-  --sidebar-active-border: rgba(255, 255, 255, 0.12);
-  --accent: #4da6ff;
-  --accent-strong: #2f80ed;
+  --app-bg: #f6f2ee;
+  --app-text: #171312;
+  --app-muted: #726460;
+  --app-panel: #ffffff;
+  --app-panel-strong: #fcfaf8;
+  --app-panel-border: rgba(205, 69, 76, 0.22);
+  --app-shadow: 0 18px 48px rgba(18, 14, 13, 0.08);
+  --sidebar-bg: #a53840;
+  --sidebar-border: rgba(255, 255, 255, 0.14);
+  --sidebar-text: #fff8f5;
+  --sidebar-muted: rgba(255, 248, 245, 0.72);
+  --sidebar-hover: rgba(255, 255, 255, 0.12);
+  --sidebar-active: rgba(23, 19, 18, 0.18);
+  --sidebar-active-border: rgba(255, 255, 255, 0.2);
+  --accent: #cd454c;
+  --accent-strong: #a9343b;
+  --accent-soft: rgba(205, 69, 76, 0.1);
+  --accent-soft-strong: rgba(205, 69, 76, 0.16);
+  --surface-tint: #ffffff;
+  --surface-muted: #f7f2ef;
+  --button-bg: #171312;
+  --button-bg-hover: #2a2422;
+  --button-text: #fffaf8;
   min-height: 100vh;
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   gap: 28px;
   padding: 28px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.78), transparent 28%),
-    radial-gradient(circle at top right, rgba(87, 180, 255, 0.28), transparent 22%),
-    linear-gradient(180deg, var(--app-bg-start) 0%, var(--app-bg-end) 100%);
+  background: var(--app-bg);
   color: var(--app-text);
   transition:
     grid-template-columns 320ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -41,24 +43,29 @@
 }
 
 .themeDark {
-  --app-bg-start: #16293f;
-  --app-bg-end: #0d1624;
-  --app-text: #edf6ff;
-  --app-muted: #9db0c8;
-  --app-panel: rgba(8, 16, 28, 0.56);
-  --app-panel-strong: rgba(12, 23, 38, 0.8);
-  --app-panel-border: rgba(176, 211, 255, 0.1);
-  --app-shadow: 0 28px 100px rgba(0, 0, 0, 0.35);
-  --sidebar-bg-top: rgba(32, 49, 72, 0.92);
-  --sidebar-bg-bottom: rgba(7, 14, 23, 0.96);
-  --sidebar-border: rgba(169, 205, 255, 0.08);
-  --sidebar-text: #f2f7ff;
-  --sidebar-muted: rgba(211, 228, 255, 0.68);
-  --sidebar-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-active: rgba(255, 255, 255, 0.08);
-  --sidebar-active-border: rgba(181, 219, 255, 0.08);
-  --accent: #6eb7ff;
-  --accent-strong: #4ea1ff;
+  --app-bg: #1a1615;
+  --app-text: #f4efec;
+  --app-muted: #b4a7a1;
+  --app-panel: #26201f;
+  --app-panel-strong: #2d2625;
+  --app-panel-border: rgba(214, 83, 90, 0.24);
+  --app-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
+  --sidebar-bg: #8b3f43;
+  --sidebar-border: rgba(255, 255, 255, 0.14);
+  --sidebar-text: #fff8f5;
+  --sidebar-muted: rgba(255, 248, 245, 0.58);
+  --sidebar-hover: rgba(255, 255, 255, 0.14);
+  --sidebar-active: rgba(0, 0, 0, 0.22);
+  --sidebar-active-border: rgba(255, 255, 255, 0.22);
+  --accent: #d6535a;
+  --accent-strong: #b5444b;
+  --accent-soft: rgba(214, 83, 90, 0.14);
+  --accent-soft-strong: rgba(214, 83, 90, 0.2);
+  --surface-tint: #26201f;
+  --surface-muted: #211b1a;
+  --button-bg: #f4efec;
+  --button-bg-hover: #ffffff;
+  --button-text: #1a1615;
 }
 
 .right {
