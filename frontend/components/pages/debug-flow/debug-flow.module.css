@@ -1,0 +1,27 @@
+.main {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 1180px;
+  display: grid;
+  gap: 20px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+
+@media (max-width: 960px) {
+  .main {
+    padding: 16px;
+  }
+}
