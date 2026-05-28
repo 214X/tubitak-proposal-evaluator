@@ -1,0 +1,9 @@
+::view-transition-old(app-shell),
+::view-transition-new(app-shell),
+::view-transition-old(app-content),
+::view-transition-new(app-content),
+::view-transition-old(app-sidebar),
+::view-transition-new(app-sidebar) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { Sidebar, type SidebarSide, type ThemeMode } from "../sidebar/Sidebar";
 import styles from "./app-shell.module.css";
@@ -11,6 +12,10 @@ type AppShellProps = Readonly<{
 
 const THEME_STORAGE_KEY = "proposal-evaluator-theme";
 const SIDEBAR_SIDE_STORAGE_KEY = "proposal-evaluator-sidebar-side";
+
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (callback: () => void) => void;
+};
 
 export function AppShell({ children }: AppShellProps) {
   const [theme, setTheme] = useState<ThemeMode>("light");
@@ -48,14 +53,33 @@ export function AppShell({ children }: AppShellProps) {
     .filter(Boolean)
     .join(" ");
 
+  function runWithViewTransition(update: () => void) {
+    const documentWithTransition = document as DocumentWithViewTransition;
+
+    if (!documentWithTransition.startViewTransition) {
+      update();
+      return;
+    }
+
+    documentWithTransition.startViewTransition(() => {
+      flushSync(update);
+    });
+  }
+
   return (
     <div className={shellClassName} data-shell data-sidebar-side={sidebarSide}>
       <Sidebar
         theme={theme}
         sidebarSide={sidebarSide}
-        onToggleTheme={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
+        onToggleTheme={() =>
+          runWithViewTransition(() =>
+            setTheme((current) => (current === "light" ? "dark" : "light")),
+          )
+        }
         onToggleSidebarSide={() =>
-          setSidebarSide((current) => (current === "left" ? "right" : "left"))
+          runWithViewTransition(() =>
+            setSidebarSide((current) => (current === "left" ? "right" : "left")),
+          )
         }
       />
 

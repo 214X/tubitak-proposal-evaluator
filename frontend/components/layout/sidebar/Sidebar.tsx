@@ -34,8 +34,6 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className={styles.divider} />
-
         <nav className={styles.navGroup} aria-label="Primary navigation">
           <button type="button" className={`${styles.navButton} ${styles.navButtonActive}`}>
             <span className={styles.navIcon}>
@@ -56,7 +54,7 @@ export function Sidebar({
           </button>
         </nav>
 
-        <section className={styles.settingsPanel} aria-label="Settings">
+        <section className={styles.settingsPanel} aria-label="Ayarlar">
           <button
             type="button"
             className={`${styles.navButton} ${styles.settingsToggle} ${
@@ -65,14 +63,14 @@ export function Sidebar({
             onClick={() => setIsSettingsOpen((current) => !current)}
             aria-expanded={isSettingsOpen}
           >
-            <span className={styles.settingLeft}>
-              <span className={styles.navIcon}>
-                <SettingsIcon />
+              <span className={styles.settingLeft}>
+                <span className={styles.navIcon}>
+                  <SettingsIcon />
+                </span>
+                <span className={styles.navText}>
+                  <span className={styles.navTitle}>Ayarlar</span>
+                </span>
               </span>
-              <span className={styles.navText}>
-                <span className={styles.navTitle}>Settings</span>
-              </span>
-            </span>
             <span
               className={`${styles.chevron} ${isSettingsOpen ? styles.chevronOpen : ""}`}
               aria-hidden="true"
@@ -81,7 +79,11 @@ export function Sidebar({
             </span>
           </button>
 
-          {isSettingsOpen ? (
+          <div
+            className={styles.settingsBodyWrap}
+            data-open={isSettingsOpen ? "true" : "false"}
+            aria-hidden={!isSettingsOpen}
+          >
             <div className={styles.settingsBody}>
               <button type="button" className={styles.settingButton} onClick={onToggleTheme}>
                 <span className={styles.settingLeft}>
@@ -89,10 +91,9 @@ export function Sidebar({
                     {theme === "light" ? <SunIcon /> : <MoonIcon />}
                   </span>
                   <span className={styles.settingLabel}>
-                    <span className={styles.settingTitle}>Theme</span>
+                    <span className={styles.settingTitle}>Tema</span>
                   </span>
                 </span>
-                <span className={styles.settingsHint}>{theme === "light" ? "Güneş" : "Ay"}</span>
               </button>
 
               <button
@@ -102,18 +103,15 @@ export function Sidebar({
               >
                 <span className={styles.settingLeft}>
                   <span className={styles.settingIcon}>
-                    <SwapSideIcon direction={sidebarSide} />
+                    {sidebarSide === "left" ? <ArrowRightIcon /> : <ArrowLeftIcon />}
                   </span>
                   <span className={styles.settingLabel}>
-                    <span className={styles.settingTitle}>Sidebar Position</span>
+                    <span className={styles.settingTitle}>Kenar Çubuğu Konumu</span>
                   </span>
-                </span>
-                <span className={styles.settingsHint}>
-                  {sidebarSide === "left" ? "Sağa al" : "Sola al"}
                 </span>
               </button>
             </div>
-          ) : null}
+          </div>
         </section>
       </div>
     </aside>
@@ -143,8 +141,15 @@ function LayersIcon() {
 function SettingsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="m12 2.8 1.2 2.1 2.4.4.8 2.3 2.2 1-.3 2.4 1.6 1.8-1.6 1.8.3 2.4-2.2 1-.8 2.3-2.4.4L12 21.2l-1.2-2.1-2.4-.4-.8-2.3-2.2-1 .3-2.4-1.6-1.8 1.6-1.8-.3-2.4 2.2-1 .8-2.3 2.4-.4L12 2.8Z" />
-      <circle cx="12" cy="12" r="3.2" />
+      <path d="M4 6h10" />
+      <path d="M18 6h2" />
+      <path d="M14 6a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
+      <path d="M4 12h2" />
+      <path d="M10 12h10" />
+      <path d="M6 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
+      <path d="M4 18h10" />
+      <path d="M18 18h2" />
+      <path d="M14 18a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
     </svg>
   );
 }
@@ -166,22 +171,6 @@ function MoonIcon() {
   );
 }
 
-function SwapSideIcon({ direction }: { direction: SidebarSide }) {
-  return direction === "left" ? (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M10 5v14" />
-      <path d="m14.5 12 3-3m-3 3 3 3" />
-    </svg>
-  ) : (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M14 5v14" />
-      <path d="m9.5 12-3-3m3 3-3 3" />
-    </svg>
-  );
-}
-
 function FlaskIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -196,6 +185,24 @@ function ChevronIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function ArrowLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M19 12H5" />
+      <path d="m11 6-6 6 6 6" />
     </svg>
   );
 }

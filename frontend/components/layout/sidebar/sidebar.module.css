@@ -5,21 +5,25 @@
   min-height: calc(100vh - 56px);
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
-  border-radius: 34px;
+  padding: 24px var(--sidebar-inline-padding);
+  overflow: hidden;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 12px;
   background:
     linear-gradient(180deg, var(--sidebar-bg-top) 0%, var(--sidebar-bg-bottom) 100%);
-  border: 1px solid var(--sidebar-border);
   box-shadow: 0 32px 70px rgba(8, 14, 23, 0.3);
   backdrop-filter: blur(22px);
   color: var(--sidebar-text);
-  overflow: hidden;
   transition:
-    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
-    padding 180ms ease,
-    border-radius 180ms ease,
-    box-shadow 220ms ease,
-    background 220ms ease;
+    width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 220ms ease,
+    border-radius 220ms ease,
+    box-shadow 280ms ease,
+    background 320ms ease,
+    border-color 280ms ease,
+    color 240ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  view-transition-name: app-sidebar;
 }
 
 .sidebar::before {
@@ -32,43 +36,69 @@
   pointer-events: none;
 }
 
+/* Shell structure */
+
 .sidebarInner {
   position: relative;
   z-index: 1;
   display: flex;
   flex: 1;
   flex-direction: column;
+  align-items: center;
 }
 
+.divider {
+  height: 1px;
+  margin: 0 4px 18px;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  transition: opacity 220ms ease;
+}
+
+/* Brand */
+
 .brandRow {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-  padding: 6px 4px 20px;
+  display: grid;
+  width: 100%;
+  padding: 6px 0 20px;
+  place-items: center;
+  transition: padding 220ms ease;
 }
 
 .brandMark {
-  width: 48px;
-  height: 48px;
+  width: var(--sidebar-control-size);
+  height: var(--sidebar-control-size);
   display: grid;
   place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(109, 190, 255, 0.34), rgba(255, 255, 255, 0.08));
+  margin-inline: auto;
+  flex: 0 0 auto;
   border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: calc(var(--sidebar-control-radius) + 2px);
+  background: linear-gradient(135deg, rgba(109, 190, 255, 0.34), rgba(255, 255, 255, 0.08));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition:
+    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 220ms ease,
+    background 220ms ease;
+}
+
+.brandMark :global(svg) {
+  width: 20px;
+  height: 20px;
 }
 
 .brandCopy {
+  display: none;
   min-width: 0;
-  opacity: 0;
   max-width: 0;
   overflow: hidden;
+  opacity: 0;
   transform: translateX(-10px);
   transition:
-    opacity 190ms ease,
-    max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms ease;
+    opacity 220ms ease,
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms ease;
 }
 
 .brandTitle {
@@ -79,39 +109,41 @@
   letter-spacing: 0.01em;
 }
 
-.divider {
-  height: 1px;
-  margin: 0 4px 18px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-  opacity: 0;
-  transition: opacity 180ms ease;
-}
+/* Primary navigation */
 
 .navGroup {
   display: grid;
+  width: 100%;
   gap: 10px;
   justify-items: center;
 }
 
 .navButton {
+  position: relative;
+  width: 100%;
+  max-width: var(--sidebar-control-size);
+  min-width: 0;
+  height: var(--sidebar-control-size);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 14px;
-  width: 56px;
-  min-width: 56px;
-  height: 56px;
-  padding: 0 18px;
+  margin-inline: auto;
+  padding: 0;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: var(--sidebar-control-radius);
   background: transparent;
   color: var(--sidebar-text);
   text-align: left;
   cursor: pointer;
   transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    transform 160ms ease;
+    background 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    transform 220ms ease,
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 220ms ease;
 }
 
 .navButton:hover {
@@ -120,32 +152,38 @@
 }
 
 .navButtonActive {
-  background: var(--sidebar-active);
   border-color: var(--sidebar-active-border);
+  background: var(--sidebar-active);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .navIcon {
   width: 20px;
   height: 20px;
-  color: #e8f5ff;
-  flex: 0 0 auto;
   display: grid;
+  flex: 0 0 auto;
   place-items: center;
+  color: #e8f5ff;
+}
+
+.navIcon :global(svg) {
+  width: 20px;
+  height: 20px;
 }
 
 .navText {
+  position: absolute;
   display: grid;
   gap: 3px;
-  opacity: 0;
   max-width: 0;
   overflow: hidden;
+  opacity: 0;
   white-space: nowrap;
   transform: translateX(-10px);
   transition:
-    opacity 190ms ease,
-    max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms ease;
+    opacity 220ms ease,
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms ease;
 }
 
 .navTitle {
@@ -153,34 +191,45 @@
   font-weight: 700;
 }
 
+/* Settings area */
+
 .settingsPanel {
   margin-top: auto;
   display: grid;
+  width: 100%;
   gap: 12px;
+  justify-items: center;
   padding: 0;
+  border: 0;
   border-radius: 24px;
   background: transparent;
-  border: 0;
 }
 
 .settingsToggle {
+  position: relative;
+  width: 100%;
+  max-width: var(--sidebar-control-size);
+  min-width: 0;
+  height: var(--sidebar-control-size);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 14px;
-  width: 56px;
-  min-width: 56px;
-  height: 56px;
-  padding: 0 18px;
+  margin-inline: auto;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border-radius: var(--sidebar-control-radius);
   background: rgba(5, 13, 24, 0.18);
   color: var(--sidebar-text);
   cursor: pointer;
   transition:
-    background 160ms ease,
-    border-color 160ms ease,
-    transform 160ms ease;
+    background 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    transform 220ms ease,
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 220ms ease;
 }
 
 .settingsToggle:hover {
@@ -188,51 +237,30 @@
   border-color: rgba(255, 255, 255, 0.14);
 }
 
-.settingButton {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  color: var(--sidebar-text);
-  cursor: pointer;
-  transition:
-    background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
-}
-
-.settingButton:hover {
-  background: rgba(255, 255, 255, 0.055);
-  transform: translateX(0);
-}
-
 .settingLeft {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 14px;
   min-width: 0;
-  width: 100%;
+  width: auto;
+  transition: width 220ms ease;
 }
 
 .settingLabel {
+  position: absolute;
   display: grid;
   gap: 3px;
-  text-align: left;
-  opacity: 0;
   max-width: 0;
   overflow: hidden;
+  opacity: 0;
   white-space: nowrap;
+  text-align: left;
   transform: translateX(-10px);
   transition:
-    opacity 190ms ease,
-    max-width 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 220ms ease;
+    opacity 220ms ease,
+    max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms ease;
 }
 
 .settingTitle {
@@ -240,11 +268,43 @@
   font-weight: 650;
 }
 
-.settingsHint {
-  color: var(--sidebar-muted);
-  font-size: 0.82rem;
-  font-weight: 600;
-  white-space: nowrap;
+.settingButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition:
+    background 220ms ease,
+    color 220ms ease,
+    transform 220ms ease;
+}
+
+.settingButton:hover {
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateX(0);
+}
+
+.settingIcon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(115, 197, 255, 0.18), rgba(255, 255, 255, 0.06));
+  color: #ffffff;
+}
+
+.settingIcon :global(svg) {
+  width: 18px;
+  height: 18px;
 }
 
 .controlBadge {
@@ -257,51 +317,86 @@
   color: #ffffff;
 }
 
-.settingIcon {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(115, 197, 255, 0.18), rgba(255, 255, 255, 0.06));
-  color: #ffffff;
-  flex: 0 0 auto;
-}
-
-.settingIcon :global(svg) {
-  width: 18px;
-  height: 18px;
-}
-
 .chevron {
+  position: absolute;
+  top: 50%;
+  right: 18px;
   width: 0;
   height: 18px;
-  color: var(--sidebar-muted);
   flex: 0 0 auto;
-  opacity: 0;
   overflow: hidden;
-  transform: rotate(0deg) translateX(-6px);
+  opacity: 0;
+  color: var(--sidebar-muted);
+  transform: translateY(-50%) rotate(0deg) translateX(-6px);
   transition:
-    opacity 190ms ease,
-    width 190ms ease,
-    transform 220ms ease;
+    opacity 220ms ease,
+    width 220ms ease,
+    transform 260ms ease;
 }
 
 .chevronOpen {
-  transform: rotate(180deg) translateX(0);
+  transform: translateY(-50%) rotate(180deg) translateX(0);
 }
 
 .settingsBody {
   display: grid;
   gap: 6px;
   padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(8, 17, 29, 0.5), rgba(7, 14, 23, 0.36));
-  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 12px 28px rgba(0, 0, 0, 0.14);
+  transition:
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.settingsBodyWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms ease,
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.settingsBodyWrap[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.settingsBodyWrap > .settingsBody {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Expanded / hover state */
+
+.sidebar:hover,
+.sidebar:focus-within,
+.sidebar:has([aria-expanded="true"]) {
+  border-radius: 12px;
+}
+
+.sidebar:hover .sidebarInner,
+.sidebar:focus-within .sidebarInner,
+.sidebar:has([aria-expanded="true"]) .sidebarInner {
+  align-items: stretch;
+}
+
+.sidebar:hover .brandRow,
+.sidebar:focus-within .brandRow,
+.sidebar:has([aria-expanded="true"]) .brandRow {
+  display: flex;
+  align-items: center;
+  padding: 6px 4px 20px;
 }
 
 .sidebar:hover .brandCopy,
@@ -313,9 +408,19 @@
 .sidebar:hover .settingLabel,
 .sidebar:focus-within .settingLabel,
 .sidebar:has([aria-expanded="true"]) .settingLabel {
-  opacity: 1;
+  display: grid;
   max-width: var(--sidebar-copy-width);
+  opacity: 1;
   transform: translateX(0);
+}
+
+.sidebar:hover .navGroup,
+.sidebar:focus-within .navGroup,
+.sidebar:has([aria-expanded="true"]) .navGroup,
+.sidebar:hover .settingsPanel,
+.sidebar:focus-within .settingsPanel,
+.sidebar:has([aria-expanded="true"]) .settingsPanel {
+  justify-items: stretch;
 }
 
 .sidebar:hover .navButton,
@@ -324,14 +429,25 @@
 .sidebar:hover .settingsToggle,
 .sidebar:focus-within .settingsToggle,
 .sidebar:has([aria-expanded="true"]) .settingsToggle {
-  width: 100%;
-  min-width: 0;
+  justify-content: flex-start;
+  max-width: none;
+  padding: 0 18px;
 }
 
 .sidebar:hover .settingLeft,
 .sidebar:focus-within .settingLeft,
 .sidebar:has([aria-expanded="true"]) .settingLeft {
+  justify-content: flex-start;
   width: auto;
+}
+
+.sidebar:hover .navText,
+.sidebar:focus-within .navText,
+.sidebar:has([aria-expanded="true"]) .navText,
+.sidebar:hover .settingLabel,
+.sidebar:focus-within .settingLabel,
+.sidebar:has([aria-expanded="true"]) .settingLabel {
+  position: static;
 }
 
 .sidebar:hover .divider,
@@ -340,21 +456,23 @@
 .sidebar:hover .chevron,
 .sidebar:focus-within .chevron,
 .sidebar:has([aria-expanded="true"]) .chevron {
-  opacity: 1;
   width: 18px;
+  opacity: 1;
 }
 
 .sidebar:hover .chevron:not(.chevronOpen),
 .sidebar:focus-within .chevron:not(.chevronOpen),
 .sidebar:has([aria-expanded="true"]) .chevron:not(.chevronOpen) {
-  transform: rotate(0deg) translateX(0);
+  transform: translateY(-50%) rotate(0deg) translateX(0);
 }
 
 .sidebar:hover .chevron.chevronOpen,
 .sidebar:focus-within .chevron.chevronOpen,
 .sidebar:has([aria-expanded="true"]) .chevron.chevronOpen {
-  transform: rotate(180deg) translateX(0);
+  transform: translateY(-50%) rotate(180deg) translateX(0);
 }
+
+/* Responsive override */
 
 @media (max-width: 1080px) {
   .sidebar {
@@ -391,8 +509,8 @@
   .settingLabel,
   .chevron,
   .divider {
-    opacity: 1;
     max-width: none;
+    opacity: 1;
     transform: none;
   }
 
