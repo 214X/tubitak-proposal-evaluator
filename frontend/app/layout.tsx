@@ -4,8 +4,8 @@ import "./globals.css";
 import styles from "./layout.module.css";
 
 export const metadata: Metadata = {
-  title: "TUBITAK Proposal Evaluator",
-  description: "Health status dashboard for the evaluation platform.",
+  title: "TÜBİTAK Proje Önerisi Değerlendirme Asistanı",
+  description: "Değerlendirme platformu için sağlık durumu kontrol paneli.",
 };
 
 type RootLayoutProps = Readonly<{

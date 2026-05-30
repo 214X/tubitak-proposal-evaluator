@@ -51,12 +51,12 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
     event.preventDefault();
 
     if (!selectedFile) {
-      setUploadError("Please choose a PDF or Word document.");
+      setUploadError("Lütfen bir PDF veya Word belgesi seçin.");
       return;
     }
 
     if (!hasAllowedExtension(selectedFile.name)) {
-      setUploadError("Only PDF, DOC, and DOCX files are supported.");
+      setUploadError("Sadece PDF, DOC ve DOCX dosyaları desteklenmektedir.");
       return;
     }
 
@@ -79,7 +79,7 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
         const payload = (await response.json().catch(() => null)) as
           | { detail?: string }
           | null;
-        throw new Error(payload?.detail ?? `Upload failed with status ${response.status}.`);
+        throw new Error(payload?.detail ?? `Yükleme başarısız oldu (Durum: ${response.status}).`);
       }
 
       const payload = (await response.json()) as UploadState;
@@ -89,7 +89,7 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
         fileInputRef.current.value = "";
       }
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed.");
+      setUploadError(error instanceof Error ? error.message : "Yükleme başarısız oldu.");
     } finally {
       setIsUploading(false);
     }
@@ -112,8 +112,8 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
     <form onSubmit={(event) => void handleUpload(event)} className={styles.uploadCard}>
       <div className={styles.uploadHeader}>
         <div>
-          <p className={styles.sectionLabel}>UPLOAD DOCUMENT</p>
-          <p className={styles.sectionText}>Accepted formats: PDF, DOC, DOCX</p>
+          <p className={styles.sectionLabel}>DOKÜMAN YÜKLE</p>
+          <p className={styles.sectionText}>Desteklenen formatlar: PDF, DOC, DOCX</p>
         </div>
       </div>
 
@@ -131,8 +131,8 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
           <span className={styles.dropzoneIcon}>
             <UploadIcon />
           </span>
-          <span className={styles.dropzoneTitle}>Drop file here or browse</span>
-          <span className={styles.dropzoneNote}>Single file only. PDF, DOC, DOCX</span>
+          <span className={styles.dropzoneTitle}>Dosyayı buraya sürükleyin veya göz atın</span>
+          <span className={styles.dropzoneNote}>Sadece tek bir dosya. PDF, DOC, DOCX</span>
         </span>
       </label>
 
@@ -158,7 +158,7 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
 
       {uploadState ? (
         <div className={styles.uploadedState}>
-          <p className={styles.uploadedLabel}>Current session file</p>
+          <p className={styles.uploadedLabel}>Mevcut oturum dosyası</p>
           <p className={styles.uploadedName}>{uploadState.file_name}</p>
         </div>
       ) : null}
@@ -171,12 +171,12 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
           disabled={isUploading || !sessionId || !selectedFile}
           className={styles.button}
         >
-          {isUploading ? "Uploading..." : "Upload file"}
+          {isUploading ? "Yükleniyor..." : "Dosya Yükle"}
         </button>
 
         {selectedFile ? (
           <button type="button" onClick={clearSelectedFile} className={styles.secondaryButton}>
-            Remove file
+            Dosyayı Kaldır
           </button>
         ) : null}
       </div>
@@ -207,7 +207,7 @@ async function loadCurrentUpload(
     }
 
     if (!response.ok) {
-      throw new Error("Unable to load current upload.");
+      throw new Error("Mevcut yükleme yüklenemedi.");
     }
 
     const payload = (await response.json()) as UploadState;
@@ -250,7 +250,7 @@ function getFileBadgeLabel(fileName: string) {
     return "DOC";
   }
 
-  return "FILE";
+  return "DOSYA";
 }
 
 function UploadIcon() {

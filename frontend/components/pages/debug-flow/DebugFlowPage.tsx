@@ -15,7 +15,7 @@ export function DebugFlowPage({ health, apiBaseUrl }: DebugFlowPageProps) {
     <main className={styles.main}>
       <section className={styles.panel}>
         <div>
-          <p className={styles.eyebrow}>TUBITAK PROPOSAL EVALUATOR</p>
+          <p className={styles.eyebrow}>TÜBİTAK PROJE ÖNERİ DEĞERLENDİRME ASİSTANI</p>
         </div>
 
         <UploadPanel apiBaseUrl={apiBaseUrl} />
