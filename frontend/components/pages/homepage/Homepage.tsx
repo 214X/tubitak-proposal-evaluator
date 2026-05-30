@@ -1,3 +1,4 @@
+import { HomeHero } from "../../home-hero/HomeHero";
 import { UploadPanel } from "../../upload-panel/UploadPanel";
 import styles from "./homepage.module.css";
 
@@ -14,10 +15,7 @@ export function Homepage({ health, apiBaseUrl }: HomepageProps) {
   return (
     <main className={styles.main}>
       <section className={styles.panel}>
-        <div>
-          <p className={styles.eyebrow}>TUBITAK PROPOSAL EVALUATOR</p>
-        </div>
-
+        <HomeHero />
         <UploadPanel apiBaseUrl={apiBaseUrl} />
       </section>
     </main>
