@@ -1,0 +1,241 @@
+.page {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  gap: 20px;
+  padding: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.session {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0;
+  color: #b42332;
+  font-size: 14px;
+}
+
+.canvas {
+  display: grid;
+}
+
+.document {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 36px;
+  border-radius: 32px;
+  background: #fbf8f4;
+  color: #201a19;
+  box-shadow: 0 24px 60px rgba(18, 14, 13, 0.14);
+}
+
+.documentHeader {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(32, 26, 25, 0.08);
+}
+
+.documentMetaLabel {
+  margin: 0;
+  color: #8a7b76;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.documentTitle {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1;
+}
+
+.documentMeta {
+  margin: 0;
+  color: #6f625d;
+  font-size: 14px;
+}
+
+.documentBody {
+  display: grid;
+  gap: 28px;
+  padding-top: 28px;
+}
+
+.section {
+  display: grid;
+  gap: 16px;
+}
+
+.sectionHeading {
+  display: grid;
+  gap: 4px;
+}
+
+.sectionCode {
+  margin: 0;
+  color: #ba4248;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 28px);
+  line-height: 1.2;
+}
+
+.sectionMeta {
+  margin: 0;
+  color: #736661;
+  font-size: 13px;
+}
+
+.sectionContent {
+  display: grid;
+  gap: 16px;
+}
+
+.childSection {
+  padding-left: 22px;
+  border-left: 2px solid rgba(186, 66, 72, 0.12);
+}
+
+.paragraph {
+  margin: 0;
+  color: #2c2523;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 28px;
+  color: #2c2523;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.listItem::marker {
+  color: #1b1615;
+}
+
+.tableWrap {
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(32, 26, 25, 0.1);
+  background: #fffdfa;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(32, 26, 25, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background: rgba(186, 66, 72, 0.08);
+  font-weight: 700;
+}
+
+.tableEmpty {
+  padding: 16px;
+  color: #736661;
+}
+
+.fallbackBlock {
+  margin: 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(32, 26, 25, 0.05);
+  overflow: auto;
+  font-size: 12px;
+}
+
+.emptyState {
+  display: grid;
+  gap: 14px;
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 28px;
+  background: var(--app-panel);
+  box-shadow: var(--app-shadow);
+}
+
+.emptyLine,
+.emptyLineLong,
+.emptySheet {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 0%,
+    color-mix(in srgb, var(--accent) 18%, var(--app-panel)) 50%,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.emptyLine {
+  width: 28%;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.emptyLineLong {
+  width: 52%;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.emptySheet {
+  width: 100%;
+  height: 640px;
+  border-radius: 20px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -20% 0;
+  }
+}

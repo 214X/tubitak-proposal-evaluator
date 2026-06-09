@@ -1,4 +1,4 @@
-import { UploadPanel } from "../../upload-panel/UploadPanel";
+import { DebugFlowWorkspace } from "./DebugFlowWorkspace";
 import styles from "./debug-flow.module.css";
 
 type DebugFlowPageProps = Readonly<{
@@ -14,11 +14,16 @@ export function DebugFlowPage({ health, apiBaseUrl }: DebugFlowPageProps) {
   return (
     <main className={styles.main}>
       <section className={styles.panel}>
-        <div>
+        <div className={styles.headerBlock}>
           <p className={styles.eyebrow}>TÜBİTAK PROJE ÖNERİ DEĞERLENDİRME ASİSTANI</p>
+          <h1 className={styles.title}>Debug Analiz Akışı</h1>
+          <p className={styles.description}>
+            Upload, extraction, parser ve arka plan analysis durumunu bu sayfadan
+            izleyin.
+          </p>
         </div>
 
-        <UploadPanel apiBaseUrl={apiBaseUrl} />
+        <DebugFlowWorkspace apiBaseUrl={apiBaseUrl} />
       </section>
     </main>
   );

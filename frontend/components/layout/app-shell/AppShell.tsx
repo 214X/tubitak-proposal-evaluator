@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
+import { usePathname } from "next/navigation";
 
 import { Sidebar, type SidebarSide, type ThemeMode } from "../sidebar/Sidebar";
 import styles from "./app-shell.module.css";
@@ -20,6 +21,16 @@ type DocumentWithViewTransition = Document & {
 export function AppShell({ children }: AppShellProps) {
   const [theme, setTheme] = useState<ThemeMode>("light");
   const [sidebarSide, setSidebarSide] = useState<SidebarSide>("left");
+  const pathname = usePathname();
+
+  /**
+   * Raw debug viewers must render as completely bare pages.
+   * We bypass the shared shell here so those routes do not inherit
+   * sidebar chrome, spacing, or themed app background.
+   */
+  const isRawOutputRoute =
+    pathname === "/debug-flow/extraction-view" ||
+    pathname === "/debug-flow/parser-output-view";
 
   useEffect(() => {
     const storedTheme = readStorageValue<ThemeMode>(THEME_STORAGE_KEY, ["light", "dark"]);
@@ -64,6 +75,10 @@ export function AppShell({ children }: AppShellProps) {
     documentWithTransition.startViewTransition(() => {
       flushSync(update);
     });
+  }
+
+  if (isRawOutputRoute) {
+    return <>{children}</>;
   }
 
   return (

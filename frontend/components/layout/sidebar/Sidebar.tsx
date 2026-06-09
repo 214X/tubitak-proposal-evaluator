@@ -26,7 +26,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   const isHomePage = pathname === "/home" || pathname === "/";
-  const isDebugFlowPage = pathname === "/debug-flow";
+  const isDebugFlowPage = pathname === "/debug-flow" || pathname.startsWith("/debug-flow/");
 
   return (
     <aside className={styles.sidebar} data-sidebar>

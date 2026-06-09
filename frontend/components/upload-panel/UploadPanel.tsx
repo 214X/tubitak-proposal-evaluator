@@ -3,13 +3,16 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { getOrCreateSessionId, replaceSessionId } from "../../lib/session";
 import styles from "./upload-panel.module.css";
 
 type UploadPanelProps = Readonly<{
   apiBaseUrl: string;
+  onSessionReady?: (sessionId: string) => void;
+  onUploadStateChange?: (uploadState: UploadState | null) => void;
 }>;
 
-type UploadState = {
+export type UploadState = {
   session_id: string;
   file_name: string;
   content_type: string;
@@ -17,35 +20,48 @@ type UploadState = {
   uploaded_at: string;
 };
 
-const SESSION_STORAGE_KEY = "proposal-evaluator-session-id";
 const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"];
 const HEARTBEAT_INTERVAL_MS = 30000;
 
-export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
+export function UploadPanel({
+  apiBaseUrl,
+  onSessionReady,
+  onUploadStateChange,
+}: UploadPanelProps) {
   const [sessionId, setSessionId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isResettingSession, setIsResettingSession] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const existingSessionId = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
-    const nextSessionId = existingSessionId ?? crypto.randomUUID().replaceAll("-", "");
-
-    window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSessionId);
+    const nextSessionId = getOrCreateSessionId();
     setSessionId(nextSessionId);
-    void loadCurrentUpload(nextSessionId, apiBaseUrl, setUploadState);
-    void sendHeartbeat(nextSessionId, apiBaseUrl);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
+    onSessionReady?.(sessionId);
+    void loadCurrentUpload(sessionId, apiBaseUrl, setUploadState);
+    void sendHeartbeat(sessionId, apiBaseUrl);
 
     const heartbeatId = window.setInterval(() => {
-      void sendHeartbeat(nextSessionId, apiBaseUrl);
+      void sendHeartbeat(sessionId, apiBaseUrl);
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       window.clearInterval(heartbeatId);
     };
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, onSessionReady, sessionId]);
+
+  useEffect(() => {
+    onUploadStateChange?.(uploadState);
+  }, [onUploadStateChange, uploadState]);
 
   async function handleUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,6 +121,38 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
     setUploadError("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleResetSession() {
+    if (!sessionId) {
+      return;
+    }
+
+    setIsResettingSession(true);
+    setUploadError("");
+
+    try {
+      await fetch(`${apiBaseUrl}/api/uploads/current`, {
+        method: "DELETE",
+        headers: {
+          "X-Session-Id": sessionId,
+        },
+      }).catch(() => undefined);
+
+      const nextSessionId = replaceSessionId();
+      setSessionId(nextSessionId);
+      setUploadState(null);
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Oturum sıfırlanamadı.",
+      );
+    } finally {
+      setIsResettingSession(false);
     }
   }
 
@@ -168,7 +216,7 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
       <div className={styles.actionsRow}>
         <button
           type="submit"
-          disabled={isUploading || !sessionId || !selectedFile}
+          disabled={isUploading || isResettingSession || !sessionId || !selectedFile}
           className={styles.button}
         >
           {isUploading ? "Yükleniyor..." : "Dosya Yükle"}
@@ -179,6 +227,15 @@ export function UploadPanel({ apiBaseUrl }: UploadPanelProps) {
             Dosyayı Kaldır
           </button>
         ) : null}
+
+        <button
+          type="button"
+          onClick={() => void handleResetSession()}
+          className={styles.tertiaryButton}
+          disabled={isUploading || isResettingSession || !sessionId}
+        >
+          {isResettingSession ? "Oturum Sıfırlanıyor..." : "Session Sıfırla"}
+        </button>
       </div>
     </form>
   );

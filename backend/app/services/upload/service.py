@@ -165,6 +165,30 @@ def get_session_upload(session_id: str) -> UploadSessionResponse:
     return metadata_to_response(payload)
 
 
+def get_session_upload_path(session_id: str) -> Path:
+    current_metadata_path = metadata_path(session_id)
+
+    with lock:
+        prune_expired_sessions()
+        if not current_metadata_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No uploaded file found for this session.",
+            )
+
+        payload = read_metadata_payload(current_metadata_path)
+        file_name = str(payload.get("file_name", ""))
+        file_path = session_dir(session_id) / file_name
+
+        if not file_name or not file_path.exists() or not file_path.is_file():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Uploaded file could not be found for this session.",
+            )
+
+    return file_path
+
+
 def touch_session_upload(session_id: str) -> None:
     current_metadata_path = metadata_path(session_id)
 

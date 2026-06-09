@@ -12,12 +12,31 @@
   gap: 20px;
 }
 
+.headerBlock {
+  display: grid;
+  gap: 8px;
+}
+
 .eyebrow {
   margin: 0;
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1;
+}
+
+.description {
+  margin: 0;
+  max-width: 760px;
+  color: var(--app-muted);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 @media (max-width: 960px) {

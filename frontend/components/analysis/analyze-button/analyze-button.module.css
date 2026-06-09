@@ -1,0 +1,73 @@
+.wrap {
+  display: grid;
+  gap: 10px;
+}
+
+.button {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 18%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--app-panel) 0%, var(--app-panel-strong) 100%);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.buttonIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--app-panel));
+  color: var(--accent);
+}
+
+.buttonIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.buttonCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.buttonTitle {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.buttonDescription {
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.helperText {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}

@@ -12,6 +12,10 @@
   gap: 24px;
 }
 
+.analysisEntry {
+  max-width: 860px;
+}
+
 @media (max-width: 960px) {
   .main {
     padding: 16px;

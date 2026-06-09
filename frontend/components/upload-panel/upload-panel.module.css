@@ -236,6 +236,31 @@
   cursor: pointer;
 }
 
+.tertiaryButton {
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 999px;
+  padding: 16px 24px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.tertiaryButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.tertiaryButton:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
 .errorText {
   margin: 0;
   color: var(--accent);

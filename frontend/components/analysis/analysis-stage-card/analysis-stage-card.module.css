@@ -1,0 +1,121 @@
+.card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  background:
+    linear-gradient(180deg, var(--app-panel) 0%, var(--app-panel-strong) 100%);
+  box-shadow: var(--app-shadow);
+}
+
+.header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.statusIcon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--app-panel));
+  color: var(--accent);
+}
+
+.headerCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.description {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.statusPill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-muted);
+  color: var(--app-muted);
+}
+
+.statusPill[data-tone="loading"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.statusPill[data-tone="success"] {
+  background: rgba(52, 168, 83, 0.12);
+  color: #23753a;
+}
+
+.statusPill[data-tone="error"] {
+  background: rgba(215, 58, 73, 0.12);
+  color: #b42332;
+}
+
+.statusPill[data-tone="waiting"] {
+  background: rgba(98, 108, 113, 0.12);
+  color: var(--app-muted);
+}
+
+.preview {
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--surface-muted) 78%, var(--app-panel));
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  border-top-color: var(--accent);
+  animation: spin 840ms linear infinite;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .statusPill {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
