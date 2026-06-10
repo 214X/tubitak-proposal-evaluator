@@ -8,6 +8,7 @@ import {
   type SectionContainer,
   fetchCurrentAnalysis,
 } from "../../../lib/analysis";
+import { EmbeddingSearchPanel } from "../embedding-search-panel/EmbeddingSearchPanel";
 import { readSessionId } from "../../../lib/session";
 import styles from "./chunk-document-viewer.module.css";
 
@@ -91,6 +92,16 @@ export function ChunkDocumentViewer({
             </div>
 
             <div className={styles.documentBody}>
+              {sessionId ? (
+                <EmbeddingSearchPanel
+                  apiBaseUrl={apiBaseUrl}
+                  sessionId={sessionId}
+                  chunkOutput={chunkOutput}
+                  embeddingOutput={analysisState?.embedding_output ?? null}
+                  analysisStatus={analysisState?.status ?? "idle"}
+                />
+              ) : null}
+
               {chunkOutput.chunks.map((chunk) => (
                 <ChunkCard
                   key={chunk.chunk_id}

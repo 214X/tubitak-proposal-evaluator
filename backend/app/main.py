@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.services.embedding.store import ensure_embedding_store
 from app.services.upload.service import ensure_upload_storage
 
 
@@ -23,6 +24,7 @@ def create_application() -> FastAPI:
     @app.on_event("startup")
     def on_startup() -> None:
         ensure_upload_storage()
+        ensure_embedding_store()
 
     return app
 

@@ -46,6 +46,22 @@ def run_command(command: list[str], cwd: Path) -> None:
         raise SystemExit(completed.returncode)
 
 
+def ensure_backend_venv() -> None:
+    if venv_python().exists():
+        return
+    raise SystemExit(
+        "Backend virtual environment not found. Run 'make setup' first.",
+    )
+
+
+def ensure_frontend_install() -> None:
+    if (FRONTEND_DIR / "node_modules").exists():
+        return
+    raise SystemExit(
+        "Frontend dependencies not found. Run 'make setup' first.",
+    )
+
+
 def setup() -> None:
     ensure_command_exists(npm_command())
 
@@ -62,7 +78,24 @@ def setup() -> None:
     run_command([npm_command(), "install"], FRONTEND_DIR)
 
 
+def warmup() -> None:
+    ensure_backend_venv()
+    run_command(
+        [
+            str(venv_python()),
+            "-c",
+            (
+                "from app.services.embedding.provider import get_embedding_provider; "
+                "provider = get_embedding_provider(); "
+                "print(provider.model_name, provider.dimensions)"
+            ),
+        ],
+        BACKEND_DIR,
+    )
+
+
 def backend() -> None:
+    ensure_backend_venv()
     run_command(
         [
             str(venv_python()),
@@ -76,10 +109,13 @@ def backend() -> None:
 
 
 def frontend() -> None:
+    ensure_frontend_install()
     run_command([npm_command(), "run", "dev"], FRONTEND_DIR)
 
 
 def run_both() -> None:
+    ensure_backend_venv()
+    ensure_frontend_install()
     backend_process = subprocess.Popen(
         [str(venv_python()), "-m", "uvicorn", "app.main:app", "--reload"],
         cwd=BACKEND_DIR,
@@ -125,12 +161,15 @@ def terminate_processes(processes: list[subprocess.Popen[bytes] | subprocess.Pop
 
 def main() -> None:
     if len(sys.argv) != 2:
-        raise SystemExit("Usage: python3 scripts/run_dev.py [setup|backend|frontend|run]")
+        raise SystemExit("Usage: python3 scripts/run_dev.py [setup|warmup|backend|frontend|run]")
 
     command = sys.argv[1]
 
     if command == "setup":
         setup()
+        return
+    if command == "warmup":
+        warmup()
         return
     if command == "backend":
         backend()

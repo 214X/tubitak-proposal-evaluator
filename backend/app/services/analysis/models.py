@@ -5,10 +5,20 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.services.chunking.models import ChunkOutput
+from app.services.embedding.models import EmbeddingOutput
 from app.services.extraction.models import ExtractionOutput, ParserOutput
 
-AnalysisStatus = Literal["idle", "queued", "extracting", "parsing", "completed", "failed"]
-AnalysisStep = Literal["none", "extractor", "parser", "done"]
+AnalysisStatus = Literal[
+    "idle",
+    "queued",
+    "extracting",
+    "parsing",
+    "chunking",
+    "embedding",
+    "completed",
+    "failed",
+]
+AnalysisStep = Literal["none", "extractor", "parser", "chunker", "embedder", "done"]
 
 
 class AnalysisState(BaseModel):
@@ -22,3 +32,4 @@ class AnalysisState(BaseModel):
     extraction_output: ExtractionOutput | None = None  # completed extraction artifact when available
     parser_output: ParserOutput | None = None          # completed parser artifact when available
     chunk_output: ChunkOutput | None = None            # completed chunking artifact when available
+    embedding_output: EmbeddingOutput | None = None    # completed embedding artifact when available

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   type AnalysisState,
   type ChunkOutput,
+  type EmbeddingOutput,
   type HeadingHierarchyNode,
   type ParserOutput,
   type UploadState,
@@ -88,11 +89,17 @@ export function AnalysisDashboard({
   }, [analysisState, apiBaseUrl, sessionId]);
 
   const chunkOutput = analysisState?.chunk_output ?? null;
+  const embeddingOutput = analysisState?.embedding_output ?? null;
   const chunkError = analysisState?.status === "failed" ? (analysisState.error ?? "") : "";
   const isChunkLoading = Boolean(
     analysisState?.parser_output &&
       !analysisState?.chunk_output &&
-      analysisState.status !== "failed",
+      (analysisState.status === "chunking" || analysisState.status === "embedding"),
+  );
+  const isEmbeddingLoading = Boolean(
+    analysisState?.chunk_output &&
+      !analysisState?.embedding_output &&
+      analysisState?.status === "embedding",
   );
 
   const canStart = Boolean(uploadState && sessionId) && !isStarting && !isAnalysisRunning(analysisState);
@@ -154,11 +161,42 @@ export function AnalysisDashboard({
     if (analysisState.parser_output) {
       return "waiting" as const;
     }
-    if (analysisState.status === "queued" || analysisState.status === "extracting" || analysisState.status === "parsing") {
+    if (
+      analysisState.status === "queued" ||
+      analysisState.status === "extracting" ||
+      analysisState.status === "parsing"
+    ) {
       return "waiting" as const;
     }
     return "idle" as const;
   }, [analysisState, chunkError, chunkOutput, isChunkLoading]);
+
+  const embeddingTone = useMemo(() => {
+    if (!analysisState) {
+      return "idle" as const;
+    }
+    if (embeddingOutput) {
+      return "success" as const;
+    }
+    if (analysisState.status === "failed") {
+      return "error" as const;
+    }
+    if (isEmbeddingLoading) {
+      return "loading" as const;
+    }
+    if (analysisState.chunk_output) {
+      return "waiting" as const;
+    }
+    if (
+      analysisState.status === "queued" ||
+      analysisState.status === "extracting" ||
+      analysisState.status === "parsing" ||
+      analysisState.status === "chunking"
+    ) {
+      return "waiting" as const;
+    }
+    return "idle" as const;
+  }, [analysisState, embeddingOutput, isEmbeddingLoading]);
 
   async function handleStartAnalysis() {
     setIsStarting(true);
@@ -275,6 +313,23 @@ export function AnalysisDashboard({
               }
             />
           ) : null}
+
+          {analysisState?.status !== "queued" && analysisState?.status !== "extracting" ? (
+            <AnalysisStageCard
+              title="Embedding Search"
+              description={getEmbeddingDescription(analysisState, embeddingOutput, isEmbeddingLoading)}
+              tone={embeddingTone}
+              preview={<EmbeddingPreview embeddingOutput={embeddingOutput} />}
+              action={
+                chunkOutput ? (
+                  <ViewerLink
+                    href={`/debug-flow/chunk-view?sessionId=${encodeURIComponent(sessionId)}`}
+                    label="Arama Panelini Aç"
+                  />
+                ) : null
+              }
+            />
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -282,7 +337,13 @@ export function AnalysisDashboard({
 }
 
 function isRunningState(status: AnalysisState["status"]) {
-  return status === "queued" || status === "extracting" || status === "parsing";
+  return (
+    status === "queued" ||
+    status === "extracting" ||
+    status === "parsing" ||
+    status === "chunking" ||
+    status === "embedding"
+  );
 }
 
 function isAnalysisRunning(analysisState: AnalysisState | null) {
@@ -324,6 +385,9 @@ function getChunkDescription(
   if (isChunkLoading) {
     return "Parser çıktısı chunklara ayrılıyor. Hazır olduğunda kart otomatik güncellenecek.";
   }
+  if (analysisState.status === "embedding") {
+    return "Chunking tamamlandı. Embedding adımı sürerken chunk detayları görüntülenebilir.";
+  }
   if (analysisState.parser_output) {
     return "Chunking çıktısı hazırlanıyor.";
   }
@@ -331,6 +395,29 @@ function getChunkDescription(
     return analysisState.error ?? "Chunking aşaması tamamlanamadı.";
   }
   return "Chunking görünümü parser tamamlandıktan sonra hazırlanacak.";
+}
+
+function getEmbeddingDescription(
+  analysisState: AnalysisState | null,
+  embeddingOutput: EmbeddingOutput | null,
+  isEmbeddingLoading: boolean,
+) {
+  if (!analysisState) {
+    return "Embedding çıktısı hazır olduğunda burada retrieval özeti görüntülenecek.";
+  }
+  if (embeddingOutput) {
+    return "Chunk embeddingleri SQLite store içine yazıldı. Semantic search paneli chunk viewer üzerinden test edilebilir.";
+  }
+  if (analysisState.status === "failed") {
+    return analysisState.error ?? "Embedding aşaması tamamlanamadı.";
+  }
+  if (isEmbeddingLoading) {
+    return "Chunkların embedding vektörleri üretiliyor ve veritabanına yazılıyor.";
+  }
+  if (analysisState.chunk_output) {
+    return "Chunking tamamlandıktan sonra embedding adımı başlayacak.";
+  }
+  return "Embedding görünümü chunking tamamlandıktan sonra hazırlanacak.";
 }
 
 function getParserOutputDescription(analysisState: AnalysisState | null) {
@@ -392,6 +479,25 @@ function ParserOutputPreview({ state }: Readonly<{ state: AnalysisState | null }
     <pre className={styles.jsonPreview}>
       {JSON.stringify(state.parser_output, null, 2)}
     </pre>
+  );
+}
+
+function EmbeddingPreview({
+  embeddingOutput,
+}: Readonly<{
+  embeddingOutput: EmbeddingOutput | null;
+}>) {
+  if (!embeddingOutput) {
+    return <p>Embedding özeti hazır değil.</p>;
+  }
+
+  return (
+    <div>
+      <p>
+        {embeddingOutput.chunk_count} chunk • {embeddingOutput.vector_dimensions} boyut
+      </p>
+      <p>{embeddingOutput.model_name}</p>
+    </div>
   );
 }
 

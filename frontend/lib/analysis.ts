@@ -136,10 +136,50 @@ export type ChunkOutput = {
   chunks: Array<QAChunk | NarrativeChunk | TableChunk | ListChunk>;
 };
 
+export type EmbeddingOutput = {
+  session_id: string;
+  document_id: string;
+  provider_name: "bge_m3";
+  model_name: string;
+  vector_dimensions: number;
+  chunk_count: number;
+  embedded_at: string;
+};
+
+export type EmbeddingSearchResult = {
+  chunk_id: string;
+  document_id: string;
+  section_id: string;
+  chunk_type: "qa" | "narrative" | "table" | "list";
+  heading_path_titles: string[];
+  page_start: number | null;
+  page_end: number | null;
+  text_for_embedding: string;
+  similarity_score: number;
+};
+
+export type EmbeddingSearchResponse = {
+  session_id: string;
+  query: string;
+  provider_name: "bge_m3";
+  model_name: string;
+  vector_dimensions: number;
+  top_k: number;
+  results: EmbeddingSearchResult[];
+};
+
 export type AnalysisState = {
   session_id: string;
-  status: "idle" | "queued" | "extracting" | "parsing" | "completed" | "failed";
-  current_step: "none" | "extractor" | "parser" | "done";
+  status:
+    | "idle"
+    | "queued"
+    | "extracting"
+    | "parsing"
+    | "chunking"
+    | "embedding"
+    | "completed"
+    | "failed";
+  current_step: "none" | "extractor" | "parser" | "chunker" | "embedder" | "done";
   file_name: string | null;
   started_at: string | null;
   updated_at: string | null;
@@ -147,6 +187,7 @@ export type AnalysisState = {
   extraction_output: ExtractionOutput | null;
   parser_output: ParserOutput | null;
   chunk_output: ChunkOutput | null;
+  embedding_output: EmbeddingOutput | null;
 };
 
 export async function fetchCurrentAnalysis(apiBaseUrl: string, sessionId: string) {
@@ -196,4 +237,48 @@ export async function fetchCurrentChunkOutput(apiBaseUrl: string, sessionId: str
   }
 
   return (await response.json()) as ChunkOutput;
+}
+
+export async function fetchCurrentEmbedding(apiBaseUrl: string, sessionId: string) {
+  const response = await fetch(`${apiBaseUrl}/api/embedding/current`, {
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `Embedding çıktısı alınamadı (Durum: ${response.status}).`);
+  }
+
+  return (await response.json()) as EmbeddingOutput;
+}
+
+export async function searchCurrentEmbeddings(
+  apiBaseUrl: string,
+  sessionId: string,
+  payload: {
+    query: string;
+    top_k: number;
+    chunk_types: Array<"qa" | "narrative" | "table" | "list">;
+  },
+) {
+  const response = await fetch(`${apiBaseUrl}/api/embedding/current/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Session-Id": sessionId,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(
+      errorPayload?.detail ?? `Embedding araması yapılamadı (Durum: ${response.status}).`,
+    );
+  }
+
+  return (await response.json()) as EmbeddingSearchResponse;
 }

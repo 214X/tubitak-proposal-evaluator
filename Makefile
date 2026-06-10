@@ -10,11 +10,12 @@ endif
 
 all: setup run
 
-.PHONY: all help setup backend frontend run clean
+.PHONY: all help setup warmup backend frontend run clean
 
 help:
 	@printf '%s\n' \
 		'make setup     Install backend and frontend dependencies' \
+		'make warmup    Download and cache the BAAI/bge-m3 embedding model' \
 		'make backend   Start the FastAPI backend' \
 		'make frontend  Start the Next.js frontend' \
 		'make run       Start backend and frontend together' \
@@ -22,6 +23,9 @@ help:
 
 setup:
 	$(PYTHON) $(RUNNER) setup
+
+warmup:
+	$(PYTHON) $(RUNNER) warmup
 
 backend:
 	$(PYTHON) $(RUNNER) backend

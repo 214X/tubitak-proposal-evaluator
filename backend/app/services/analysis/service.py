@@ -7,6 +7,8 @@ from app.services.analysis.models import AnalysisState
 from app.services.analysis.store import read_analysis_state, write_analysis_state
 from app.services.chunking.models import ChunkOutput
 from app.services.chunking.service import build_chunk_output_from_parser
+from app.services.embedding.models import EmbeddingOutput
+from app.services.embedding.service import build_embeddings_for_chunk_output
 from app.services.extraction.docling_extractor import extract_pdf_with_docling
 from app.services.extraction.models import ExtractionOutput
 from app.services.extraction.models import ParserOutput
@@ -38,6 +40,7 @@ def get_current_analysis_state(session_id: str) -> AnalysisState:
         extraction_output=None,
         parser_output=None,
         chunk_output=None,
+        embedding_output=None,
     )
 
 
@@ -62,6 +65,7 @@ def start_current_analysis(session_id: str) -> AnalysisState:
             extraction_output=None,
             parser_output=None,
             chunk_output=None,
+            embedding_output=None,
         )
         write_analysis_state(queued_state)
 
@@ -81,6 +85,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
     extraction_output: ExtractionOutput | None = None
     parser_output: ParserOutput | None = None
     chunk_output: ChunkOutput | None = None
+    embedding_output: EmbeddingOutput | None = None
     try:
         upload = get_session_upload(session_id)
         file_path = get_session_upload_path(session_id)
@@ -97,6 +102,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 extraction_output=None,
                 parser_output=None,
                 chunk_output=None,
+                embedding_output=None,
             )
         )
 
@@ -114,6 +120,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 extraction_output=extraction_output,
                 parser_output=None,
                 chunk_output=None,
+                embedding_output=None,
             )
         )
 
@@ -125,7 +132,42 @@ def _run_analysis_pipeline(session_id: str) -> None:
             content_stream=content_stream,
             heading_hierarchy=heading_hierarchy,
         )
+
+        _persist_state(
+            AnalysisState(
+                session_id=session_id,
+                status="chunking",
+                current_step="chunker",
+                file_name=upload.file_name,
+                started_at=_existing_started_at(session_id),
+                updated_at=_timestamp_now(),
+                error=None,
+                extraction_output=extraction_output,
+                parser_output=parser_output,
+                chunk_output=None,
+                embedding_output=None,
+            )
+        )
+
         chunk_output = build_chunk_output_from_parser(parser_output)
+
+        _persist_state(
+            AnalysisState(
+                session_id=session_id,
+                status="embedding",
+                current_step="embedder",
+                file_name=upload.file_name,
+                started_at=_existing_started_at(session_id),
+                updated_at=_timestamp_now(),
+                error=None,
+                extraction_output=extraction_output,
+                parser_output=parser_output,
+                chunk_output=chunk_output,
+                embedding_output=None,
+            )
+        )
+
+        embedding_output = build_embeddings_for_chunk_output(session_id, chunk_output)
 
         _persist_state(
             AnalysisState(
@@ -139,6 +181,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 extraction_output=extraction_output,
                 parser_output=parser_output,
                 chunk_output=chunk_output,
+                embedding_output=embedding_output,
             )
         )
     except Exception as error:
@@ -155,6 +198,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 extraction_output=extraction_output,
                 parser_output=parser_output,
                 chunk_output=chunk_output,
+                embedding_output=embedding_output,
             )
         )
     finally:
