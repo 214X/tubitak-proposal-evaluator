@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   type AnalysisState,
+  type ChunkOutput,
   type HeadingHierarchyNode,
   type ParserOutput,
   type UploadState,
@@ -13,6 +14,7 @@ import {
 } from "../../../lib/analysis";
 import styles from "./analysis-dashboard.module.css";
 import { AnalyzeButton } from "../analyze-button/AnalyzeButton";
+import { ChunkOutputPreview } from "../chunk-output-preview/ChunkOutputPreview";
 import { AnalysisStageCard } from "../analysis-stage-card/AnalysisStageCard";
 
 type AnalysisDashboardProps = Readonly<{
@@ -85,6 +87,14 @@ export function AnalysisDashboard({
     };
   }, [analysisState, apiBaseUrl, sessionId]);
 
+  const chunkOutput = analysisState?.chunk_output ?? null;
+  const chunkError = analysisState?.status === "failed" ? (analysisState.error ?? "") : "";
+  const isChunkLoading = Boolean(
+    analysisState?.parser_output &&
+      !analysisState?.chunk_output &&
+      analysisState.status !== "failed",
+  );
+
   const canStart = Boolean(uploadState && sessionId) && !isStarting && !isAnalysisRunning(analysisState);
   const shouldShowCards = Boolean(
     analysisState &&
@@ -128,6 +138,27 @@ export function AnalysisDashboard({
   }, [analysisState]);
 
   const hierarchyTone = parserTone;
+  const chunkTone = useMemo(() => {
+    if (!analysisState) {
+      return "idle" as const;
+    }
+    if (chunkOutput) {
+      return "success" as const;
+    }
+    if (chunkError || analysisState.status === "failed") {
+      return "error" as const;
+    }
+    if (isChunkLoading) {
+      return "loading" as const;
+    }
+    if (analysisState.parser_output) {
+      return "waiting" as const;
+    }
+    if (analysisState.status === "queued" || analysisState.status === "extracting" || analysisState.status === "parsing") {
+      return "waiting" as const;
+    }
+    return "idle" as const;
+  }, [analysisState, chunkError, chunkOutput, isChunkLoading]);
 
   async function handleStartAnalysis() {
     setIsStarting(true);
@@ -221,6 +252,29 @@ export function AnalysisDashboard({
               }
             />
           ) : null}
+
+          {analysisState?.status !== "queued" && analysisState?.status !== "extracting" ? (
+            <AnalysisStageCard
+              title="Chunking Görünümü"
+              description={getChunkDescription(analysisState, chunkOutput, chunkError, isChunkLoading)}
+              tone={chunkTone}
+              preview={
+                <ChunkOutputPreview
+                  chunkOutput={chunkOutput}
+                  isLoading={isChunkLoading}
+                  error={chunkError}
+                />
+              }
+              action={
+                chunkOutput ? (
+                  <ViewerLink
+                    href={`/debug-flow/chunk-view?sessionId=${encodeURIComponent(sessionId)}`}
+                    label="Yeni Sekmede Aç"
+                  />
+                ) : null
+              }
+            />
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -250,6 +304,33 @@ function getExtractionDescription(analysisState: AnalysisState | null) {
 
 function getParserDescription(analysisState: AnalysisState | null) {
   return getHierarchyDescription(analysisState);
+}
+
+function getChunkDescription(
+  analysisState: AnalysisState | null,
+  chunkOutput: ChunkOutput | null,
+  chunkError: string,
+  isChunkLoading: boolean,
+) {
+  if (!analysisState) {
+    return "Chunk görünümü hazır olduğunda burada görüntülenecek.";
+  }
+  if (chunkOutput) {
+    return "Section ve chunk listesi ayrı ayrı çıkarıldı. Tüm chunklar detay sayfasında incelenebilir.";
+  }
+  if (chunkError) {
+    return chunkError;
+  }
+  if (isChunkLoading) {
+    return "Parser çıktısı chunklara ayrılıyor. Hazır olduğunda kart otomatik güncellenecek.";
+  }
+  if (analysisState.parser_output) {
+    return "Chunking çıktısı hazırlanıyor.";
+  }
+  if (analysisState.status === "failed") {
+    return analysisState.error ?? "Chunking aşaması tamamlanamadı.";
+  }
+  return "Chunking görünümü parser tamamlandıktan sonra hazırlanacak.";
 }
 
 function getParserOutputDescription(analysisState: AnalysisState | null) {

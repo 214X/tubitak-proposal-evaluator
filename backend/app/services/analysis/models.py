@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.services.chunking.models import ChunkOutput
 from app.services.extraction.models import ExtractionOutput, ParserOutput
 
 AnalysisStatus = Literal["idle", "queued", "extracting", "parsing", "completed", "failed"]
@@ -20,3 +21,4 @@ class AnalysisState(BaseModel):
     error: str | None = None                    # human-readable error message when status == failed
     extraction_output: ExtractionOutput | None = None  # completed extraction artifact when available
     parser_output: ParserOutput | None = None          # completed parser artifact when available
+    chunk_output: ChunkOutput | None = None            # completed chunking artifact when available

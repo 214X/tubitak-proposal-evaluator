@@ -5,6 +5,8 @@ from threading import Lock, Thread
 
 from app.services.analysis.models import AnalysisState
 from app.services.analysis.store import read_analysis_state, write_analysis_state
+from app.services.chunking.models import ChunkOutput
+from app.services.chunking.service import build_chunk_output_from_parser
 from app.services.extraction.docling_extractor import extract_pdf_with_docling
 from app.services.extraction.models import ExtractionOutput
 from app.services.extraction.models import ParserOutput
@@ -35,6 +37,7 @@ def get_current_analysis_state(session_id: str) -> AnalysisState:
         error=None,
         extraction_output=None,
         parser_output=None,
+        chunk_output=None,
     )
 
 
@@ -58,6 +61,7 @@ def start_current_analysis(session_id: str) -> AnalysisState:
             error=None,
             extraction_output=None,
             parser_output=None,
+            chunk_output=None,
         )
         write_analysis_state(queued_state)
 
@@ -75,6 +79,8 @@ def start_current_analysis(session_id: str) -> AnalysisState:
 
 def _run_analysis_pipeline(session_id: str) -> None:
     extraction_output: ExtractionOutput | None = None
+    parser_output: ParserOutput | None = None
+    chunk_output: ChunkOutput | None = None
     try:
         upload = get_session_upload(session_id)
         file_path = get_session_upload_path(session_id)
@@ -90,6 +96,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 error=None,
                 extraction_output=None,
                 parser_output=None,
+                chunk_output=None,
             )
         )
 
@@ -106,6 +113,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 error=None,
                 extraction_output=extraction_output,
                 parser_output=None,
+                chunk_output=None,
             )
         )
 
@@ -117,6 +125,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
             content_stream=content_stream,
             heading_hierarchy=heading_hierarchy,
         )
+        chunk_output = build_chunk_output_from_parser(parser_output)
 
         _persist_state(
             AnalysisState(
@@ -129,6 +138,7 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 error=None,
                 extraction_output=extraction_output,
                 parser_output=parser_output,
+                chunk_output=chunk_output,
             )
         )
     except Exception as error:
@@ -143,7 +153,8 @@ def _run_analysis_pipeline(session_id: str) -> None:
                 updated_at=_timestamp_now(),
                 error=str(error),
                 extraction_output=extraction_output,
-                parser_output=None,
+                parser_output=parser_output,
+                chunk_output=chunk_output,
             )
         )
     finally:

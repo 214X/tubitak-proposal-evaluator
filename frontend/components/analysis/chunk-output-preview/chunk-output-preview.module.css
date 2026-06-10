@@ -1,0 +1,123 @@
+.loadingPreview {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.loadingLine,
+.loadingLineShort,
+.loadingBlock {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 0%,
+    color-mix(in srgb, var(--accent) 16%, var(--app-panel)) 50%,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.loadingLine {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.loadingLineShort {
+  width: 52%;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.loadingBlock {
+  width: 100%;
+  height: 210px;
+  border-radius: 18px;
+}
+
+.preview {
+  display: grid;
+  gap: 14px;
+}
+
+.metaRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.chunkList {
+  display: grid;
+  gap: 12px;
+  padding: 0 18px 18px;
+}
+
+.chunkCard {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fbf8f4;
+  border: 1px solid rgba(48, 32, 26, 0.08);
+}
+
+.chunkHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.chunkType,
+.chunkOrder {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.chunkType {
+  color: var(--accent-strong);
+}
+
+.chunkOrder {
+  color: #7a6d68;
+}
+
+.chunkPath,
+.chunkSnippet,
+.errorText {
+  margin: 0;
+}
+
+.chunkPath {
+  color: #2a2321;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.chunkSnippet {
+  color: #6b5d58;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.errorText {
+  padding: 18px;
+  color: #b42332;
+  font-size: 14px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -20% 0;
+  }
+}

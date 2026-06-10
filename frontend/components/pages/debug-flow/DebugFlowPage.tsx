@@ -18,8 +18,8 @@ export function DebugFlowPage({ health, apiBaseUrl }: DebugFlowPageProps) {
           <p className={styles.eyebrow}>TÜBİTAK PROJE ÖNERİ DEĞERLENDİRME ASİSTANI</p>
           <h1 className={styles.title}>Debug Analiz Akışı</h1>
           <p className={styles.description}>
-            Upload, extraction, parser ve arka plan analysis durumunu bu sayfadan
-            izleyin.
+            Upload, extraction, parser, chunking ve arka plan analysis durumunu bu
+            sayfadan izleyin.
           </p>
         </div>
 

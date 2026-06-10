@@ -1,0 +1,423 @@
+.page {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  gap: 20px;
+  padding: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.session {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0;
+  color: #b42332;
+  font-size: 14px;
+}
+
+.canvas {
+  display: grid;
+}
+
+.document {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 36px;
+  border-radius: 32px;
+  background: #fbf8f4;
+  color: #201a19;
+  box-shadow: 0 24px 60px rgba(18, 14, 13, 0.14);
+}
+
+.documentHeader {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(32, 26, 25, 0.08);
+}
+
+.documentMetaLabel {
+  margin: 0;
+  color: #8a7b76;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.documentTitle {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1;
+}
+
+.documentMeta {
+  margin: 0;
+  color: #6f625d;
+  font-size: 14px;
+}
+
+.documentBody {
+  display: grid;
+  gap: 18px;
+  padding-top: 28px;
+}
+
+.chunkCard {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 26px;
+  border: 1px solid rgba(32, 26, 25, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(253, 249, 244, 0.96) 100%);
+}
+
+.chunkCard[data-type="qa"] {
+  border-color: rgba(186, 66, 72, 0.18);
+}
+
+.chunkCard[data-type="table"] {
+  border-color: rgba(33, 90, 115, 0.16);
+}
+
+.chunkCard[data-type="list"] {
+  border-color: rgba(73, 96, 47, 0.16);
+}
+
+.chunkHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.chunkMetaBlock,
+.chunkMetaSide,
+.qaBlock,
+.fieldBlock,
+.tablePanel {
+  display: grid;
+}
+
+.chunkMetaBlock {
+  gap: 6px;
+}
+
+.chunkMetaSide {
+  gap: 6px;
+  text-align: right;
+}
+
+.chunkType,
+.chunkOrder,
+.chunkPage,
+.fieldLabel,
+.tableTitle {
+  margin: 0;
+}
+
+.chunkType {
+  color: #ba4248;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chunkTitle {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.chunkPath {
+  margin: 0;
+  color: #6f625d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.chunkOrder,
+.chunkPage {
+  color: #6f625d;
+  font-size: 13px;
+}
+
+.chunkBody {
+  display: grid;
+  gap: 16px;
+}
+
+.qaBlock {
+  gap: 14px;
+}
+
+.fieldBlock {
+  gap: 6px;
+}
+
+.fieldLabel {
+  color: #8a7b76;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fieldValue,
+.paragraph {
+  margin: 0;
+  color: #2c2523;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.answerPill {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(186, 66, 72, 0.12);
+  color: #852f34;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 24px;
+  color: #2c2523;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.listItem::marker {
+  color: #1b1615;
+}
+
+.tablePanel {
+  gap: 12px;
+}
+
+.embeddingPanel,
+.normalizedPanel {
+  display: grid;
+  gap: 10px;
+}
+
+.embeddingText {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  border-radius: 18px;
+  background: #111010;
+  color: #f6f2ef;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.embeddingHeading,
+.embeddingRow {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family:
+    "SFMono-Regular",
+    ui-monospace,
+    "Cascadia Code",
+    "Source Code Pro",
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+.embeddingHeading {
+  color: #f4d8c8;
+  font-weight: 700;
+}
+
+.embeddingRow {
+  color: #f6f2ef;
+}
+
+.toggleButton {
+  width: fit-content;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, white);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.toggleButton:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, white);
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.tableTitle {
+  color: #2f4149;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.formTable {
+  display: grid;
+  gap: 14px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.formField {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(32, 26, 25, 0.08);
+  background: #fffdfa;
+}
+
+.formLabel,
+.formValue {
+  margin: 0;
+}
+
+.formLabel {
+  color: #7c6e68;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.formValue {
+  color: #2c2523;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.tableWrap {
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(32, 26, 25, 0.1);
+  background: #fffdfa;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(32, 26, 25, 0.08);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  background: rgba(33, 90, 115, 0.08);
+  font-weight: 700;
+}
+
+.emptyState {
+  display: grid;
+  gap: 14px;
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 28px;
+  background: var(--app-panel);
+  box-shadow: var(--app-shadow);
+}
+
+.emptyLine,
+.emptyLineLong,
+.emptySheet {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 0%,
+    color-mix(in srgb, var(--accent) 18%, var(--app-panel)) 50%,
+    color-mix(in srgb, var(--accent) 6%, var(--app-panel)) 100%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.emptyLine {
+  width: 28%;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.emptyLineLong {
+  width: 52%;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.emptySheet {
+  width: 100%;
+  height: 640px;
+  border-radius: 20px;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -20% 0;
+  }
+}

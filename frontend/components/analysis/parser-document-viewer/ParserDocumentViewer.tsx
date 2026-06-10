@@ -176,39 +176,122 @@ function DocumentTable({
   table,
 }: Readonly<{
   table: {
+    table_cells?: Array<{
+      text?: string;
+      start_row_offset_idx?: number;
+      end_row_offset_idx?: number;
+      start_col_offset_idx?: number;
+      end_col_offset_idx?: number;
+      row_span?: number;
+      col_span?: number;
+      column_header?: boolean;
+    }>;
     grid?: Array<Array<{ text?: string } | null>>;
   };
 }>) {
-  const rows = table.grid ?? [];
-  if (!rows.length) {
+  const cellRows = buildRenderableTableRows(table.table_cells ?? []);
+  const hasStructuredCells = cellRows.length > 0;
+  const gridRows = table.grid ?? [];
+
+  if (!hasStructuredCells && !gridRows.length) {
     return <div className={styles.tableEmpty}>Tablo içeriği boş.</div>;
   }
-
-  const headerRow = rows[0] ?? [];
-  const bodyRows = rows.slice(1);
 
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
-        <thead>
-          <tr>
-            {headerRow.map((cell, index) => (
-              <th key={`head-${index}`}>{cell?.text ?? ""}</th>
+        {hasStructuredCells ? (
+          <tbody>
+            {cellRows.map((row, rowIndex) => (
+              <tr key={`row-${rowIndex}`}>
+                {row.map((cell, cellIndex) => {
+                  const CellTag = cell.isHeader ? "th" : "td";
+
+                  return (
+                    <CellTag
+                      key={`cell-${rowIndex}-${cellIndex}`}
+                      colSpan={cell.colSpan}
+                      rowSpan={cell.rowSpan}
+                    >
+                      {cell.text}
+                    </CellTag>
+                  );
+                })}
+              </tr>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {bodyRows.map((row, rowIndex) => (
-            <tr key={`row-${rowIndex}`}>
-              {row.map((cell, cellIndex) => (
-                <td key={`cell-${rowIndex}-${cellIndex}`}>{cell?.text ?? ""}</td>
+          </tbody>
+        ) : (
+          <>
+            <thead>
+              <tr>
+                {(gridRows[0] ?? []).map((cell, index) => (
+                  <th key={`head-${index}`}>{cell?.text ?? ""}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {gridRows.slice(1).map((row, rowIndex) => (
+                <tr key={`row-${rowIndex}`}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={`cell-${rowIndex}-${cellIndex}`}>{cell?.text ?? ""}</td>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
+            </tbody>
+          </>
+        )}
       </table>
     </div>
   );
+}
+
+function buildRenderableTableRows(
+  tableCells: Array<{
+    text?: string;
+    start_row_offset_idx?: number;
+    start_col_offset_idx?: number;
+    row_span?: number;
+    col_span?: number;
+    column_header?: boolean;
+  }>,
+) {
+  const validCells = tableCells
+    .filter(
+      (cell) =>
+        typeof cell.start_row_offset_idx === "number" &&
+        typeof cell.start_col_offset_idx === "number",
+    )
+    .sort((left, right) => {
+      const rowDiff = (left.start_row_offset_idx ?? 0) - (right.start_row_offset_idx ?? 0);
+      if (rowDiff !== 0) {
+        return rowDiff;
+      }
+
+      return (left.start_col_offset_idx ?? 0) - (right.start_col_offset_idx ?? 0);
+    });
+
+  const rows = new Map<number, Array<{
+    text: string;
+    rowSpan: number;
+    colSpan: number;
+    isHeader: boolean;
+  }>>();
+
+  for (const cell of validCells) {
+    const rowIndex = cell.start_row_offset_idx as number;
+    const nextRow = rows.get(rowIndex) ?? [];
+    nextRow.push({
+      text: cell.text ?? "",
+      rowSpan: cell.row_span ?? 1,
+      colSpan: cell.col_span ?? 1,
+      isHeader: Boolean(cell.column_header),
+    });
+    rows.set(rowIndex, nextRow);
+  }
+
+  return [...rows.entries()]
+    .sort((left, right) => left[0] - right[0])
+    .map(([, row]) => row);
 }
 
 function DocumentList({ items }: Readonly<{ items: string[] }>) {
@@ -227,7 +310,17 @@ function DocumentList({ items }: Readonly<{ items: string[] }>) {
   );
 }
 
-function isDoclingTableData(value: unknown): value is { grid?: Array<Array<{ text?: string } | null>> } {
+function isDoclingTableData(value: unknown): value is {
+  table_cells?: Array<{
+    text?: string;
+    start_row_offset_idx?: number;
+    start_col_offset_idx?: number;
+    row_span?: number;
+    col_span?: number;
+    column_header?: boolean;
+  }>;
+  grid?: Array<Array<{ text?: string } | null>>;
+} {
   return typeof value === "object" && value !== null;
 }
 
