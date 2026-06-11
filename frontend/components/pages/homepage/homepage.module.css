@@ -1,23 +1,315 @@
 .main {
-  min-height: calc(100vh - 56px);
+  position: relative;
+  min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 28px;
+  padding: 0 28px 40px;
+  background:
+    radial-gradient(circle at 50% 6%, color-mix(in srgb, #f4a261 28%, transparent), transparent 22%),
+    radial-gradient(circle at 18% 20%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 26%),
+    radial-gradient(circle at 82% 24%, color-mix(in srgb, #ef8765 24%, transparent), transparent 28%),
+    radial-gradient(circle at 50% 82%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, #fff4f0 56%, var(--app-bg)) 0%, color-mix(in srgb, #ffe6df 44%, var(--app-bg)) 34%, color-mix(in srgb, var(--accent) 14%, var(--app-bg)) 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.main::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  opacity: 0.2;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 88%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .panel {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1140px;
   display: grid;
-  gap: 24px;
+  align-content: center;
+  gap: 32px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 84px 0 32px;
+  scroll-behavior: smooth;
 }
 
-.analysisEntry {
-  max-width: 860px;
+.themeToggle {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  z-index: 2;
+}
+
+.backdropOrb,
+.backdropBeam,
+.backdropGlow {
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.backdropOrb {
+  width: 560px;
+  height: 560px;
+  top: 8%;
+  right: -180px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 52%, transparent) 0%, color-mix(in srgb, #ef8765 26%, transparent) 44%, transparent 74%);
+  filter: blur(12px);
+  opacity: 1;
+}
+
+.backdropBeam {
+  width: min(88vw, 1080px);
+  height: 280px;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 38%, transparent) 12%, color-mix(in srgb, #f19b4f 28%, transparent) 40%, color-mix(in srgb, #ef8765 34%, transparent) 62%, color-mix(in srgb, var(--accent) 40%, transparent) 88%, transparent 100%);
+  filter: blur(56px);
+  opacity: 1;
+}
+
+.backdropGlow {
+  width: 460px;
+  height: 460px;
+  left: -140px;
+  bottom: -120px;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, #f19b4f 28%, transparent), color-mix(in srgb, var(--accent) 24%, transparent) 42%, transparent 74%);
+  filter: blur(26px);
+  opacity: 0.92;
+}
+
+.hero {
+  display: grid;
+  min-height: min(78vh, 860px);
+  align-items: center;
+}
+
+.heroInner {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.logoWrap {
+  width: min(100%, 380px);
+}
+
+.logo {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 20px 44px color-mix(in srgb, var(--accent) 18%, transparent));
+}
+
+.copy {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.title {
+  margin: 0;
+  max-width: 15ch;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+  font-size: clamp(2.6rem, 6vw, 5.3rem);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+  color: var(--app-text);
+  text-wrap: balance;
+}
+
+.description {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--app-muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.cta {
+  min-width: min(100%, 340px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 30px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 52%, #ef8765 100%);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  box-shadow:
+    0 24px 54px color-mix(in srgb, var(--accent) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.06) brightness(1.02);
+  box-shadow:
+    0 30px 64px color-mix(in srgb, var(--accent) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.scrollCue {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  color: var(--app-text);
+  text-decoration: none;
+  opacity: 0.86;
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease,
+    color 220ms ease;
+}
+
+.scrollCue:hover {
+  transform: translateY(-2px);
+  opacity: 1;
+  color: var(--accent-strong);
+}
+
+.scrollMouse {
+  width: 28px;
+  height: 44px;
+  display: grid;
+  justify-items: center;
+  padding-top: 7px;
+  border: 1.5px solid color-mix(in srgb, var(--app-text) 42%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-tint) 52%, transparent);
+  box-shadow: 0 10px 24px rgba(18, 14, 13, 0.08);
+}
+
+.scrollWheel {
+  width: 4px;
+  height: 9px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: scrollWheel 1.8s ease-in-out infinite;
+}
+
+.scrollLabel {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+@keyframes scrollWheel {
+  0% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+
+  45% {
+    transform: translateY(10px);
+    opacity: 0.2;
+  }
+
+  46% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
 }
 
 @media (max-width: 960px) {
   .main {
-    padding: 16px;
+    padding: 0 16px 24px;
+  }
+
+  .panel {
+    gap: 24px;
+    padding: 72px 0 24px;
+  }
+
+  .themeToggle {
+    top: 16px;
+    right: 16px;
+  }
+
+  .backdropOrb {
+    width: 280px;
+    height: 280px;
+    top: 7%;
+    right: -100px;
+  }
+
+  .backdropBeam {
+    height: 160px;
+    top: 4%;
+    opacity: 0.7;
+  }
+
+  .backdropGlow {
+    width: 220px;
+    height: 220px;
+    left: -100px;
+    bottom: 0;
+  }
+
+  .hero {
+    min-height: auto;
+  }
+
+  .logoWrap {
+    width: min(100%, 280px);
+  }
+
+  .title {
+    font-size: clamp(2.2rem, 12vw, 3.9rem);
+    line-height: 1.05;
+  }
+
+  .description {
+    font-size: 0.98rem;
+    line-height: 1.58;
+  }
+
+  .cta {
+    width: 100%;
+  }
+
+  .scrollCue {
+    display: none;
   }
 }

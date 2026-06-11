@@ -1,4 +1,167 @@
 .grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 34px;
+}
+
+.workspaceMain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 760px;
+  gap: 28px;
+}
+
+/* Control Card for starting evaluation */
+.startCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 760px;
+  padding: 44px 36px;
+  border-radius: 34px;
+  border: 1px solid var(--app-panel-border);
+  background: 
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 94%, transparent) 0%, color-mix(in srgb, var(--app-panel-strong) 96%, transparent) 100%);
+  box-shadow:
+    0 24px 44px rgba(18, 14, 13, 0.08),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 74%, transparent);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  gap: 22px;
+}
+
+.startCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.22;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.46), transparent 74%);
+  pointer-events: none;
+}
+
+.startIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 18%, transparent), color-mix(in srgb, var(--accent) 10%, transparent));
+  color: var(--accent);
   display: grid;
-  gap: 26px;
+  place-items: center;
+  margin-bottom: 8px;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent),
+    0 14px 30px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.startIcon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.startTitle {
+  margin: 0;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+  font-size: clamp(1.7rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--app-text);
+}
+
+.startDescription {
+  margin: 0 auto;
+  font-size: 15px;
+  line-height: 1.72;
+  color: var(--app-muted);
+  max-width: 520px;
+}
+
+.startButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+  min-height: 58px;
+  padding: 0 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 52%, #ef8765 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 
+    0 20px 40px color-mix(in srgb, var(--accent) 26%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.startButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 26px 46px color-mix(in srgb, var(--accent) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, var(--accent-strong) 0%, var(--accent) 56%, #f28a69 100%);
+}
+
+.startButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.startButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--app-muted);
+  color: #ffffff;
+}
+
+.helperText {
+  font-size: 13px;
+  color: var(--app-muted);
+  background: color-mix(in srgb, var(--accent) 8%, var(--app-panel));
+  padding: 10px 16px;
+  border-radius: 14px;
+  margin: 0;
+}
+
+.errorText {
+  font-size: 14px;
+  color: #d73a49;
+  background: rgba(215, 58, 73, 0.08);
+  padding: 12px 18px;
+  border-radius: 16px;
+  margin: 0;
+  border: 1px solid rgba(215, 58, 73, 0.15);
+  text-align: left;
+  width: 100%;
+  max-width: 500px;
+}
+
+.uploadWrapper {
+  width: 100%;
+  max-width: 760px;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .grid {
+    gap: 24px;
+  }
 }

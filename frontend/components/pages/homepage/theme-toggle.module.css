@@ -1,0 +1,38 @@
+.toggle {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--app-panel-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 92%, transparent), var(--app-panel-strong));
+  color: var(--app-text);
+  box-shadow: 0 12px 28px rgba(18, 14, 13, 0.08);
+  cursor: pointer;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
+    box-shadow 220ms ease,
+    color 220ms ease;
+}
+
+.toggle:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 16px 34px rgba(18, 14, 13, 0.12);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.icon :global(svg) {
+  width: 20px;
+  height: 20px;
+}

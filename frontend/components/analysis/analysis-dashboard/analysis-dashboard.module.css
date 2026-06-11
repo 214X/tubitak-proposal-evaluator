@@ -1,13 +1,16 @@
 .panel {
   display: grid;
   gap: 22px;
-  padding: 28px;
+  padding: 30px;
   border-radius: 34px;
   border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 16%, transparent), transparent 40%),
-    linear-gradient(180deg, var(--app-panel) 0%, var(--app-panel-strong) 100%);
-  box-shadow: var(--app-shadow);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 14%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 94%, transparent) 0%, color-mix(in srgb, var(--app-panel-strong) 96%, transparent) 100%);
+  box-shadow:
+    0 24px 44px rgba(18, 14, 13, 0.08),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 .panelHeader {
@@ -26,8 +29,15 @@
 
 .title {
   margin: 0;
-  font-size: clamp(24px, 4vw, 34px);
-  line-height: 1.06;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
 }
 
 .description {
@@ -74,10 +84,10 @@
 .summaryItem {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--surface-tint) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .summaryLabel {
@@ -105,7 +115,7 @@
   padding: 0 16px;
   border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--app-panel));
+  background: color-mix(in srgb, var(--accent) 8%, var(--app-panel));
   color: var(--accent-strong);
   text-decoration: none;
   font-weight: 700;
@@ -119,7 +129,7 @@
 .viewerLink:hover {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent) 42%, transparent);
-  background: color-mix(in srgb, var(--accent) 16%, var(--app-panel));
+  background: color-mix(in srgb, var(--accent) 14%, var(--app-panel));
 }
 
 .viewerLink:focus-visible {

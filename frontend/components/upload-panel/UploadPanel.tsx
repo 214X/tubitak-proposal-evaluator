@@ -38,6 +38,7 @@ export function UploadPanel({
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isResettingSession, setIsResettingSession] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export function UploadPanel({
       const payload = (await response.json()) as UploadState;
       setUploadState(payload);
       setSelectedFile(null);
+      setIsPreviewOpen(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -136,6 +138,7 @@ export function UploadPanel({
   function clearSelectedFile() {
     setSelectedFile(null);
     setUploadError("");
+    setIsPreviewOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -169,7 +172,8 @@ export function UploadPanel({
   }
 
   return (
-    <form onSubmit={(event) => void handleUpload(event)} className={styles.uploadCard}>
+    <>
+      <form onSubmit={(event) => void handleUpload(event)} className={styles.uploadCard}>
       <div className={styles.uploadHeader}>
         <div>
           <p className={styles.sectionLabel}>DOKÜMAN YÜKLE</p>
@@ -177,24 +181,74 @@ export function UploadPanel({
         </div>
       </div>
 
-      <label className={styles.dropzone}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          onChange={(event) => {
-            handleSelectedFileChange(event.target.files?.[0] ?? null);
-          }}
-          className={styles.fileInput}
-        />
-        <span className={styles.dropzoneInner}>
-          <span className={styles.dropzoneIcon}>
-            <UploadIcon />
+      {!uploadState ? (
+        <label className={styles.dropzone}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(event) => {
+              handleSelectedFileChange(event.target.files?.[0] ?? null);
+            }}
+            className={styles.fileInput}
+          />
+          <span className={styles.dropzoneInner}>
+            <span className={styles.dropzoneIcon}>
+              <UploadIcon />
+            </span>
+            <span className={styles.dropzoneTitle}>Dosyayı buraya yükleyin veya göz atın</span>
+            <span className={styles.dropzoneNote}>Sadece tek bir dosya. PDF, DOC, DOCX</span>
           </span>
-          <span className={styles.dropzoneTitle}>Dosyayı buraya sürükleyin veya göz atın</span>
-          <span className={styles.dropzoneNote}>Sadece tek bir dosya. PDF, DOC, DOCX</span>
-        </span>
-      </label>
+        </label>
+      ) : (
+        <div className={styles.previewPanel}>
+          <div className={styles.previewTop}>
+            <div className={styles.previewMeta}>
+              <p className={styles.previewLabel}>Yüklenen Dosya</p>
+              <p className={styles.previewName}>{uploadState.file_name}</p>
+            </div>
+
+            <button
+              type="button"
+              className={styles.previewOpenButton}
+              onClick={() => setIsPreviewOpen(true)}
+            >
+              Önizlemeyi Aç
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className={styles.previewCard}
+            onClick={() => setIsPreviewOpen(true)}
+          >
+            <span className={styles.previewBadge}>Adobe Preview</span>
+            <span className={styles.previewFrame}>
+              {uploadState.content_type.includes("pdf") ? (
+                <object
+                  data={`${apiBaseUrl}/api/uploads/current/content?session_id=${encodeURIComponent(sessionId)}#toolbar=0&navpanes=0&scrollbar=0`}
+                  type="application/pdf"
+                  className={styles.previewEmbed}
+                  aria-label="Belge önizleme"
+                >
+                  <span className={styles.previewFallback}>
+                    <span className={styles.previewFallbackIcon}>PDF</span>
+                    <span>Tarayıcı içi önizleme açılamadı. Detaylı görünüm için tıklayın.</span>
+                  </span>
+                </object>
+              ) : (
+                <span className={styles.previewFallback}>
+                  <span className={styles.previewFallbackIcon}>DOC</span>
+                  <span>
+                    Bu belge türü tarayıcı içinde sınırlı önizlenir. Dosya adını ve belge
+                    durumunu buradan kontrol edebilirsiniz.
+                  </span>
+                </span>
+              )}
+            </span>
+          </button>
+        </div>
+      )}
 
       {selectedFile ? (
         <div className={styles.fileCard}>
@@ -226,13 +280,15 @@ export function UploadPanel({
       {uploadError ? <p className={styles.errorText}>{uploadError}</p> : null}
 
       <div className={styles.actionsRow}>
-        <button
-          type="submit"
-          disabled={isUploading || isResettingSession || !sessionId || !selectedFile}
-          className={styles.button}
-        >
-          {isUploading ? "Yükleniyor..." : "Dosya Yükle"}
-        </button>
+        {!uploadState ? (
+          <button
+            type="submit"
+            disabled={isUploading || isResettingSession || !sessionId || !selectedFile}
+            className={styles.button}
+          >
+            {isUploading ? "Yükleniyor..." : "Dosyayı Yükle"}
+          </button>
+        ) : null}
 
         {selectedFile ? (
           <button type="button" onClick={clearSelectedFile} className={styles.secondaryButton}>
@@ -240,16 +296,71 @@ export function UploadPanel({
           </button>
         ) : null}
 
-        <button
-          type="button"
-          onClick={() => void handleResetSession()}
-          className={styles.tertiaryButton}
-          disabled={isUploading || isResettingSession || !sessionId}
-        >
-          {isResettingSession ? "Oturum Sıfırlanıyor..." : "Session Sıfırla"}
-        </button>
+        {uploadState ? (
+          <button
+            type="button"
+            onClick={() => void handleResetSession()}
+            className={styles.tertiaryButton}
+            disabled={isUploading || isResettingSession || !sessionId}
+          >
+            {isResettingSession ? "Hazırlanıyor..." : "Dosyayı Kaldır"}
+          </button>
+        ) : null}
       </div>
-    </form>
+      </form>
+
+      {isPreviewOpen && uploadState ? (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Belge önizleme"
+          onClick={() => setIsPreviewOpen(false)}
+        >
+          <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <p className={styles.previewLabel}>Belge Önizleme</p>
+                <p className={styles.modalTitle}>{uploadState.file_name}</p>
+              </div>
+
+              <button
+                type="button"
+                className={styles.modalCloseButton}
+                onClick={() => setIsPreviewOpen(false)}
+                aria-label="Önizlemeyi kapat"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {uploadState.content_type.includes("pdf") ? (
+                <object
+                  data={`${apiBaseUrl}/api/uploads/current/content?session_id=${encodeURIComponent(sessionId)}`}
+                  type="application/pdf"
+                  className={styles.modalEmbed}
+                  aria-label="Belge önizleme modal"
+                >
+                  <div className={styles.modalFallback}>
+                    <span className={styles.previewFallbackIcon}>PDF</span>
+                    <p>Tarayıcı içi PDF önizlemesi açılamadı.</p>
+                  </div>
+                </object>
+              ) : (
+                <div className={styles.modalFallback}>
+                  <span className={styles.previewFallbackIcon}>DOC</span>
+                  <p>
+                    DOC ve DOCX dosyaları bu önizleme alanında sınırlı desteklenir. PDF
+                    yüklediğinizde belgeyi doğrudan burada inceleyebilirsiniz.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 
