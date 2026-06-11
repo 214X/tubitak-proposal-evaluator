@@ -10,15 +10,16 @@ endif
 
 all: setup run
 
-.PHONY: all help setup warmup backend frontend run clean
+.PHONY: all help setup warmup backend frontend run check clean
 
 help:
 	@printf '%s\n' \
-		'make setup     Install backend and frontend dependencies' \
+		'make setup     Install dependencies and pull the Ollama Aya model if missing' \
 		'make warmup    Download and cache the BAAI/bge-m3 embedding model' \
 		'make backend   Start the FastAPI backend' \
 		'make frontend  Start the Next.js frontend' \
 		'make run       Start backend and frontend together' \
+		'make check     Run backend import guards and smoke checks' \
 		'make clean     Remove generated caches and local build artifacts'
 
 setup:
@@ -35,6 +36,9 @@ frontend:
 
 run:
 	$(PYTHON) $(RUNNER) run
+
+check:
+	$(PYTHON) $(RUNNER) check
 
 clean:
 	rm -rf backend/.venv

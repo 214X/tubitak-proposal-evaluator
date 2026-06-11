@@ -3,7 +3,11 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
-import { getOrCreateSessionId, replaceSessionId } from "../../lib/session";
+import {
+  getOrCreateSessionId,
+  replaceSessionId,
+  subscribeToSessionIdChange,
+} from "../../lib/session";
 import styles from "./upload-panel.module.css";
 
 type UploadPanelProps = Readonly<{
@@ -39,11 +43,24 @@ export function UploadPanel({
   useEffect(() => {
     const nextSessionId = getOrCreateSessionId();
     setSessionId(nextSessionId);
+
+    return subscribeToSessionIdChange((nextValue) => {
+      if (nextValue) {
+        setSessionId(nextValue);
+      }
+    });
   }, []);
 
   useEffect(() => {
     if (!sessionId) {
       return;
+    }
+
+    setSelectedFile(null);
+    setUploadState(null);
+    setUploadError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
 
     onSessionReady?.(sessionId);
@@ -142,11 +159,6 @@ export function UploadPanel({
 
       const nextSessionId = replaceSessionId();
       setSessionId(nextSessionId);
-      setUploadState(null);
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : "Oturum sıfırlanamadı.",

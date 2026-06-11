@@ -1,0 +1,91 @@
+{
+  "rubric_id": "tubitak-default",
+  "version": "v1",
+  "program_codes": ["1501", "1507"],
+  "criteria": [
+    {
+      "criterion_id": "legal_sector_regulations",
+      "category": "Legal",
+      "title": "Proje ilgili sektör mevzuatı ve düzenlemeleri ile uyumlu mudur?",
+      "description": "Başvuru içeriğinde önerilen çözüm, üretim yaklaşımı ve proje çıktıları ilgili sektör mevzuatı, standartlar ve düzenleyici gerekliliklerle çelişmemelidir.",
+      "weight": 4,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "qa", "list"],
+      "positive_queries": ["mevzuata uyum", "regülasyon uyumu", "standartlara uygunluk", "yasal uygunluk"],
+      "negative_queries": ["mevzuata aykırı", "izin eksikliği", "uyumsuzluk", "regülasyon riski"],
+      "evidence_top_k": 4,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    },
+    {
+      "criterion_id": "financing_costed_activities",
+      "category": "Financing",
+      "title": "Projede yer alan faaliyet ve iş paketleri için maliyetlendirme yeterince yapılmış mıdır?",
+      "description": "İş paketleri, faaliyetler, insan kaynağı, hizmet alımı ve diğer kaynak kullanımları için tutarlı ve izlenebilir bir bütçe/maliyet dağılımı beklenir.",
+      "weight": 1,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "table", "list"],
+      "positive_queries": ["bütçe kalemleri", "maliyet tablosu", "faaliyet maliyeti", "iş paketi bütçesi"],
+      "negative_queries": ["maliyet belirtilmemiş", "bütçe eksik", "faaliyet maliyeti yok", "harcama belirsiz"],
+      "evidence_top_k": 4,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    },
+    {
+      "criterion_id": "financing_operational_revenue",
+      "category": "Financing",
+      "title": "Projenin operasyonel giderleri gelir modeli veya finansal plan ile karşılanabilir görünmekte midir?",
+      "description": "Projenin ekonomik sürdürülebilirliği; gelir modeli, satış beklentisi, finansal projeksiyon veya benzeri açıklamalarla desteklenmelidir.",
+      "weight": 2,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "table", "qa"],
+      "positive_queries": ["gelir modeli", "operasyonel sürdürülebilirlik", "nakit akışı", "gelir projeksiyonu"],
+      "negative_queries": ["gelir belirsiz", "operasyonel maliyet yüksek", "sürdürülebilirlik riski", "gelir modeli yok"],
+      "evidence_top_k": 4,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    },
+    {
+      "criterion_id": "consultation_beneficiaries",
+      "category": "Consultation",
+      "title": "Projenin hedef kullanıcıları veya faydalanıcıları proje kurgusuna katkı sunmuş mudur?",
+      "description": "Hedef kullanıcıların, müşterilerin veya doğrudan faydalanıcıların ihtiyaçlarının nasıl toplandığı ve proje tanımına nasıl yansıtıldığı açıkça gösterilmelidir.",
+      "weight": 1,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "qa", "list"],
+      "positive_queries": ["kullanıcı görüşü", "müşteri geri bildirimi", "faydalanıcı analizi", "ihtiyaç analizi"],
+      "negative_queries": ["kullanıcı doğrulaması yok", "geri bildirim alınmadı", "faydalanıcı belirsiz", "müşteri görüşü yok"],
+      "evidence_top_k": 4,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    },
+    {
+      "criterion_id": "consultation_stakeholders",
+      "category": "Consultation",
+      "title": "Projeyle ilişkili paydaşların görüş ve katkıları proje kurgusuna yansıtılmış mıdır?",
+      "description": "Tedarikçi, çözüm ortağı, iş ortağı, danışman veya ilgili kurumsal paydaş katkılarının proje planına yansıtıldığına dair kanıt bulunmalıdır.",
+      "weight": 2,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "qa", "list"],
+      "positive_queries": ["paydaş görüşü", "iş ortağı katkısı", "kurumsal iş birliği", "tedarikçi görüşmesi"],
+      "negative_queries": ["paydaş yok", "iş birliği planı belirsiz", "ortak katkısı yok", "paydaş analizi eksik"],
+      "evidence_top_k": 4,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    },
+    {
+      "criterion_id": "impact_environment",
+      "category": "Impact",
+      "title": "Projenin çevresel etkisi olumlu veya yönetilebilir düzeyde midir?",
+      "description": "Proje çevresel fayda sunmalı ya da oluşabilecek atık, emisyon, kimyasal kullanım ve benzeri olumsuz etkiler için açık azaltım, bertaraf veya kontrol önlemleri içermelidir.",
+      "weight": 2,
+      "allowed_scores": [3, -1],
+      "allowed_chunk_types": ["narrative", "table", "list"],
+      "positive_queries": ["çevresel fayda", "enerji verimliliği", "atık azaltımı", "sürdürülebilirlik", "emisyon azaltımı"],
+      "negative_queries": ["atık oluşumu", "tehlikeli atık", "kimyasal kullanım", "çevresel risk", "yüksek enerji tüketimi", "emisyon artışı"],
+      "evidence_top_k": 5,
+      "minimum_evidence_count": 1,
+      "decision_rule": "support_vs_contradiction"
+    }
+  ]
+}

@@ -21,6 +21,11 @@ AnalysisStatus = Literal[
 AnalysisStep = Literal["none", "extractor", "parser", "chunker", "embedder", "done"]
 
 
+class StageTiming(BaseModel):
+    started_at: str | None = None
+    completed_at: str | None = None
+
+
 class AnalysisState(BaseModel):
     session_id: str                              # session that owns this analysis lifecycle
     status: AnalysisStatus                       # current overall job status
@@ -29,6 +34,10 @@ class AnalysisState(BaseModel):
     started_at: str | None = None               # first timestamp when analysis run started
     updated_at: str | None = None               # latest state mutation timestamp
     error: str | None = None                    # human-readable error message when status == failed
+    extraction_timing: StageTiming | None = None
+    parser_timing: StageTiming | None = None
+    chunking_timing: StageTiming | None = None
+    embedding_timing: StageTiming | None = None
     extraction_output: ExtractionOutput | None = None  # completed extraction artifact when available
     parser_output: ParserOutput | None = None          # completed parser artifact when available
     chunk_output: ChunkOutput | None = None            # completed chunking artifact when available

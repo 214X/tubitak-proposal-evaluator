@@ -10,7 +10,7 @@ import {
   type ParserStreamItem,
   fetchCurrentAnalysis,
 } from "../../../lib/analysis";
-import { readSessionId } from "../../../lib/session";
+import { readSessionId, subscribeToSessionIdChange } from "../../../lib/session";
 import styles from "./parser-document-viewer.module.css";
 
 type ParserDocumentViewerProps = Readonly<{
@@ -27,33 +27,52 @@ export function ParserDocumentViewer({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const nextSessionId = initialSessionId ?? readSessionId();
-    setSessionId(nextSessionId);
+    let cancelled = false;
 
-    if (!nextSessionId) {
-      setError("Aktif bir oturum bulunamadı.");
-      return;
+    function loadForSession(nextSessionId: string | null) {
+      setSessionId(nextSessionId);
+      setAnalysisState(null);
+
+      if (!nextSessionId) {
+        setError("Aktif bir oturum bulunamadı.");
+        return;
+      }
+
+      void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
+        .then((nextState) => {
+          if (!cancelled) {
+            setAnalysisState(nextState);
+            setError("");
+          }
+        })
+        .catch((currentError) => {
+          if (!cancelled) {
+            setError(
+              currentError instanceof Error
+                ? currentError.message
+                : "Parser sonucu yüklenemedi.",
+            );
+          }
+        });
     }
 
-    let cancelled = false;
-    void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
-      .then((nextState) => {
-        if (!cancelled) {
-          setAnalysisState(nextState);
-        }
-      })
-      .catch((currentError) => {
-        if (!cancelled) {
-          setError(
-            currentError instanceof Error
-              ? currentError.message
-              : "Parser sonucu yüklenemedi.",
-          );
-        }
-      });
+    loadForSession(initialSessionId ?? readSessionId());
+
+    if (initialSessionId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const unsubscribe = subscribeToSessionIdChange((nextSessionId) => {
+      if (!cancelled) {
+        loadForSession(nextSessionId);
+      }
+    });
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [apiBaseUrl, initialSessionId]);
 
@@ -71,7 +90,7 @@ export function ParserDocumentViewer({
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Parser Viewer</p>
-          <h1 className={styles.title}>Belge Görünümü</h1>
+          <h1 className={styles.title}>Belge Görünümü ve Hiyerarşisi</h1>
         </div>
         {sessionId ? <p className={styles.session}>Session: {sessionId}</p> : null}
       </header>
@@ -90,6 +109,21 @@ export function ParserDocumentViewer({
             </div>
 
             <div className={styles.documentBody}>
+              <section className={styles.hierarchyPanel}>
+                <div className={styles.hierarchyPanelHeader}>
+                  <p className={styles.hierarchyEyebrow}>Hiyerarşi Özeti</p>
+                  <p className={styles.hierarchyMeta}>
+                    {parserOutput.heading_hierarchy.length} kök başlık
+                  </p>
+                </div>
+
+                <div className={styles.hierarchyTree}>
+                  {parserOutput.heading_hierarchy.map((heading) => (
+                    <HierarchyOutline key={`outline-${heading.id}`} heading={heading} depth={0} />
+                  ))}
+                </div>
+              </section>
+
               {parserOutput.heading_hierarchy.map((heading) => (
                 <DocumentHeadingSection
                   key={heading.id}
@@ -151,6 +185,30 @@ function DocumentHeadingSection({
         })}
       </div>
     </section>
+  );
+}
+
+function HierarchyOutline({
+  heading,
+  depth,
+}: Readonly<{
+  heading: HeadingHierarchyNode;
+  depth: number;
+}>) {
+  return (
+    <div className={styles.outlineNode} style={{ paddingLeft: `${depth * 18}px` }}>
+      <p className={styles.outlineTitle}>
+        {heading.code}
+        {heading.title ? ` - ${heading.title}` : ""}
+      </p>
+      {heading.children.length ? (
+        <div className={styles.outlineChildren}>
+          {heading.children.map((child) => (
+            <HierarchyOutline key={child.id} heading={child} depth={depth + 1} />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

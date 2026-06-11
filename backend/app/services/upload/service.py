@@ -10,6 +10,7 @@ from threading import Lock
 from fastapi import HTTPException, UploadFile, status
 
 from app.core.config import settings
+from app.services.embedding.store import clear_session_embeddings
 from app.services.upload.schemas import UploadSessionResponse
 
 SESSION_PATTERN = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
@@ -141,6 +142,7 @@ async def save_upload(session_id: str, upload: UploadFile) -> UploadSessionRespo
         prune_expired_sessions()
         if current_session_dir.exists():
             shutil.rmtree(current_session_dir)
+        clear_session_embeddings(session_id)
 
         current_session_dir.mkdir(parents=True, exist_ok=True)
         file_path.write_bytes(file_bytes)
@@ -209,3 +211,4 @@ def clear_session_upload(session_id: str) -> None:
         prune_expired_sessions()
         if current_session_dir.exists():
             shutil.rmtree(current_session_dir)
+        clear_session_embeddings(session_id)

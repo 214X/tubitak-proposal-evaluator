@@ -8,7 +8,7 @@ import {
   type ParserOutput,
   fetchCurrentAnalysis,
 } from "../../../lib/analysis";
-import { readSessionId } from "../../../lib/session";
+import { readSessionId, subscribeToSessionIdChange } from "../../../lib/session";
 import styles from "./raw-output-viewer.module.css";
 
 type RawOutputViewerProps = Readonly<{
@@ -31,34 +31,53 @@ export function RawOutputViewer({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const nextSessionId = initialSessionId ?? readSessionId();
+    let cancelled = false;
 
-    if (!nextSessionId) {
-      setError("Aktif bir oturum bulunamadı.");
-      return;
+    function loadForSession(nextSessionId: string | null) {
+      setAnalysisState(null);
+
+      if (!nextSessionId) {
+        setError("Aktif bir oturum bulunamadı.");
+        return;
+      }
+
+      void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
+        .then((nextState) => {
+          if (!cancelled) {
+            setAnalysisState(nextState);
+            setError("");
+          }
+        })
+        .catch((currentError) => {
+          if (!cancelled) {
+            setError(
+              currentError instanceof Error
+                ? currentError.message
+                : mode === "extraction"
+                  ? "Extraction sonucu yüklenemedi."
+                  : "Parser sonucu yüklenemedi.",
+            );
+          }
+        });
     }
 
-    let cancelled = false;
-    void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
-      .then((nextState) => {
-        if (!cancelled) {
-          setAnalysisState(nextState);
-        }
-      })
-      .catch((currentError) => {
-        if (!cancelled) {
-          setError(
-            currentError instanceof Error
-              ? currentError.message
-              : mode === "extraction"
-                ? "Extraction sonucu yüklenemedi."
-                : "Parser sonucu yüklenemedi.",
-          );
-        }
-      });
+    loadForSession(initialSessionId ?? readSessionId());
+
+    if (initialSessionId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const unsubscribe = subscribeToSessionIdChange((nextSessionId) => {
+      if (!cancelled) {
+        loadForSession(nextSessionId);
+      }
+    });
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [apiBaseUrl, initialSessionId, mode]);
 

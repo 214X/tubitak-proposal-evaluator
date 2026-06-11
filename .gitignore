@@ -14,6 +14,7 @@ dist/
 
 backend/.pytest_cache/
 backend/.mypy_cache/
+backend/cache/
 backend/runtime/
 
 frontend/.next/

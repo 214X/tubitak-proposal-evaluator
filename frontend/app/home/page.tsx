@@ -1,7 +1,8 @@
 import { Homepage } from "../../components/pages/homepage/Homepage";
+import { internalApiBaseUrl, publicApiBaseUrl } from "../../lib/api-base";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const API_BASE_URL = publicApiBaseUrl;
+const INTERNAL_API_BASE_URL = internalApiBaseUrl;
 
 export type HealthStatus = {
   status: string;
@@ -11,7 +12,7 @@ export type HealthStatus = {
 
 async function getHealthStatus(): Promise<HealthStatus> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
+    const response = await fetch(`${INTERNAL_API_BASE_URL}/api/health`, {
       cache: "no-store",
     });
 
@@ -19,11 +20,7 @@ async function getHealthStatus(): Promise<HealthStatus> {
       throw new Error(`Backend responded with ${response.status}`);
     }
 
-    return response.json() as Promise<{
-      status: string;
-      service: string;
-      version: string;
-    }>;
+    return response.json() as Promise<HealthStatus>;
   } catch (error) {
     return {
       status: "unreachable",

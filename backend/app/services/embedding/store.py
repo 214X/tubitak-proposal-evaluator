@@ -19,6 +19,7 @@ def embedding_storage_path() -> Path:
 def ensure_embedding_store() -> None:
     embedding_storage_path().mkdir(parents=True, exist_ok=True)
 
+
 def replace_session_embeddings(
     session_id: str,
     records: list[EmbeddingRecord],
@@ -45,6 +46,17 @@ def replace_session_embeddings(
                 embeddings=[record.embedding for record in records],
                 metadatas=[_build_metadata(record) for record in records],
             )
+
+
+def clear_session_embeddings(session_id: str) -> None:
+    ensure_embedding_store()
+
+    with STORE_LOCK:
+        client = _get_client()
+        try:
+            client.delete_collection(_collection_name(session_id))
+        except Exception:
+            pass
 
 
 def query_embeddings(

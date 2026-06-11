@@ -8,7 +8,7 @@ type AnalysisStageCardProps = Readonly<{
   title: string;
   description: string;
   tone: StageTone;
-  preview?: React.ReactNode;
+  details?: React.ReactNode;
   action?: React.ReactNode;
 }>;
 
@@ -16,7 +16,7 @@ export function AnalysisStageCard({
   title,
   description,
   tone,
-  preview,
+  details,
   action,
 }: AnalysisStageCardProps) {
   return (
@@ -36,7 +36,7 @@ export function AnalysisStageCard({
         </span>
       </div>
 
-      {preview ? <div className={styles.preview}>{preview}</div> : null}
+      {details ? <div className={styles.details}>{details}</div> : null}
       {action ? <div className={styles.actions}>{action}</div> : null}
     </article>
   );

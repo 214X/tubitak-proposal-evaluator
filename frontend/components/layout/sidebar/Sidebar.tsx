@@ -26,6 +26,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   const isHomePage = pathname === "/home" || pathname === "/";
+  const isEvaluationPage = pathname === "/evaluation" || pathname.startsWith("/evaluation/");
   const isDebugFlowPage = pathname === "/debug-flow" || pathname.startsWith("/debug-flow/");
 
   return (
@@ -50,6 +51,18 @@ export function Sidebar({
             </span>
             <span className={styles.navText}>
               <span className={styles.navTitle}>Ana Sayfa</span>
+            </span>
+          </Link>
+
+          <Link
+            href="/evaluation"
+            className={`${styles.navButton} ${isEvaluationPage ? styles.navButtonActive : ""}`}
+          >
+            <span className={styles.navIcon}>
+              <GaugeIcon />
+            </span>
+            <span className={styles.navText}>
+              <span className={styles.navTitle}>Evaluation</span>
             </span>
           </Link>
 
@@ -146,6 +159,16 @@ function LayersIcon() {
       <path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z" />
       <path d="m4 12 8 4.5 8-4.5" />
       <path d="m4 16.5 8 4.5 8-4.5" />
+    </svg>
+  );
+}
+
+function GaugeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4.5 15a7.5 7.5 0 1 1 15 0" />
+      <path d="M12 12l3.5-3.5" />
+      <path d="M5 19h14" />
     </svg>
   );
 }

@@ -1,0 +1,63 @@
+.page {
+  min-height: calc(100vh - 56px);
+  display: grid;
+  gap: 20px;
+  padding: 32px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-end;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.session {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0;
+  color: #b42332;
+  font-size: 14px;
+}
+
+.emptyState {
+  display: grid;
+  gap: 10px;
+  padding: 28px;
+  border-radius: 28px;
+  background: var(--app-panel);
+  box-shadow: var(--app-shadow);
+}
+
+.emptyTitle,
+.emptyText {
+  margin: 0;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.emptyText {
+  color: var(--app-muted);
+  line-height: 1.6;
+}

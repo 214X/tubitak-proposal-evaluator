@@ -86,6 +86,58 @@
   padding-top: 28px;
 }
 
+.hierarchyPanel {
+  display: grid;
+  gap: 14px;
+  padding: 20px 22px;
+  border-radius: 22px;
+  background: rgba(186, 66, 72, 0.06);
+  border: 1px solid rgba(186, 66, 72, 0.12);
+}
+
+.hierarchyPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.hierarchyEyebrow,
+.hierarchyMeta,
+.outlineTitle {
+  margin: 0;
+}
+
+.hierarchyEyebrow {
+  color: #ba4248;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hierarchyMeta {
+  color: #6f625d;
+  font-size: 13px;
+}
+
+.hierarchyTree,
+.outlineChildren {
+  display: grid;
+  gap: 10px;
+}
+
+.outlineNode {
+  display: grid;
+  gap: 10px;
+}
+
+.outlineTitle {
+  color: #2c2523;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .section {
   display: grid;
   gap: 16px;

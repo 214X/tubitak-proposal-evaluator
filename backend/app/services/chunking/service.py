@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.services.chunking import build_chunk_output
+from app.services.chunking.builders import build_chunk_output
 from app.services.chunking.models import ChunkOutput
 from app.services.extraction.models import ParserOutput
 from app.services.extraction.service import get_current_parser_output

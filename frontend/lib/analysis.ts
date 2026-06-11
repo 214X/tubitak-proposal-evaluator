@@ -8,6 +8,11 @@ export type UploadState = {
   uploaded_at: string;
 };
 
+export type StageTiming = {
+  started_at: string | null;
+  completed_at: string | null;
+};
+
 export type ExtractionOutput = {
   document: {
     file_name: string;
@@ -168,6 +173,80 @@ export type EmbeddingSearchResponse = {
   results: EmbeddingSearchResult[];
 };
 
+export type EvidenceChunk = {
+  chunk_id: string;
+  chunk_type: "qa" | "narrative" | "table" | "list";
+  heading_path_titles: string[];
+  page_start: number | null;
+  page_end: number | null;
+  text_for_embedding: string;
+  similarity_score: number;
+};
+
+export type EvidenceNarrative = {
+  chunk_id: string;
+  location_summary: string;
+  evidence_text: string;
+  why_it_matters: string;
+};
+
+export type CriterionEvaluationResult = {
+  criterion_id: string;
+  category: string;
+  title: string;
+  score: number | null;
+  weight: number;
+  weighted_score: number | null;
+  confidence: number;
+  decision_status: "scored" | "insufficient_evidence" | "conflicting_evidence" | "failed";
+  justification: string;
+  supporting_chunk_ids: string[];
+  contradicting_chunk_ids: string[];
+  missing_information: string[];
+  red_flags: string[];
+  supporting_evidence: EvidenceChunk[];
+  contradicting_evidence: EvidenceChunk[];
+  supporting_evidence_notes: EvidenceNarrative[];
+  contradicting_evidence_notes: EvidenceNarrative[];
+};
+
+export type EvaluationReport = {
+  session_id: string;
+  rubric_id: string;
+  rubric_version: string;
+  total_weight: number;
+  total_weighted_score: number;
+  max_possible_weighted_score: number;
+  scored_criteria_count: number;
+  criterion_results: CriterionEvaluationResult[];
+  strengths: string[];
+  weaknesses: string[];
+  final_summary: string;
+};
+
+export type EvaluationState = {
+  session_id: string;
+  status:
+    | "idle"
+    | "queued"
+    | "retrieving"
+    | "evaluating"
+    | "aggregating"
+    | "completed"
+    | "failed";
+  current_step: "none" | "retriever" | "judge" | "aggregator" | "done";
+  rubric_id: string | null;
+  rubric_version: string | null;
+  active_criterion_id: string | null;
+  active_criterion_title: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  updated_at: string | null;
+  error: string | null;
+  criterion_results: CriterionEvaluationResult[];
+  final_report: EvaluationReport | null;
+};
+
 export type AnalysisState = {
   session_id: string;
   status:
@@ -184,6 +263,10 @@ export type AnalysisState = {
   started_at: string | null;
   updated_at: string | null;
   error: string | null;
+  extraction_timing: StageTiming | null;
+  parser_timing: StageTiming | null;
+  chunking_timing: StageTiming | null;
+  embedding_timing: StageTiming | null;
   extraction_output: ExtractionOutput | null;
   parser_output: ParserOutput | null;
   chunk_output: ChunkOutput | null;
@@ -253,6 +336,38 @@ export async function fetchCurrentEmbedding(apiBaseUrl: string, sessionId: strin
   }
 
   return (await response.json()) as EmbeddingOutput;
+}
+
+export async function fetchCurrentEvaluation(apiBaseUrl: string, sessionId: string) {
+  const response = await fetch(`${apiBaseUrl}/api/evaluation/current`, {
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `Evaluation durumu alınamadı (Durum: ${response.status}).`);
+  }
+
+  return (await response.json()) as EvaluationState;
+}
+
+export async function startCurrentEvaluation(apiBaseUrl: string, sessionId: string) {
+  const response = await fetch(`${apiBaseUrl}/api/evaluation/current/start`, {
+    method: "POST",
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `Evaluation başlatılamadı (Durum: ${response.status}).`);
+  }
+
+  return (await response.json()) as EvaluationState;
 }
 
 export async function searchCurrentEmbeddings(

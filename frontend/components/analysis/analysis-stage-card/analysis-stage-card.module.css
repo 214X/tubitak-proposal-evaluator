@@ -75,11 +75,11 @@
   color: var(--app-muted);
 }
 
-.preview {
+.details {
   border-radius: 22px;
   border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
   background: color-mix(in srgb, var(--surface-muted) 78%, var(--app-panel));
-  overflow: hidden;
+  padding: 16px 18px;
 }
 
 .actions {

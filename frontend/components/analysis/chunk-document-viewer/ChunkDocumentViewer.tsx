@@ -8,8 +8,7 @@ import {
   type SectionContainer,
   fetchCurrentAnalysis,
 } from "../../../lib/analysis";
-import { EmbeddingSearchPanel } from "../embedding-search-panel/EmbeddingSearchPanel";
-import { readSessionId } from "../../../lib/session";
+import { readSessionId, subscribeToSessionIdChange } from "../../../lib/session";
 import styles from "./chunk-document-viewer.module.css";
 
 type ChunkDocumentViewerProps = Readonly<{
@@ -27,35 +26,54 @@ export function ChunkDocumentViewer({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const nextSessionId = initialSessionId ?? readSessionId();
-    setSessionId(nextSessionId);
+    let cancelled = false;
 
-    if (!nextSessionId) {
-      setError("Aktif bir oturum bulunamadı.");
-      return;
+    function loadForSession(nextSessionId: string | null) {
+      setSessionId(nextSessionId);
+      setAnalysisState(null);
+      setChunkOutput(null);
+
+      if (!nextSessionId) {
+        setError("Aktif bir oturum bulunamadı.");
+        return;
+      }
+
+      void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
+        .then((nextState) => {
+          if (!cancelled) {
+            setAnalysisState(nextState);
+            setChunkOutput(nextState.chunk_output);
+            setError("");
+          }
+        })
+        .catch((currentError) => {
+          if (!cancelled) {
+            setError(
+              currentError instanceof Error
+                ? currentError.message
+                : "Chunk çıktısı yüklenemedi.",
+            );
+          }
+        });
     }
 
-    let cancelled = false;
-    void fetchCurrentAnalysis(apiBaseUrl, nextSessionId)
-      .then((nextState) => {
-        if (!cancelled) {
-          setAnalysisState(nextState);
-          setChunkOutput(nextState.chunk_output);
-          setError("");
-        }
-      })
-      .catch((currentError) => {
-        if (!cancelled) {
-          setError(
-            currentError instanceof Error
-              ? currentError.message
-              : "Chunk çıktısı yüklenemedi.",
-          );
-        }
-      });
+    loadForSession(initialSessionId ?? readSessionId());
+
+    if (initialSessionId) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const unsubscribe = subscribeToSessionIdChange((nextSessionId) => {
+      if (!cancelled) {
+        loadForSession(nextSessionId);
+      }
+    });
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [apiBaseUrl, initialSessionId]);
 
@@ -92,16 +110,6 @@ export function ChunkDocumentViewer({
             </div>
 
             <div className={styles.documentBody}>
-              {sessionId ? (
-                <EmbeddingSearchPanel
-                  apiBaseUrl={apiBaseUrl}
-                  sessionId={sessionId}
-                  chunkOutput={chunkOutput}
-                  embeddingOutput={analysisState?.embedding_output ?? null}
-                  analysisStatus={analysisState?.status ?? "idle"}
-                />
-              ) : null}
-
               {chunkOutput.chunks.map((chunk) => (
                 <ChunkCard
                   key={chunk.chunk_id}

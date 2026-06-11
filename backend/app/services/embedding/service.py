@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from typing import Callable
 
 from fastapi import HTTPException, status
 
@@ -19,7 +20,11 @@ from app.services.embedding.store import query_embeddings, replace_session_embed
 from app.services.upload.service import validate_session_id
 
 
-def build_embeddings_for_chunk_output(session_id: str, chunk_output: ChunkOutput) -> EmbeddingOutput:
+def build_embeddings_for_chunk_output(
+    session_id: str,
+    chunk_output: ChunkOutput,
+    before_store: Callable[[], None] | None = None,
+) -> EmbeddingOutput:
     validate_session_id(session_id)
     provider = get_embedding_provider()
     chunk_texts = [chunk.text_for_embedding for chunk in chunk_output.chunks]
@@ -50,6 +55,10 @@ def build_embeddings_for_chunk_output(session_id: str, chunk_output: ChunkOutput
         chunk_count=len(records),
         embedded_at=_timestamp_now(),
     )
+
+    if before_store is not None:
+        before_store()
+
     replace_session_embeddings(session_id, records)
     return embedding_output
 

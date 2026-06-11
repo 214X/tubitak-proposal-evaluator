@@ -1,0 +1,265 @@
+.panel {
+  display: grid;
+  gap: 22px;
+  padding: 28px;
+  border-radius: 34px;
+  border: 1px solid color-mix(in srgb, #176753 18%, transparent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, #2f8c74 16%, transparent), transparent 40%),
+    linear-gradient(180deg, #f7fbf7 0%, #eff6f2 100%);
+  box-shadow: var(--app-shadow);
+}
+
+.compactPanel {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.eyebrow,
+.progressEyebrow,
+.summaryEyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #176753;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 34px);
+  line-height: 1.06;
+  color: #122319;
+}
+
+.description {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: #4c6258;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.headerActions {
+  display: grid;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.startButton,
+.reportButton {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.startButton {
+  border: 0;
+  background: linear-gradient(135deg, #176753 0%, #2f8c74 100%);
+  color: #f8fff9;
+  cursor: pointer;
+}
+
+.startButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reportButton {
+  border: 1px solid rgba(23, 103, 83, 0.22);
+  background: rgba(255, 255, 255, 0.72);
+  color: #145644;
+}
+
+.helperText,
+.errorText {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.helperText {
+  background: rgba(23, 103, 83, 0.08);
+  color: #275649;
+}
+
+.errorText {
+  background: rgba(215, 58, 73, 0.1);
+  color: #b42332;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.statusCard,
+.summaryCard {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 103, 83, 0.12);
+}
+
+.statusLabel {
+  color: #677a71;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statusValue {
+  color: #15211a;
+  line-height: 1.45;
+}
+
+.progressPanel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 28px;
+  background: #fffef8;
+  border: 1px solid rgba(23, 103, 83, 0.12);
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.progressTitle {
+  margin: 0;
+  font-size: 24px;
+  color: #13241a;
+}
+
+.progressDescription {
+  margin: 0;
+  max-width: 460px;
+  color: #4b5d55;
+  line-height: 1.6;
+}
+
+.progressTrack {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(23, 103, 83, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #176753 0%, #59ad89 100%);
+  transition: width 280ms ease;
+}
+
+.stageGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stageCard {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(23, 103, 83, 0.12);
+  background: #f5faf7;
+}
+
+.stageCard[data-state="complete"] {
+  background: rgba(53, 157, 118, 0.12);
+}
+
+.stageCard[data-state="active"] {
+  background: rgba(23, 103, 83, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(23, 103, 83, 0.1);
+}
+
+.stageCard[data-state="error"] {
+  background: rgba(185, 76, 55, 0.12);
+}
+
+.stageNumber {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #145644;
+  font-weight: 800;
+}
+
+.stageLabel {
+  margin: 0 0 6px;
+  color: #183427;
+  font-weight: 700;
+}
+
+.stageDescription {
+  margin: 0;
+  color: #577066;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.summaryText {
+  margin: 0;
+  color: #29362f;
+  line-height: 1.7;
+}
+
+.summaryScore {
+  display: grid;
+  justify-items: end;
+  color: #114b3d;
+}
+
+.summaryScore strong {
+  font-size: 30px;
+}
+
+.summaryScore span {
+  color: #65726b;
+  font-size: 13px;
+}
+
+@media (max-width: 1080px) {
+  .statusGrid,
+  .stageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .progressHeader,
+  .header,
+  .summaryCard {
+    display: grid;
+  }
+
+  .headerActions {
+    min-width: 0;
+  }
+}
