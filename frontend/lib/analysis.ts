@@ -41,6 +41,7 @@ export type HeadingHierarchyNode = {
   ref: string;
   node_type: "section_heading" | "table_heading" | "numbered_heading";
   code: string;
+  display_code: string | null;
   title: string | null;
   full_text: string;
   level: number;
@@ -71,6 +72,14 @@ export type SectionContainer = {
   page_start: number | null;
   page_end: number | null;
   content_refs: string[];
+  work_package_id: string | null;
+  work_package_no: string | null;
+  work_package_code: string | null;
+  work_package_title: string | null;
+  work_package_date_range: string | null;
+  work_package_duration_text: string | null;
+  work_package_organizations: string[];
+  work_package_section_no: string | null;
 };
 
 export type QAChunk = {
@@ -84,6 +93,14 @@ export type QAChunk = {
   page_end: number | null;
   order_in_section: number;
   text_for_embedding: string;
+  work_package_id: string | null;
+  work_package_no: string | null;
+  work_package_code: string | null;
+  work_package_title: string | null;
+  work_package_date_range: string | null;
+  work_package_duration_text: string | null;
+  work_package_organizations: string[];
+  work_package_section_no: string | null;
   question: string;
   guidance: string | null;
   answer: string | null;
@@ -100,6 +117,14 @@ export type NarrativeChunk = {
   page_end: number | null;
   order_in_section: number;
   text_for_embedding: string;
+  work_package_id: string | null;
+  work_package_no: string | null;
+  work_package_code: string | null;
+  work_package_title: string | null;
+  work_package_date_range: string | null;
+  work_package_duration_text: string | null;
+  work_package_organizations: string[];
+  work_package_section_no: string | null;
   text: string;
   part_index: number | null;
   part_count: number | null;
@@ -116,6 +141,14 @@ export type TableChunk = {
   page_end: number | null;
   order_in_section: number;
   text_for_embedding: string;
+  work_package_id: string | null;
+  work_package_no: string | null;
+  work_package_code: string | null;
+  work_package_title: string | null;
+  work_package_date_range: string | null;
+  work_package_duration_text: string | null;
+  work_package_organizations: string[];
+  work_package_section_no: string | null;
   table_title: string | null;
   table_columns: string[];
   table_rows: string[][];
@@ -132,6 +165,14 @@ export type ListChunk = {
   page_end: number | null;
   order_in_section: number;
   text_for_embedding: string;
+  work_package_id: string | null;
+  work_package_no: string | null;
+  work_package_code: string | null;
+  work_package_title: string | null;
+  work_package_date_range: string | null;
+  work_package_duration_text: string | null;
+  work_package_organizations: string[];
+  work_package_section_no: string | null;
   items: string[];
 };
 
@@ -176,6 +217,7 @@ export type EmbeddingSearchResponse = {
 export type EvidenceChunk = {
   chunk_id: string;
   chunk_type: "qa" | "narrative" | "table" | "list";
+  heading_path_ids?: string[];
   heading_path_titles: string[];
   page_start: number | null;
   page_end: number | null;
@@ -192,18 +234,49 @@ export type EvidenceNarrative = {
 
 export type CriterionEvaluationResult = {
   criterion_id: string;
-  category: string;
+  main_dimension_id: string | null;
+  category: string | null;
   title: string;
   score: number | null;
+  claim_strength: number | null;
+  evidence_quality: number | null;
   weight: number;
   weighted_score: number | null;
   confidence: number;
   decision_status: "scored" | "insufficient_evidence" | "conflicting_evidence" | "failed";
+  criterion_explanation: string;
+  short_assessment: string;
   justification: string;
+  positive_findings: Array<{
+    summary: string;
+    why_positive: string | null;
+    why_negative: string | null;
+    chunk_id: string;
+  }>;
+  negative_findings: Array<{
+    summary: string;
+    why_positive: string | null;
+    why_negative: string | null;
+    chunk_id: string;
+  }>;
   supporting_chunk_ids: string[];
   contradicting_chunk_ids: string[];
   missing_information: string[];
   red_flags: string[];
+  evidence_items: Array<{
+    evidence_type: "positive" | "negative" | "context";
+    chunk_id: string;
+    verbatim_excerpt: string;
+    heading_path: string[];
+    page_start: number | null;
+    page_end: number | null;
+    why_it_matters: string;
+  }>;
+  primary_section_chunks: EvidenceChunk[];
+  semantic_support_chunks: EvidenceChunk[];
+  fallback_context_chunks: EvidenceChunk[];
+  coverage_status: "complete" | "covered" | "partial" | "missing" | "unknown";
+  coverage_notes: string[];
   supporting_evidence: EvidenceChunk[];
   contradicting_evidence: EvidenceChunk[];
   supporting_evidence_notes: EvidenceNarrative[];
@@ -214,10 +287,39 @@ export type EvaluationReport = {
   session_id: string;
   rubric_id: string;
   rubric_version: string;
-  total_weight: number;
-  total_weighted_score: number;
-  max_possible_weighted_score: number;
-  scored_criteria_count: number;
+  overall_score: number | null;
+  main_scores: Array<{
+    main_dimension_id: string;
+    title: string;
+    weight: number;
+    score: number | null;
+    weighted_score: number | null;
+    subcriteria_count: number;
+    scored_subcriteria_count: number;
+    summary: string;
+  }>;
+  rubric_table: Array<{
+    main_dimension_title: string;
+    criterion_id: string;
+    main_dimension_id: string;
+    criterion_title: string;
+    description: string;
+    weight: number;
+    source_sections: string[];
+    ui_label: string;
+    score_min: number;
+    score_max: number;
+    ui_explanation: string;
+  }>;
+  subcriteria_results: CriterionEvaluationResult[];
+  major_strengths: string[];
+  major_weaknesses: string[];
+  critical_missing_information: string[];
+  red_flags: string[];
+  total_weight: number | null;
+  total_weighted_score: number | null;
+  max_possible_weighted_score: number | null;
+  scored_criteria_count: number | null;
   criterion_results: CriterionEvaluationResult[];
   strengths: string[];
   weaknesses: string[];
@@ -239,10 +341,21 @@ export type EvaluationState = {
   rubric_version: string | null;
   active_criterion_id: string | null;
   active_criterion_title: string | null;
+  active_subcriterion_id: string | null;
+  active_subcriterion_title: string | null;
+  active_main_dimension_id: string | null;
   started_at: string | null;
   completed_at: string | null;
   updated_at: string | null;
   error: string | null;
+  overall_score: number | null;
+  main_scores: EvaluationReport["main_scores"];
+  rubric_table: EvaluationReport["rubric_table"];
+  subcriteria_results: CriterionEvaluationResult[];
+  major_strengths: string[];
+  major_weaknesses: string[];
+  critical_missing_information: string[];
+  red_flags: string[];
   criterion_results: CriterionEvaluationResult[];
   final_report: EvaluationReport | null;
 };
@@ -291,6 +404,22 @@ export async function fetchCurrentAnalysis(apiBaseUrl: string, sessionId: string
 
 export async function startCurrentAnalysis(apiBaseUrl: string, sessionId: string) {
   const response = await fetch(`${apiBaseUrl}/api/analysis/current/start`, {
+    method: "POST",
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `Analiz başlatılamadı (Durum: ${response.status}).`);
+  }
+
+  return (await response.json()) as AnalysisState;
+}
+
+export async function startCurrentAnalysisUntilChunking(apiBaseUrl: string, sessionId: string) {
+  const response = await fetch(`${apiBaseUrl}/api/analysis/current/start-until-chunking`, {
     method: "POST",
     headers: {
       "X-Session-Id": sessionId,

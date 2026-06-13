@@ -8,6 +8,7 @@ import {
   type ParserListContent,
   type ParserOutput,
   type ParserStreamItem,
+  type SectionContainer,
   fetchCurrentAnalysis,
 } from "../../../lib/analysis";
 import { readSessionId, subscribeToSessionIdChange } from "../../../lib/session";
@@ -85,6 +86,23 @@ export function ParserDocumentViewer({
     return new Map(parserOutput.content_stream.map((item) => [item.ref, item]));
   }, [parserOutput]);
 
+  const sectionsByRootHeadingId = useMemo(() => {
+    const grouped = new Map<string, SectionContainer[]>();
+    const sections = analysisState?.chunk_output?.sections ?? [];
+
+    for (const section of sections) {
+      const rootHeadingId = section.id.split("::", 1)[0];
+      const current = grouped.get(rootHeadingId);
+      if (current) {
+        current.push(section);
+      } else {
+        grouped.set(rootHeadingId, [section]);
+      }
+    }
+
+    return grouped;
+  }, [analysisState?.chunk_output?.sections]);
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -119,7 +137,12 @@ export function ParserDocumentViewer({
 
                 <div className={styles.hierarchyTree}>
                   {parserOutput.heading_hierarchy.map((heading) => (
-                    <HierarchyOutline key={`outline-${heading.id}`} heading={heading} depth={0} />
+                    <HierarchyOutline
+                      key={`outline-${heading.id}`}
+                      heading={heading}
+                      depth={0}
+                      groupedSections={sectionsByRootHeadingId.get(heading.id) ?? []}
+                    />
                   ))}
                 </div>
               </section>
@@ -129,6 +152,8 @@ export function ParserDocumentViewer({
                   key={heading.id}
                   heading={heading}
                   streamByRef={streamByRef}
+                  depth={0}
+                  groupedSections={sectionsByRootHeadingId.get(heading.id) ?? []}
                 />
               ))}
             </div>
@@ -148,10 +173,25 @@ export function ParserDocumentViewer({
 function DocumentHeadingSection({
   heading,
   streamByRef,
+  depth,
+  groupedSections,
 }: Readonly<{
   heading: HeadingHierarchyNode;
   streamByRef: Map<string, ParserStreamItem>;
+  depth: number;
+  groupedSections: SectionContainer[];
 }>) {
+  if (isWorkPackageRoot(heading) && groupedSections.length > 0) {
+    return (
+      <WorkPackageRootSection
+        heading={heading}
+        streamByRef={streamByRef}
+        depth={depth}
+        groupedSections={groupedSections}
+      />
+    );
+  }
+
   const orderedEntries = [
     ...heading.content_refs
       .map((ref) => streamByRef.get(ref))
@@ -161,9 +201,15 @@ function DocumentHeadingSection({
   ].sort((left, right) => left.order - right.order);
 
   return (
-    <section className={styles.section}>
+    <section
+      className={styles.section}
+      data-depth={depth}
+    >
       <div className={styles.sectionHeading}>
-        <p className={styles.sectionCode}>{heading.code}</p>
+        <div className={styles.sectionHeadingTop}>
+          <p className={styles.sectionBadge}>{depth === 0 ? "Ana Bölüm" : "Alt Bölüm"}</p>
+          <p className={styles.sectionCode}>{heading.display_code ?? heading.code}</p>
+        </div>
         <h3 className={styles.sectionTitle}>{heading.title ?? heading.full_text}</h3>
         <p className={styles.sectionMeta}>
           Sayfa {heading.page_start ?? "?"}
@@ -179,7 +225,12 @@ function DocumentHeadingSection({
 
           return (
             <div key={entry.child.id} className={styles.childSection}>
-              <DocumentHeadingSection heading={entry.child} streamByRef={streamByRef} />
+              <DocumentHeadingSection
+                heading={entry.child}
+                streamByRef={streamByRef}
+                depth={depth + 1}
+                groupedSections={[]}
+              />
             </div>
           );
         })}
@@ -191,20 +242,34 @@ function DocumentHeadingSection({
 function HierarchyOutline({
   heading,
   depth,
+  groupedSections,
 }: Readonly<{
   heading: HeadingHierarchyNode;
   depth: number;
+  groupedSections: SectionContainer[];
 }>) {
+  if (isWorkPackageRoot(heading) && groupedSections.length > 0) {
+    return (
+      <div className={styles.outlineNode} style={{ paddingLeft: `${depth * 18}px` }}>
+        <p className={styles.outlineTitle}>
+          {heading.display_code ?? heading.code}
+          {heading.title ? ` - ${heading.title}` : ""}
+        </p>
+        <WorkPackageOutline groupedSections={groupedSections} depth={depth + 1} />
+      </div>
+    );
+  }
+
   return (
     <div className={styles.outlineNode} style={{ paddingLeft: `${depth * 18}px` }}>
       <p className={styles.outlineTitle}>
-        {heading.code}
+        {heading.display_code ?? heading.code}
         {heading.title ? ` - ${heading.title}` : ""}
       </p>
       {heading.children.length ? (
         <div className={styles.outlineChildren}>
           {heading.children.map((child) => (
-            <HierarchyOutline key={child.id} heading={child} depth={depth + 1} />
+            <HierarchyOutline key={child.id} heading={child} depth={depth + 1} groupedSections={[]} />
           ))}
         </div>
       ) : null}
@@ -212,21 +277,231 @@ function HierarchyOutline({
   );
 }
 
+function WorkPackageRootSection({
+  heading,
+  streamByRef,
+  depth,
+  groupedSections,
+}: Readonly<{
+  heading: HeadingHierarchyNode;
+  streamByRef: Map<string, ParserStreamItem>;
+  depth: number;
+  groupedSections: SectionContainer[];
+}>) {
+  const workPackages = buildWorkPackageGroups(groupedSections);
+
+  return (
+    <section className={styles.section} data-depth={depth}>
+      <div className={styles.sectionHeading}>
+        <div className={styles.sectionHeadingTop}>
+          <p className={styles.sectionBadge}>{depth === 0 ? "Ana Bölüm" : "Alt Bölüm"}</p>
+          <p className={styles.sectionCode}>{heading.code}</p>
+        </div>
+        <h3 className={styles.sectionTitle}>{heading.title ?? heading.full_text}</h3>
+        <p className={styles.sectionMeta}>
+          {workPackages.length} iş paketi
+          {heading.page_start ? ` • Sayfa ${heading.page_start}` : ""}
+          {heading.page_end && heading.page_end !== heading.page_start ? ` - ${heading.page_end}` : ""}
+        </p>
+      </div>
+
+      <div className={styles.workPackageStack}>
+        {workPackages.map((workPackage) => (
+          <article key={workPackage.id} className={styles.workPackageCard}>
+            <div className={styles.workPackageHeader}>
+              <div className={styles.workPackageHeaderTop}>
+                <p className={styles.workPackageBadge}>İş Paketi</p>
+                <p className={styles.workPackageCode}>{workPackage.no ?? "?"}</p>
+              </div>
+              <h4 className={styles.workPackageTitle}>
+                {workPackage.title ?? `İş Paketi ${workPackage.no ?? "?"}`}
+              </h4>
+              <p className={styles.workPackageMeta}>
+                {[workPackage.code, workPackage.dateRange, workPackage.durationText]
+                  .filter(Boolean)
+                  .join(" • ") || "Özet bilgisi"}
+              </p>
+            </div>
+
+            <div className={styles.workPackageSections}>
+              {workPackage.sections.map((section) => (
+                <section key={section.id} className={styles.workPackageSubsection}>
+                  <div className={styles.workPackageSubsectionHeader}>
+                    <p className={styles.workPackageSubsectionBadge}>
+                      {section.work_package_section_no === "meta" ? "Özet" : `Alt Bölüm ${section.work_package_section_no}`}
+                    </p>
+                    <h5 className={styles.workPackageSubsectionTitle}>
+                      {renderWorkPackageSectionTitle(section)}
+                    </h5>
+                  </div>
+
+                  <div className={styles.sectionContent}>
+                    {section.content_refs
+                      .map((ref) => streamByRef.get(ref))
+                      .filter((item): item is ParserStreamItem => Boolean(item))
+                      .map((item) => (
+                        <DocumentContentBlock key={item.ref} item={item} />
+                      ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function WorkPackageOutline({
+  groupedSections,
+  depth,
+}: Readonly<{
+  groupedSections: SectionContainer[];
+  depth: number;
+}>) {
+  const workPackages = buildWorkPackageGroups(groupedSections);
+
+  return (
+    <div className={styles.outlineChildren}>
+      {workPackages.map((workPackage) => (
+        <div key={workPackage.id} className={styles.outlineNode} style={{ paddingLeft: `${depth * 18}px` }}>
+          <p className={styles.outlineTitle}>{workPackage.title ?? `İş Paketi ${workPackage.no ?? "?"}`}</p>
+          <div className={styles.outlineChildren}>
+            {workPackage.sections.map((section) => (
+              <div
+                key={section.id}
+                className={styles.outlineNode}
+                style={{ paddingLeft: `${(depth + 1) * 18}px` }}
+              >
+                <p className={styles.outlineTitle}>{renderWorkPackageSectionTitle(section)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function buildWorkPackageGroups(sections: SectionContainer[]) {
+  const grouped = new Map<
+    string,
+    {
+      id: string;
+      no: string | null;
+      code: string | null;
+      title: string | null;
+      dateRange: string | null;
+      durationText: string | null;
+      sections: SectionContainer[];
+    }
+  >();
+
+  for (const section of sections) {
+    if (!section.work_package_id) {
+      continue;
+    }
+
+    const current = grouped.get(section.work_package_id);
+    if (current) {
+      current.sections.push(section);
+      continue;
+    }
+
+    grouped.set(section.work_package_id, {
+      id: section.work_package_id,
+      no: section.work_package_no,
+      code: section.work_package_code,
+      title: section.work_package_title,
+      dateRange: section.work_package_date_range,
+      durationText: section.work_package_duration_text,
+      sections: [section],
+    });
+  }
+
+  return [...grouped.values()].map((workPackage) => ({
+    ...workPackage,
+    sections: [...workPackage.sections].sort(compareWorkPackageSectionOrder),
+  }));
+}
+
+function compareWorkPackageSectionOrder(left: SectionContainer, right: SectionContainer) {
+  return getWorkPackageSectionOrder(left) - getWorkPackageSectionOrder(right);
+}
+
+function getWorkPackageSectionOrder(section: SectionContainer) {
+  if (section.work_package_section_no === "meta") {
+    return 0;
+  }
+
+  const parsed = Number(section.work_package_section_no);
+  return Number.isFinite(parsed) ? parsed : 99;
+}
+
+function renderWorkPackageSectionTitle(section: SectionContainer) {
+  if (section.work_package_section_no === "meta") {
+    return "İş Paketi Özeti";
+  }
+
+  return `${section.work_package_section_no} - ${section.leaf_heading}`;
+}
+
+function isWorkPackageRoot(heading: HeadingHierarchyNode) {
+  return normalizeLabel(heading.title ?? heading.full_text).includes("is paketleri listesi");
+}
+
+function normalizeLabel(value: string) {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function DocumentContentBlock({ item }: Readonly<{ item: ParserStreamItem }>) {
+  const blockLabel =
+    item.item_type === "text"
+      ? "Metin Bloğu"
+      : item.item_type === "table"
+        ? "Tablo Bloğu"
+        : item.item_type === "group"
+          ? "Liste Bloğu"
+          : "Ham Veri";
+
   if (item.item_type === "text" && typeof item.content === "string") {
-    return <p className={styles.paragraph}>{item.content}</p>;
+    return (
+      <div className={styles.contentBlock}>
+        <p className={styles.contentBlockLabel}>{blockLabel}</p>
+        <p className={styles.paragraph}>{item.content}</p>
+      </div>
+    );
   }
 
   if (item.item_type === "table" && isDoclingTableData(item.content)) {
-    return <DocumentTable table={item.content} />;
+    return (
+      <div className={styles.contentBlock}>
+        <p className={styles.contentBlockLabel}>{blockLabel}</p>
+        <DocumentTable table={item.content} />
+      </div>
+    );
   }
 
   if (item.item_type === "group" && isNormalizedListContent(item.content)) {
-    return <DocumentList items={item.content.items} />;
+    return (
+      <div className={styles.contentBlock}>
+        <p className={styles.contentBlockLabel}>{blockLabel}</p>
+        <DocumentList items={item.content.items} />
+      </div>
+    );
   }
 
   return (
-    <pre className={styles.fallbackBlock}>{JSON.stringify(item.content, null, 2)}</pre>
+    <div className={styles.contentBlock}>
+      <p className={styles.contentBlockLabel}>{blockLabel}</p>
+      <pre className={styles.fallbackBlock}>{JSON.stringify(item.content, null, 2)}</pre>
+    </div>
   );
 }
 

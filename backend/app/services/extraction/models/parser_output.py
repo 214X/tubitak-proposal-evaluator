@@ -23,6 +23,7 @@ class HeadingHierarchyNode(BaseModel):
     ref: str                                  # source stream reference for the heading item
     node_type: HeadingNodeType                # semantic heading category inferred by the parser
     code: str                                 # parsed heading code such as A.2, A.2.1, M013 or 1.1
+    display_code: str | None = None           # UI-facing normalized heading code, e.g. 1.1.3 for both 1.1.3.a and 1.1.3.b
     title: str | None = None                  # human-readable title when the heading line contains one
     full_text: str                            # full heading text exactly as carried by the parser stream
     level: int                                # absolute hierarchy depth produced by parser stack logic

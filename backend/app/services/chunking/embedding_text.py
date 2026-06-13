@@ -6,7 +6,7 @@ from app.services.chunking.models import ListChunk, NarrativeChunk, QAChunk, Tab
 def build_qa_embedding_text(chunk: QAChunk) -> str:
     # QA chunks should preserve the hierarchy context and clearly separate the
     # question from optional guidance and the selected answer.
-    lines = [_render_heading_path(chunk.heading_path_titles)]
+    lines = _build_context_lines(chunk)
     lines.append(f"Soru: {chunk.question}")
 
     if chunk.guidance:
@@ -20,14 +20,14 @@ def build_qa_embedding_text(chunk: QAChunk) -> str:
 def build_narrative_embedding_text(chunk: NarrativeChunk) -> str:
     # Narrative chunks mainly need hierarchy context plus the normalized body
     # text. Split metadata stays in the model, not in the embedding text.
-    lines = [_render_heading_path(chunk.heading_path_titles), chunk.text]
+    lines = [*_build_context_lines(chunk), chunk.text]
     return "\n".join(line for line in lines if line).strip()
 
 
 def build_table_embedding_text(chunk: TableChunk) -> str:
     # Tables are rendered into row-wise key-value text so embeddings capture
     # semantic relationships between columns without leaking layout metadata.
-    lines = [_render_heading_path(chunk.heading_path_titles)]
+    lines = _build_context_lines(chunk)
 
     if chunk.table_title:
         lines.append(f"Tablo: {chunk.table_title}")
@@ -56,9 +56,26 @@ def build_table_embedding_text(chunk: TableChunk) -> str:
 def build_list_embedding_text(chunk: ListChunk) -> str:
     # Lists should stay easy to read for retrieval, so we keep the hierarchy
     # prefix and render each item as its own bullet-style line.
-    lines = [_render_heading_path(chunk.heading_path_titles)]
+    lines = _build_context_lines(chunk)
     lines.extend(f"- {item}" for item in chunk.items if item)
     return "\n".join(line for line in lines if line).strip()
+
+
+def _build_context_lines(
+    chunk: QAChunk | NarrativeChunk | TableChunk | ListChunk,
+) -> list[str]:
+    lines = [_render_heading_path(chunk.heading_path_titles)]
+
+    if chunk.work_package_no:
+        lines.append(f"İş Paketi No: {chunk.work_package_no}")
+    if chunk.work_package_code:
+        lines.append(f"İş Paketi Kodu: {chunk.work_package_code}")
+    if chunk.work_package_title:
+        lines.append(f"İş Paketi Adı: {chunk.work_package_title}")
+    if chunk.work_package_section_no:
+        lines.append(f"İş Paketi Bölümü: {chunk.work_package_section_no}")
+
+    return [line for line in lines if line]
 
 
 def _render_heading_path(heading_path_titles: list[str]) -> str:

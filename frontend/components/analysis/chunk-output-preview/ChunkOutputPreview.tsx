@@ -54,6 +54,11 @@ export function ChunkOutputPreview({
               <span className={styles.chunkType}>{chunk.chunk_type}</span>
               <span className={styles.chunkOrder}>#{chunk.order_in_section}</span>
             </div>
+            {chunk.work_package_no ? (
+              <p className={styles.chunkPath}>
+                {`İş Paketi ${chunk.work_package_no}${chunk.work_package_title ? ` - ${chunk.work_package_title}` : ""}`}
+              </p>
+            ) : null}
             <p className={styles.chunkPath}>{chunk.heading_path_titles.join(" > ")}</p>
             <p className={styles.chunkSnippet}>{getChunkSnippet(chunk)}</p>
           </article>

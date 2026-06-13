@@ -175,6 +175,15 @@
     filter 220ms ease;
 }
 
+.cta:link,
+.cta:visited,
+.cta:hover,
+.cta:active,
+.cta:focus,
+.cta:focus-visible {
+  color: #ffffff;
+}
+
 .cta:hover {
   transform: translateY(-2px);
   filter: saturate(1.06) brightness(1.02);

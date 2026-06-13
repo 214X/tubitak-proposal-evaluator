@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 from app.services.extraction.models.parser_output import (
@@ -10,6 +11,7 @@ from app.services.extraction.models.parser_output import (
 )
 
 ALLOWED_HEADING_LABELS = {"section_header", "list_item", "page_header"}
+FOOTER_LIKE_LABELS = {"page_footer", "page_header", "footnote", "page_number"}
 ALPHA_HEADING_PATTERN = re.compile(
     r"^(?P<code>[A-ZÇĞİÖŞÜ]\.(?:\d+(?:\.\d+)*)?)(?:\s*-\s*(?P<title>.+))?$"
 )
@@ -17,10 +19,24 @@ ALPHA_HEADING_DOTTED_PATTERN = re.compile(
     r"^(?P<code>[A-ZÇĞİÖŞÜ]\.(?:\d+(?:\.\d+)*)\.)\s*(?P<title>.*)$"
 )
 TABLE_HEADING_PATTERN = re.compile(r"^(?P<code>M\d{3})(?:\s*-\s*(?P<title>.+))?$")
+NUMBERED_HEADING_WITH_SPACE_PATTERN = re.compile(
+    r"^(?P<code>\d+(?:\.\d+)+)\s+(?P<title>.+)$"
+)
+NUMBERED_HEADING_WITH_INLINE_ALPHA_PATTERN = re.compile(
+    r"^(?P<code>\d+(?:\.\d+)*)\s+(?P<alpha>[a-zçğıöşü])\)\s*(?P<title>.+)$",
+    re.IGNORECASE,
+)
+NUMBERED_HEADING_WITH_DOTTED_ALPHA_PATTERN = re.compile(
+    r"^(?P<code>\d+(?:\.\d+)*)\.\s*(?P<alpha>[a-zçğıöşü])\)\s*(?P<title>.+)$",
+    re.IGNORECASE,
+)
 NUMBERED_HEADING_PATTERN = re.compile(
     r"^(?P<code>\d+(?:\.\d+)*)(?:\s*[-.)]\s*(?P<title>.+)|\.\s*(?P<title_dotted>.*))$"
 )
 NUMBERED_LINE_PATTERN = re.compile(r"^(?P<number>\d+)\s*-\s+")
+PAGE_MARKER_PATTERN = re.compile(r"^\d+\s*/\s*\d+$")
+LONG_NUMERIC_ID_PATTERN = re.compile(r"^\d{5,}$")
+NUMERIC_ID_WITH_PAGE_PATTERN = re.compile(r"^\d{5,}\s+\d+\s*/\s*\d+$")
 
 
 def parse_docling_content_stream(docling_output: dict[str, Any]) -> list[ParserStreamItem]:
@@ -97,6 +113,8 @@ def parse_docling_content_stream(docling_output: dict[str, Any]) -> list[ParserS
             continue
 
         content = _extract_stream_item_content(item, item_type, docling_output)
+        if _should_skip_extracted_item(item_type, label, content):
+            continue
 
         content_stream.append(
             ParserStreamItem(
@@ -147,6 +165,7 @@ def parse_heading_hierarchy(content_stream: list[ParserStreamItem]) -> list[Head
             ref=item.ref,
             node_type=heading_info["node_type"],
             code=heading_info["code"],
+            display_code=heading_info.get("display_code", heading_info["code"]),
             title=heading_info["title"],
             full_text=str(item.content or ""),
             level=level,
@@ -176,7 +195,7 @@ def parse_heading_hierarchy(content_stream: list[ParserStreamItem]) -> list[Head
 
         stack.append(node)
 
-    return root_nodes
+    return _deduplicate_heading_tree(root_nodes)
 
 
 def _resolve_reference(docling_output: dict[str, Any], ref: str) -> dict[str, Any]:
@@ -240,6 +259,48 @@ def _extract_stream_item_content(
     return None
 
 
+def _should_skip_extracted_item(
+    item_type: ParserStreamItemType,
+    label: str | None,
+    content: Any | None,
+) -> bool:
+    # Drop footer-like artifacts before they reach parser hierarchy and
+    # chunking. Page provenance still survives separately as metadata.
+    if item_type != "text":
+        return False
+
+    text = content.strip() if isinstance(content, str) else None
+    if not text:
+        return False
+
+    lowered_label = (label or "").strip().casefold()
+    if lowered_label in FOOTER_LIKE_LABELS and _looks_like_layout_noise(text):
+        return True
+
+    return _looks_like_layout_noise(text)
+
+
+def _looks_like_layout_noise(text: str) -> bool:
+    compact = " ".join(text.split()).strip()
+    if not compact:
+        return False
+
+    if PAGE_MARKER_PATTERN.fullmatch(compact):
+        return True
+
+    if LONG_NUMERIC_ID_PATTERN.fullmatch(compact):
+        return True
+
+    if NUMERIC_ID_WITH_PAGE_PATTERN.fullmatch(compact):
+        return True
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if len(lines) == 2 and LONG_NUMERIC_ID_PATTERN.fullmatch(lines[0]) and PAGE_MARKER_PATTERN.fullmatch(lines[1]):
+        return True
+
+    return False
+
+
 def _extract_list_group_items(
     item: dict[str, Any],
     docling_output: dict[str, Any],
@@ -259,7 +320,7 @@ def _extract_list_group_items(
         text = child_item.get("text")
         if isinstance(text, str):
             normalized = text.strip()
-            if normalized:
+            if normalized and not _looks_like_layout_noise(normalized):
                 items.append(normalized)
 
     return items
@@ -461,6 +522,7 @@ def _parse_heading_candidate(item: ParserStreamItem) -> dict[str, Any] | None:
         return {
             "node_type": "section_heading",
             "code": code,
+            "display_code": code,
             "title": title,
         }
 
@@ -471,6 +533,7 @@ def _parse_heading_candidate(item: ParserStreamItem) -> dict[str, Any] | None:
         return {
             "node_type": "section_heading",
             "code": code,
+            "display_code": code,
             "title": title,
         }
 
@@ -481,6 +544,48 @@ def _parse_heading_candidate(item: ParserStreamItem) -> dict[str, Any] | None:
         return {
             "node_type": "table_heading",
             "code": code,
+            "display_code": code,
+            "title": title,
+        }
+
+    numbered_space_match = NUMBERED_HEADING_WITH_SPACE_PATTERN.match(text)
+    if numbered_space_match:
+        return {
+            "node_type": "numbered_heading",
+            "code": numbered_space_match.group("code"),
+            "display_code": numbered_space_match.group("code").rstrip("."),
+            "title": _normalize_heading_title(numbered_space_match.group("title")),
+        }
+
+    numbered_inline_alpha_match = NUMBERED_HEADING_WITH_INLINE_ALPHA_PATTERN.match(text)
+    if numbered_inline_alpha_match:
+        base_code = numbered_inline_alpha_match.group("code").rstrip(".")
+        alpha = numbered_inline_alpha_match.group("alpha").lower()
+        title = _normalize_heading_title(
+            f"{alpha}) {numbered_inline_alpha_match.group('title')}"
+        )
+        return {
+            "node_type": "numbered_heading",
+            "code": f"{base_code}.{alpha}",
+            "display_code": base_code,
+            "base_code": base_code,
+            "alpha_subheading": True,
+            "title": title,
+        }
+
+    numbered_dotted_alpha_match = NUMBERED_HEADING_WITH_DOTTED_ALPHA_PATTERN.match(text)
+    if numbered_dotted_alpha_match:
+        base_code = numbered_dotted_alpha_match.group("code").rstrip(".")
+        alpha = numbered_dotted_alpha_match.group("alpha").lower()
+        title = _normalize_heading_title(
+            f"{alpha}) {numbered_dotted_alpha_match.group('title')}"
+        )
+        return {
+            "node_type": "numbered_heading",
+            "code": f"{base_code}.{alpha}",
+            "display_code": base_code,
+            "base_code": base_code,
+            "alpha_subheading": True,
             "title": title,
         }
 
@@ -493,6 +598,7 @@ def _parse_heading_candidate(item: ParserStreamItem) -> dict[str, Any] | None:
         return {
             "node_type": "numbered_heading",
             "code": code,
+            "display_code": code.rstrip("."),
             "title": title,
         }
 
@@ -521,6 +627,9 @@ def _resolve_heading_level(heading_info: dict[str, Any], stack: list[HeadingHier
         return _alpha_heading_level(code)
     if node_type in {"numbered_heading", "table_heading"}:
         base_level = _nearest_structural_level(stack)
+        if heading_info.get("alpha_subheading"):
+            base_code = str(heading_info.get("base_code") or heading_info["code"]).rstrip(".")
+            return base_level + 1 + base_code.count(".")
         # 1 / 2 / 3 and M011 / M012 / M013 should stay at the same level.
         # Only explicit dotted extensions such as 1.1 or M011.1 create
         # additional depth under the same family.
@@ -534,6 +643,125 @@ def _nearest_structural_level(stack: list[HeadingHierarchyNode]) -> int:
         if heading.node_type == "section_heading":
             return heading.level
     return 0
+
+
+def _deduplicate_heading_tree(nodes: list[HeadingHierarchyNode]) -> list[HeadingHierarchyNode]:
+    deduplicated: list[HeadingHierarchyNode] = []
+
+    for node in nodes:
+        normalized_children = _deduplicate_heading_tree(node.children)
+        current_node = node.model_copy(update={"children": normalized_children}, deep=True)
+
+        if deduplicated and _should_merge_duplicate_headings(deduplicated[-1], current_node):
+            deduplicated[-1] = _merge_duplicate_headings(deduplicated[-1], current_node)
+            continue
+
+        deduplicated.append(current_node)
+
+    return deduplicated
+
+
+def _should_merge_duplicate_headings(
+    previous: HeadingHierarchyNode,
+    current: HeadingHierarchyNode,
+) -> bool:
+    if previous.code != current.code:
+        return False
+
+    previous_has_payload = _heading_carries_payload(previous)
+    current_has_payload = _heading_carries_payload(current)
+
+    if previous_has_payload == current_has_payload:
+        return False
+
+    previous_title = _normalize_duplicate_title(previous)
+    current_title = _normalize_duplicate_title(current)
+    if previous_title and current_title and previous_title != current_title:
+        return False
+
+    return True
+
+
+def _merge_duplicate_headings(
+    previous: HeadingHierarchyNode,
+    current: HeadingHierarchyNode,
+) -> HeadingHierarchyNode:
+    previous_has_payload = _heading_carries_payload(previous)
+    current_has_payload = _heading_carries_payload(current)
+    survivor = current if current_has_payload else previous
+    discarded = previous if current_has_payload else current
+
+    merged_page_start = _min_defined(previous.page_start, current.page_start)
+    merged_page_end = _max_defined(previous.page_end, current.page_end)
+    merged_stream_order = min(previous.stream_order, current.stream_order)
+
+    merged_content_refs = _merge_unique_refs(previous.content_refs, current.content_refs)
+    merged_children = [*previous.children, *current.children]
+
+    return survivor.model_copy(
+        update={
+            "page_start": merged_page_start,
+            "page_end": merged_page_end,
+            "stream_order": merged_stream_order,
+            "content_refs": merged_content_refs,
+            "children": merged_children,
+            "ref": survivor.ref if _heading_carries_payload(survivor) else discarded.ref,
+        },
+        deep=True,
+    )
+
+
+def _heading_carries_payload(node: HeadingHierarchyNode) -> bool:
+    return bool(node.content_refs or node.children)
+
+
+def _normalize_duplicate_title(node: HeadingHierarchyNode) -> str:
+    title = node.title or node.full_text
+    normalized = unicodedata.normalize("NFKD", title.casefold()).strip()
+    normalized = "".join(char for char in normalized if not unicodedata.combining(char))
+    normalized = normalized.translate(
+        str.maketrans({
+            "ı": "i",
+            "ş": "s",
+            "ğ": "g",
+            "ç": "c",
+            "ö": "o",
+            "ü": "u",
+        })
+    )
+    normalized = normalized.replace(" - ", " ").replace(".", " ")
+    normalized = normalized.replace("/", " ")
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized
+
+
+def _merge_unique_refs(left: list[str], right: list[str]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+
+    for ref in [*left, *right]:
+        if ref in seen:
+            continue
+        seen.add(ref)
+        merged.append(ref)
+
+    return merged
+
+
+def _min_defined(left: int | None, right: int | None) -> int | None:
+    if left is None:
+        return right
+    if right is None:
+        return left
+    return min(left, right)
+
+
+def _max_defined(left: int | None, right: int | None) -> int | None:
+    if left is None:
+        return right
+    if right is None:
+        return left
+    return max(left, right)
 
 
 def _normalize_heading_title(title: str | None) -> str | None:

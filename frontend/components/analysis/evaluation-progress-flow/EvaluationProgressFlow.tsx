@@ -14,8 +14,8 @@ export type EvaluationStep = {
 // Types matching current evaluation report
 type EvaluationReport = {
   session_id: string;
-  total_weighted_score: number;
-  max_possible_weighted_score: number;
+  total_weighted_score: number | null;
+  max_possible_weighted_score: number | null;
   final_summary: string;
 };
 

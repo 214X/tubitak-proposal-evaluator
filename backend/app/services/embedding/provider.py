@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from threading import Lock
 
@@ -10,6 +11,9 @@ from transformers import AutoModel, AutoTokenizer
 
 from app.core.config import settings
 from app.services.embedding.models import EmbeddingProviderName
+
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 MODEL_LOCK = Lock()
 TOKENIZER_INSTANCE = None
@@ -85,6 +89,7 @@ def _get_tokenizer():
             settings.embedding_model_name,
             cache_dir=str(cache_dir),
             trust_remote_code=True,
+            local_files_only=True,
         )
         return TOKENIZER_INSTANCE
 
@@ -104,6 +109,8 @@ def _get_model():
             settings.embedding_model_name,
             cache_dir=str(cache_dir),
             trust_remote_code=True,
+            local_files_only=True,
+            use_safetensors=False,
         )
         MODEL_INSTANCE.eval()
         return MODEL_INSTANCE

@@ -56,6 +56,14 @@ def get_current_analysis_state(session_id: str) -> AnalysisState:
 
 
 def start_current_analysis(session_id: str) -> AnalysisState:
+    return _start_analysis(session_id, stop_after_chunking=False)
+
+
+def start_current_analysis_until_chunking(session_id: str) -> AnalysisState:
+    return _start_analysis(session_id, stop_after_chunking=True)
+
+
+def _start_analysis(session_id: str, stop_after_chunking: bool) -> AnalysisState:
     # Ensure an uploaded file exists before starting background work.
     upload = get_session_upload(session_id)
     get_session_upload_path(session_id)
@@ -88,8 +96,8 @@ def start_current_analysis(session_id: str) -> AnalysisState:
 
         runner = Thread(
             target=_run_analysis_pipeline,
-            args=(session_id, upload.uploaded_at),
-            name=f"analysis-{session_id}",
+            args=(session_id, upload.uploaded_at, stop_after_chunking),
+            name=f"analysis-{session_id}-{'chunk' if stop_after_chunking else 'full'}",
             daemon=True,
         )
         ACTIVE_RUNNERS[session_id] = runner
@@ -98,7 +106,11 @@ def start_current_analysis(session_id: str) -> AnalysisState:
     return queued_state
 
 
-def _run_analysis_pipeline(session_id: str, expected_uploaded_at: str) -> None:
+def _run_analysis_pipeline(
+    session_id: str,
+    expected_uploaded_at: str,
+    stop_after_chunking: bool = False,
+) -> None:
     extraction_output: ExtractionOutput | None = None
     parser_output: ParserOutput | None = None
     chunk_output: ChunkOutput | None = None
@@ -182,6 +194,29 @@ def _run_analysis_pipeline(session_id: str, expected_uploaded_at: str) -> None:
         )
 
         chunk_output = build_chunk_output_from_parser(parser_output)
+
+        if stop_after_chunking:
+            _assert_session_upload_is_current(session_id, expected_uploaded_at)
+            _persist_state(
+                AnalysisState(
+                    session_id=session_id,
+                    status="completed",
+                    current_step="done",
+                    file_name=upload.file_name,
+                    started_at=_existing_started_at(session_id),
+                    updated_at=_timestamp_now(),
+                    error=None,
+                    extraction_timing=_carry_stage_timing(session_id, "extraction_timing"),
+                    parser_timing=_carry_stage_timing(session_id, "parser_timing"),
+                    chunking_timing=_complete_stage(session_id, "chunking_timing"),
+                    embedding_timing=_carry_stage_timing(session_id, "embedding_timing"),
+                    extraction_output=extraction_output,
+                    parser_output=parser_output,
+                    chunk_output=chunk_output,
+                    embedding_output=None,
+                )
+            )
+            return
 
         _assert_session_upload_is_current(session_id, expected_uploaded_at)
         _persist_state(

@@ -8,6 +8,7 @@ type AnalyzeButtonProps = Readonly<{
   onClick?: () => void;
   helperText?: string;
   passive?: boolean;
+  mode?: "full" | "chunk_only";
 }>;
 
 export function AnalyzeButton({
@@ -16,6 +17,7 @@ export function AnalyzeButton({
   onClick,
   helperText,
   passive = false,
+  mode = "full",
 }: AnalyzeButtonProps) {
   return (
     <div className={styles.wrap}>
@@ -30,12 +32,18 @@ export function AnalyzeButton({
         </span>
         <span className={styles.buttonCopy}>
           <span className={styles.buttonTitle}>
-            {isBusy ? "Analiz İşleniyor" : "Belgeyi Analize Başla"}
+            {isBusy
+              ? "Analiz İşleniyor"
+              : mode === "chunk_only"
+                ? "Chunking'e Kadar Çalıştır"
+                : "Belgeyi Analize Başla"}
           </span>
           <span className={styles.buttonDescription}>
             {passive
               ? "Bu aksiyon şimdilik debug akışında aktif."
-              : "Docling extraction ve parser akışını arka planda başlatır."}
+              : mode === "chunk_only"
+                ? "Extraction, parser ve chunking aşamalarını çalıştırır; embedding başlatmaz."
+                : "Extraction, parser, chunking ve embedding aşamalarını arka planda çalıştırır."}
           </span>
         </span>
       </button>

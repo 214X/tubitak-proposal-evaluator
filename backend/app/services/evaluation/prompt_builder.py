@@ -15,14 +15,27 @@ def build_judge_messages(
     ]
 
 
+def build_json_retry_message() -> dict[str, str]:
+    return {
+        "role": "user",
+        "content": (
+            "Önceki yanıt geçerli JSON değildi veya istenen şemaya uymadı. "
+            "Aynı değerlendirmeyi tekrar yap. "
+            "Sadece geçerli JSON döndür. Markdown, açıklama veya kod bloğu ekleme."
+        ),
+    }
+
+
 def _build_system_prompt() -> str:
     return (
         "Sen proje önerilerini değerlendiren bir hakem yardımcısısın. "
         "Yalnızca verilen kanıtlara dayanarak karar ver. "
         "Dış bilgi kullanma. Eksik bilgileri uydurma. "
-        "Olumsuz veya çelişen kanıtları açıkça hesaba kat. "
-        "Tüm çıktı alanlarını Türkçe üret. "
-        "Sadece geçerli JSON döndür."
+        "Başvuru sahibinin iddiasını ve bunu destekleyen kanıt gücünü ayrı değerlendir. "
+        "Kanıt zayıfsa veya eksikse bunu açıkça belirt. "
+        "0 ile 5 arasında skor ver. "
+        "Tüm alanları Türkçe üret. "
+        "JSON dışında hiçbir çıktı verme."
     )
 
 
@@ -30,57 +43,86 @@ def _build_user_prompt(
     criterion: EvaluationCriterion,
     evidence: CriterionEvidence,
 ) -> str:
-    supporting_lines = _format_evidence_block(evidence.supporting_evidence)
-    contradicting_lines = _format_evidence_block(evidence.contradicting_evidence)
     schema = {
-        "score": "3 or -1 or null",
-        "confidence": "0.0 ile 1.0 arasında sayı",
-        "decision_status": "scored | insufficient_evidence | conflicting_evidence",
+        "criterion_id": "string",
+        "main_dimension_id": "string",
+        "title": "string",
+        "score": "0.0-5.0 veya null",
+        "claim_strength": "0.0-5.0 veya null",
+        "evidence_quality": "0.0-5.0 veya null",
+        "decision_status": "scored | insufficient_evidence | failed",
+        "criterion_explanation": "Türkçe kısa açıklama",
+        "short_assessment": "Türkçe kısa değerlendirme",
         "justification": "Türkçe kısa gerekçe",
-        "supporting_chunk_ids": ["string"],
-        "contradicting_chunk_ids": ["string"],
+        "positive_findings": [
+            {
+                "summary": "Türkçe bulgu özeti",
+                "why_positive": "Bu bulgunun iddiayı neden güçlendirdiği",
+                "chunk_id": "string",
+            }
+        ],
+        "negative_findings": [
+            {
+                "summary": "Türkçe bulgu özeti",
+                "why_negative": "Bu bulgunun iddiayı neden zayıflattığı",
+                "chunk_id": "string",
+            }
+        ],
         "missing_information": ["Türkçe eksik bilgi"],
         "red_flags": ["Türkçe risk işareti"],
-        "supporting_evidence_notes": [
+        "evidence_items": [
             {
                 "chunk_id": "string",
-                "location_summary": "Belgenin hiyerarşik konumunu Türkçe özetle",
-                "evidence_text": "Bu kanıtın metin içeriğini kısa ve anlaşılır biçimde Türkçe aktar",
-                "why_it_matters": "Bu içeriğin neden lehte kanıt olduğunu Türkçe açıkla",
+                "evidence_type": "positive | negative | context",
+                "verbatim_excerpt": "Kısa, birebir veya çok yakın alıntı",
+                "heading_path": ["string"],
+                "page_start": "integer veya null",
+                "page_end": "integer veya null",
+                "why_it_matters": "Türkçe açıklama",
             }
         ],
-        "contradicting_evidence_notes": [
-            {
-                "chunk_id": "string",
-                "location_summary": "Belgenin hiyerarşik konumunu Türkçe özetle",
-                "evidence_text": "Bu kanıtın metin içeriğini kısa ve anlaşılır biçimde Türkçe aktar",
-                "why_it_matters": "Bu içeriğin neden aleyhte kanıt olduğunu Türkçe açıkla",
-            }
-        ],
+        "confidence": "0.0 ile 1.0 arasında sayı",
     }
+
     return (
         f"Kriter:\n"
         f"- id: {criterion.criterion_id}\n"
-        f"- kategori: {criterion.category}\n"
+        f"- ana_boyut: {criterion.main_dimension_id}\n"
         f"- başlık: {criterion.title}\n"
+        f"- soru: {criterion.question}\n"
         f"- açıklama: {criterion.description}\n"
-        f"- izinli_skorlar: {criterion.allowed_scores}\n"
-        f"- ağırlık: {criterion.weight}\n\n"
-        f"Lehte kanıtlar:\n{supporting_lines}\n\n"
-        f"Aleyhte kanıtlar:\n{contradicting_lines}\n\n"
-        "Talimatlar:\n"
-        "- Kararını yalnızca yukarıdaki kanıtlara dayandır.\n"
-        "- Aleyhte kanıtlar açık biçimde daha güçlü ise skor -1 ver.\n"
-        "- Lehte kanıtlar yeterliyse ve ciddi bir çelişki yoksa skor 3 ver.\n"
-        "- Kanıt yetersizse decision_status alanını insufficient_evidence yap ve score alanını null ver.\n"
-        "- Güçlü bir çelişki çözülemiyorsa decision_status alanını conflicting_evidence yap.\n"
-        "- Sadece yukarıda verilen chunk id'lerini kullan.\n"
-        "- justification, missing_information, red_flags ve kanıt notlarının tamamı Türkçe olsun.\n"
-        "- supporting_evidence_notes ve contradicting_evidence_notes alanlarında yalnızca gerçekten kullandığın kanıtları özetle.\n"
-        "- evidence_text alanında ham chunk metnini aynen kopyalama; belge içeriğini kısa, doğal ve anlaşılır Türkçe ile özetle.\n"
-        "- why_it_matters alanında bu kanıtın neden ilgili kritere etki ettiğini açıkla.\n\n"
+        f"- ağırlık: {criterion.weight}\n"
+        f"- skor_aralığı: {criterion.score_min}-{criterion.score_max}\n\n"
+        "Puanlama rehberi:\n"
+        "- 0: İddia yok veya kanıt yok denecek kadar zayıf.\n"
+        "- 1: İddia var ama ciddi ölçüde eksik, soyut veya kanıtsız.\n"
+        "- 2: Kısmi iddia ve sınırlı kanıt var; ikna gücü düşük.\n"
+        "- 3: Makul iddia ve orta düzey kanıt var; bazı boşluklar mevcut.\n"
+        "- 4: Güçlü iddia ve iyi düzeyde kanıt var; küçük eksikler mevcut.\n"
+        "- 5: Çok güçlü, açık ve iyi kanıtlanmış iddia.\n\n"
+        f"Coverage durumu: {evidence.coverage_status}\n"
+        f"Coverage notları:\n{_format_note_block(evidence.coverage_notes)}\n\n"
+        f"Primary section chunks:\n{_format_evidence_block(evidence.primary_section_chunks)}\n\n"
+        f"Semantic support chunks:\n{_format_evidence_block(evidence.semantic_support_chunks)}\n\n"
+        f"Fallback context chunks:\n{_format_evidence_block(evidence.fallback_context_chunks)}\n\n"
+        "Görev:\n"
+        "- Önce başvuru sahibinin bu kriter için ne iddia ettiğini çıkar.\n"
+        "- Sonra bu iddiayı destekleyen kanıtın ne kadar güçlü olduğunu değerlendir.\n"
+        "- Kanıttaki boşlukları, eksikleri ve iddiayı zayıflatan unsurları açıkla.\n"
+        "- Score, claim_strength ve evidence_quality alanlarını 0-5 aralığında ver.\n"
+        "- Coverage missing veya kanıt çok zayıf ise decision_status alanını insufficient_evidence yap ve skorları null bırakabilirsin.\n"
+        "- Sadece verilen chunk_id değerlerini kullan.\n"
+        "- evidence_items alanında yalnızca gerçekten kullandığın kanıtları ekle.\n"
+        "- evidence_type değeri sadece positive, negative veya context olabilir.\n"
+        "- JSON dışında hiçbir çıktı verme.\n\n"
         f"Bu tam JSON şemasına uyarak cevap ver:\n{json.dumps(schema, ensure_ascii=False, indent=2)}"
     )
+
+
+def _format_note_block(notes: list[str]) -> str:
+    if not notes:
+        return "- yok"
+    return "\n".join(f"- {item}" for item in notes)
 
 
 def _format_evidence_block(evidence_items) -> str:
@@ -92,8 +134,9 @@ def _format_evidence_block(evidence_items) -> str:
         heading_path = " > ".join(item.heading_path_titles) if item.heading_path_titles else "Belirsiz başlık"
         page_text = _format_page_range(item.page_start, item.page_end)
         lines.append(
-            f"{index}. [chunk_id={item.chunk_id}] [type={item.chunk_type}] [path={heading_path}] "
-            f"[pages={page_text}] [similarity={item.similarity_score:.4f}] {item.text_for_embedding}"
+            f"{index}. [chunk_id={item.chunk_id}] [type={item.chunk_type}] "
+            f"[path={heading_path}] [pages={page_text}] [similarity={item.similarity_score:.4f}] "
+            f"{item.text_for_embedding}"
         )
     return "\n".join(lines)
 

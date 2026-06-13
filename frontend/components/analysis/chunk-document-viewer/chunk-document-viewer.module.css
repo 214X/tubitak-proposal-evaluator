@@ -82,30 +82,42 @@
 
 .documentBody {
   display: grid;
-  gap: 18px;
+  gap: 20px;
   padding-top: 28px;
 }
 
 .chunkCard {
   display: grid;
   gap: 18px;
-  padding: 22px;
-  border-radius: 26px;
-  border: 1px solid rgba(32, 26, 25, 0.08);
+  padding: 22px 24px 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(32, 26, 25, 0.12);
+  border-left: 6px solid #ba4248;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(253, 249, 244, 0.96) 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(253, 249, 244, 0.98) 100%);
+  box-shadow: 0 14px 32px rgba(32, 26, 25, 0.08);
 }
 
 .chunkCard[data-type="qa"] {
-  border-color: rgba(186, 66, 72, 0.18);
+  border-left-color: #7d2c31;
+  background:
+    linear-gradient(180deg, rgba(255, 249, 250, 0.96) 0%, rgba(253, 242, 243, 0.98) 100%);
 }
 
 .chunkCard[data-type="table"] {
-  border-color: rgba(33, 90, 115, 0.16);
+  border-left-color: #215a73;
+  background:
+    linear-gradient(180deg, rgba(248, 252, 253, 0.96) 0%, rgba(241, 248, 251, 0.98) 100%);
 }
 
 .chunkCard[data-type="list"] {
-  border-color: rgba(73, 96, 47, 0.16);
+  border-left-color: #49602f;
+  background:
+    linear-gradient(180deg, rgba(250, 252, 248, 0.96) 0%, rgba(243, 247, 239, 0.98) 100%);
+}
+
+.chunkCard[data-type="narrative"] {
+  border-left-color: #ba4248;
 }
 
 .chunkHeader {
@@ -113,6 +125,8 @@
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(32, 26, 25, 0.1);
 }
 
 .chunkMetaBlock,
@@ -127,23 +141,78 @@
   gap: 6px;
 }
 
+.chunkContextBlock {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(32, 26, 25, 0.08);
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.chunkContextLabel {
+  margin: 0;
+  color: #8a7b76;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .chunkMetaSide {
-  gap: 6px;
+  gap: 8px;
   text-align: right;
+  justify-items: end;
 }
 
 .chunkType,
-.chunkOrder,
-.chunkPage,
 .fieldLabel,
 .tableTitle {
   margin: 0;
 }
 
+.chunkBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
 .chunkType {
-  color: #ba4248;
-  font-size: 12px;
-  font-weight: 700;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(186, 66, 72, 0.12);
+  color: #8a2f34;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chunkCard[data-type="table"] .chunkType {
+  background: rgba(33, 90, 115, 0.12);
+  color: #215a73;
+}
+
+.chunkCard[data-type="list"] .chunkType {
+  background: rgba(73, 96, 47, 0.12);
+  color: #49602f;
+}
+
+.chunkCard[data-type="qa"] .chunkType {
+  background: rgba(125, 44, 49, 0.12);
+  color: #7d2c31;
+}
+
+.chunkPart {
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(32, 26, 25, 0.08);
+  color: #544844;
+  font-size: 11px;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -154,6 +223,24 @@
   line-height: 1.2;
 }
 
+.chunkWorkPackageMeta,
+.chunkSectionLabel {
+  margin: 0;
+}
+
+.chunkWorkPackageMeta {
+  color: #7d6e68;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chunkSectionLabel {
+  color: #433733;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .chunkPath {
   margin: 0;
   color: #6f625d;
@@ -161,10 +248,15 @@
   line-height: 1.6;
 }
 
-.chunkOrder,
-.chunkPage {
+.chunkMetaPill {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(32, 26, 25, 0.08);
   color: #6f625d;
   font-size: 13px;
+  font-weight: 700;
 }
 
 .chunkBody {
@@ -178,6 +270,10 @@
 
 .fieldBlock {
   gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(32, 26, 25, 0.1);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .fieldLabel {
@@ -212,7 +308,10 @@
   display: grid;
   gap: 12px;
   margin: 0;
-  padding-left: 24px;
+  padding: 14px 14px 14px 36px;
+  border: 1px solid rgba(32, 26, 25, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
   color: #2c2523;
   font-size: 15px;
   line-height: 1.75;
@@ -349,6 +448,32 @@
   border-radius: 18px;
   border: 1px solid rgba(32, 26, 25, 0.1);
   background: #fffdfa;
+}
+
+@media (max-width: 800px) {
+  .page {
+    padding: 20px;
+  }
+
+  .document {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .header,
+  .chunkHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .chunkCard {
+    padding: 18px;
+  }
+
+  .chunkMetaSide {
+    justify-items: start;
+    text-align: left;
+  }
 }
 
 .table {

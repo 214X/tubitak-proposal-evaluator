@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   type CriterionEvaluationResult,
-  type EvidenceNarrative,
   type EvaluationState,
   fetchCurrentEvaluation,
 } from "../../../lib/analysis";
@@ -16,6 +15,16 @@ type EvaluationReportViewerProps = Readonly<{
   initialSessionId?: string | null;
 }>;
 
+type ReportDimension = {
+  id: string;
+  title: string;
+  weight: number;
+  score: number | null;
+  weightedScore: number | null;
+  summary: string;
+  subcriteria: CriterionEvaluationResult[];
+};
+
 const POLLING_INTERVAL_MS = 2500;
 
 export function EvaluationReportViewer({
@@ -25,7 +34,6 @@ export function EvaluationReportViewer({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [evaluationState, setEvaluationState] = useState<EvaluationState | null>(null);
   const [error, setError] = useState("");
-  const [selectedCriterionId, setSelectedCriterionId] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -51,7 +59,6 @@ export function EvaluationReportViewer({
     function loadForSession(nextSessionId: string | null) {
       setSessionId(nextSessionId);
       setEvaluationState(null);
-      setSelectedCriterionId(null);
 
       if (!nextSessionId) {
         setError("Aktif bir evaluation oturumu bulunamadı.");
@@ -106,243 +113,450 @@ export function EvaluationReportViewer({
     };
   }, [apiBaseUrl, evaluationState, sessionId]);
 
-  const criteria = evaluationState?.criterion_results ?? [];
-
-  useEffect(() => {
-    if (!criteria.length) {
-      setSelectedCriterionId(null);
-      return;
-    }
-
-    setSelectedCriterionId((current) =>
-      current && criteria.some((criterion) => criterion.criterion_id === current)
-        ? current
-        : criteria[0]?.criterion_id ?? null,
-    );
-  }, [criteria]);
-
-  const selectedCriterion = useMemo(
-    () =>
-      criteria.find((criterion) => criterion.criterion_id === selectedCriterionId) ??
-      criteria[0] ??
-      null,
-    [criteria, selectedCriterionId],
+  const dimensions = useMemo(() => buildReportDimensions(evaluationState), [evaluationState]);
+  const reportAvailable = Boolean(
+    evaluationState?.subcriteria_results.length ||
+      evaluationState?.main_scores.length ||
+      evaluationState?.rubric_table.length,
   );
 
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
-        <div>
+        <div className={styles.headerCopy}>
           <p className={styles.eyebrow}>DEĞERLENDİRME RAPORU</p>
-          <h2 className={styles.title}>Kriter Bazlı Evaluation Raporu</h2>
+          <h2 className={styles.title}>TÜBİTAK Uyumlu Kriter ve Kanıt Raporu</h2>
           <p className={styles.description}>
-            Seçilen kriter için lehte ve aleyhte kanıtlar, bu kanıtların neden önemli
-            olduğu ve nihai puana etkisi bu ekranda birlikte incelenir.
+            Bu ekran genel skoru, ana boyut skorlarını, rubric açıklamalarını ve her alt
+            kriter için iddia-kanıt ilişkisini öğretici biçimde gösterir.
           </p>
         </div>
-        {sessionId ? <p className={styles.session}>Oturum: {sessionId}</p> : null}
+        <div className={styles.headerMeta}>
+          {sessionId ? <p className={styles.session}>Oturum: {sessionId}</p> : null}
+          <div className={styles.statusBadge}>{getStatusLabel(evaluationState)}</div>
+        </div>
       </div>
 
       {error ? <p className={styles.errorText}>{error}</p> : null}
 
-      <div className={styles.statusCard}>
-        <div className={styles.statusRow}>
-          <span className={styles.statusLabel}>Durum</span>
-          <span className={styles.statusValue}>{getStatusLabel(evaluationState)}</span>
+      <section className={styles.heroCard}>
+        <div className={styles.heroScore}>
+          <p className={styles.heroLabel}>Genel Skor</p>
+          <p className={styles.heroValue}>{formatScore(evaluationState?.overall_score, 100)}</p>
+          <p className={styles.heroMeta}>
+            {evaluationState?.active_subcriterion_title
+              ? `Son işlenen alt kriter: ${evaluationState.active_subcriterion_title}`
+              : "Alt kriter bazlı matematiksel agregasyon"}
+          </p>
         </div>
-        <div className={styles.statusRow}>
-          <span className={styles.statusLabel}>Aktif Kriter</span>
-          <span className={styles.statusValue}>
-            {evaluationState?.active_criterion_title ?? "Henüz başlamadı"}
-          </span>
-        </div>
-        {evaluationState?.final_report ? (
-          <div className={styles.scoreSummary}>
-            <p className={styles.scoreValue}>
-              {evaluationState.final_report.total_weighted_score}/
-              {evaluationState.final_report.max_possible_weighted_score}
-            </p>
-            <p className={styles.scoreMeta}>
-              {evaluationState.final_report.scored_criteria_count} kriter skorlandı
-            </p>
-          </div>
-        ) : null}
-      </div>
 
-      {criteria.length ? (
-        <div className={styles.workspace}>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Kategori</th>
-                  <th>Kriter</th>
-                  <th>Skor</th>
-                  <th>Ağırlık</th>
-                  <th>Ağırlıklı</th>
-                  <th>Güven</th>
-                  <th>Durum</th>
+        <div className={styles.heroInsights}>
+          <InfoList
+            title="Öne Çıkan Güçlü Alanlar"
+            items={evaluationState?.major_strengths ?? []}
+            emptyText="Belirgin güçlü alan henüz çıkarılamadı."
+          />
+          <InfoList
+            title="Önemli Zayıflıklar"
+            items={evaluationState?.major_weaknesses ?? []}
+            emptyText="Belirgin zayıf alan henüz çıkarılamadı."
+          />
+        </div>
+      </section>
+
+      <section className={styles.mainScoreSection}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>Ana Boyut Skorları</h3>
+          <p className={styles.sectionDescription}>
+            Ana skorlar alt kriter puanlarının ağırlıklı ortalamasından hesaplanır.
+          </p>
+        </div>
+        <div className={styles.scoreGrid}>
+          {(evaluationState?.main_scores ?? []).map((item) => (
+            <article key={item.main_dimension_id} className={styles.scoreCard}>
+              <div className={styles.scoreCardTop}>
+                <span className={styles.scoreCardId}>{item.main_dimension_id}</span>
+                <span className={styles.scoreCardWeight}>Ağırlık %{item.weight}</span>
+              </div>
+              <h4 className={styles.scoreCardTitle}>{item.title}</h4>
+              <p className={styles.scoreCardValue}>{formatScore(item.score, 100)}</p>
+              <p className={styles.scoreCardMeta}>
+                {item.scored_subcriteria_count}/{item.subcriteria_count} alt kriter puanlandı
+              </p>
+              <p className={styles.scoreCardSummary}>{item.summary}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.supportSection}>
+        <InfoPanel
+          title="Kritik Eksik Bilgiler"
+          tone="warning"
+          items={evaluationState?.critical_missing_information ?? []}
+          emptyText="Kritik eksik bilgi listelenmedi."
+        />
+        <InfoPanel
+          title="Risk İşaretleri"
+          tone="danger"
+          items={evaluationState?.red_flags ?? []}
+          emptyText="Belirgin risk işareti listelenmedi."
+        />
+      </section>
+
+      <section className={styles.tableSection}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>Rubric Açıklama Tablosu</h3>
+          <p className={styles.sectionDescription}>
+            Alt kriterlerin neden önemli olduğu ve hangi bölüm kaynaklarına baktığı bu tabloyla
+            özetlenir.
+          </p>
+        </div>
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Ana Boyut</th>
+                <th>Alt Kriter</th>
+                <th>Ağırlık</th>
+                <th>Kaynak Bölümler</th>
+                <th>Açıklama</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(evaluationState?.rubric_table ?? []).map((item) => (
+                <tr key={item.criterion_id}>
+                  <td>
+                    <strong>{item.main_dimension_id}</strong>
+                    <span className={styles.tableSubtext}>{item.main_dimension_title}</span>
+                  </td>
+                  <td>
+                    <strong>{item.ui_label || item.criterion_id}</strong>
+                    <span className={styles.tableSubtext}>{item.criterion_title}</span>
+                  </td>
+                  <td>%{item.weight}</td>
+                  <td>{item.source_sections.map(formatSourceSectionLabel).join(", ")}</td>
+                  <td>{item.description}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {criteria.map((criterion) => (
-                  <tr
-                    key={criterion.criterion_id}
-                    className={
-                      criterion.criterion_id === selectedCriterion?.criterion_id
-                        ? styles.activeRow
-                        : undefined
-                    }
-                    onClick={() => setSelectedCriterionId(criterion.criterion_id)}
-                  >
-                    <td>{criterion.category}</td>
-                    <td>{criterion.title}</td>
-                    <td>{criterion.score ?? "-"}</td>
-                    <td>{criterion.weight}</td>
-                    <td>{criterion.weighted_score ?? "-"}</td>
-                    <td>{criterion.confidence.toFixed(2)}</td>
-                    <td>{getDecisionLabel(criterion.decision_status)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {reportAvailable ? (
+        <section className={styles.accordionSection}>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.sectionTitle}>Ana Boyut İncelemesi</h3>
+            <p className={styles.sectionDescription}>
+              Her accordion içinde alt kriterler, bulgular ve birebir kanıt alıntıları yer alır.
+            </p>
           </div>
 
-          {selectedCriterion ? <CriterionDetail criterion={selectedCriterion} /> : null}
-        </div>
+          <div className={styles.accordionList}>
+            {dimensions.map((dimension, index) => (
+              <details
+                key={dimension.id}
+                className={styles.dimensionAccordion}
+                open={index === 0}
+              >
+                <summary className={styles.dimensionSummary}>
+                  <div>
+                    <p className={styles.dimensionEyebrow}>
+                      {dimension.id} Boyutu · %{dimension.weight}
+                    </p>
+                    <h4 className={styles.dimensionTitle}>{dimension.title}</h4>
+                    <p className={styles.dimensionText}>{dimension.summary}</p>
+                  </div>
+                  <div className={styles.dimensionScoreBlock}>
+                    <span className={styles.dimensionScore}>
+                      {formatScore(dimension.score, 100)}
+                    </span>
+                    <span className={styles.dimensionScoreMeta}>
+                      Ağırlıklı katkı {formatWeightedContribution(dimension.weightedScore)}
+                    </span>
+                  </div>
+                </summary>
+
+                <div className={styles.subcriterionList}>
+                  {dimension.subcriteria.map((criterion) => (
+                    <SubcriterionCard key={criterion.criterion_id} criterion={criterion} />
+                  ))}
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
       ) : (
         <div className={styles.emptyState}>
-          <p>Henüz criterion sonucu oluşmadı.</p>
-          <p>Evaluation tamamlandığında ayrıntılı kriter raporu burada açılacak.</p>
+          <p>Henüz gösterilecek rapor verisi oluşmadı.</p>
+          <p>Evaluation tamamlandığında tüm ana boyutlar ve alt kriter kartları burada açılacak.</p>
         </div>
       )}
-
-      {evaluationState?.final_report ? (
-        <div className={styles.report}>
-          <div>
-            <p className={styles.reportTitle}>Nihai Değerlendirme</p>
-            <p className={styles.reportText}>{evaluationState.final_report.final_summary}</p>
-          </div>
-          <div className={styles.reportColumns}>
-            <div>
-              <p className={styles.reportListTitle}>Güçlü Yönler</p>
-              <ul className={styles.reportList}>
-                {evaluationState.final_report.strengths.length ? (
-                  evaluationState.final_report.strengths.map((item, index) => (
-                    <li key={`${item}-${index}`}>{item}</li>
-                  ))
-                ) : (
-                  <li>Belirgin güçlü alan çıkarılamadı.</li>
-                )}
-              </ul>
-            </div>
-            <div>
-              <p className={styles.reportListTitle}>Zayıf Yönler</p>
-              <ul className={styles.reportList}>
-                {evaluationState.final_report.weaknesses.length ? (
-                  evaluationState.final_report.weaknesses.map((item, index) => (
-                    <li key={`${item}-${index}`}>{item}</li>
-                  ))
-                ) : (
-                  <li>Belirgin zayıf alan çıkarılamadı.</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }
 
-function CriterionDetail({
+function formatSourceSectionLabel(section: string) {
+  const normalized = section.trim();
+
+  if (normalized === "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ") {
+    return "C.3 > Ürün Satışı ve Ticarileşme Öngörüleri";
+  }
+
+  if (normalized === "PAZAR FIRSATI") {
+    return "C.3 > Pazar Fırsatı";
+  }
+
+  if (normalized === "KAYNAK YÖNETİMİ") {
+    return "C.3 > Kaynak Yönetimi";
+  }
+
+  if (normalized === "Ekonomik ve Ulusal Kazanımlar") {
+    return "A.4.1 > Ekonomik ve Ulusal Kazanımlar";
+  }
+
+  if (
+    normalized ===
+    "Projenin sağlayabileceği ulusal kazanımları, aşağıdaki başlıklardan ilgili gördüklerinizi dikkate alarak belirtiniz."
+  ) {
+    return "C.3 > Ürün Satışı ve Ticarileşme Öngörüleri > 2.7 Ulusal Kazanımlar";
+  }
+
+  return normalized;
+}
+
+function SubcriterionCard({
   criterion,
 }: Readonly<{
   criterion: CriterionEvaluationResult;
 }>) {
   return (
-    <section className={styles.detailCard}>
-      <div className={styles.detailHeader}>
+    <article className={styles.subcriterionCard}>
+      <div className={styles.subcriterionHeader}>
         <div>
-          <p className={styles.detailCategory}>{criterion.category}</p>
-          <h3 className={styles.detailTitle}>{criterion.title}</h3>
+          <p className={styles.subcriterionEyebrow}>
+            {criterion.main_dimension_id ?? criterion.category ?? "?"} · {criterion.criterion_id}
+          </p>
+          <h5 className={styles.subcriterionTitle}>{criterion.title}</h5>
+          <p className={styles.subcriterionText}>
+            {criterion.criterion_explanation || criterion.justification || "Açıklama bulunamadı."}
+          </p>
         </div>
-        <div className={styles.detailScoreBlock}>
-          <span className={styles.detailScore}>{criterion.score ?? "-"}</span>
-          <span className={styles.detailScoreMeta}>weight {criterion.weight}</span>
+        <div className={styles.metricPillGrid}>
+          <MetricPill label="Skor" value={formatScore(criterion.score, 5)} accent />
+          <MetricPill
+            label="İddia Gücü"
+            value={formatScore(criterion.claim_strength, 5)}
+          />
+          <MetricPill
+            label="Kanıt Kalitesi"
+            value={formatScore(criterion.evidence_quality, 5)}
+          />
+          <MetricPill
+            label="Güven"
+            value={criterion.confidence.toFixed(2)}
+          />
         </div>
       </div>
 
-      <p className={styles.justification}>{criterion.justification}</p>
-
-      <div className={styles.metaGrid}>
-        <MetaList title="Eksik Bilgiler" items={criterion.missing_information} />
-        <MetaList title="Risk İşaretleri" items={criterion.red_flags} />
+      <div className={styles.subcriterionMetaRow}>
+        <span className={styles.statusChip}>{getDecisionLabel(criterion.decision_status)}</span>
+        <span className={styles.metaChip}>Ağırlık %{criterion.weight}</span>
+        <span className={styles.metaChip}>
+          Coverage: {criterion.coverage_status}
+        </span>
       </div>
 
-      <div className={styles.evidenceColumns}>
-        <EvidenceList
-          title="Lehte Kanıtlar"
+      <div className={styles.narrativeGrid}>
+        <InfoPanel
+          title="Olumlu Bulgular"
           tone="positive"
-          notes={criterion.supporting_evidence_notes ?? []}
+          items={criterion.positive_findings.map((item) => item.summary)}
+          emptyText="Olumlu bulgu çıkarılmadı."
         />
-        <EvidenceList
-          title="Aleyhte Kanıtlar"
-          tone="negative"
-          notes={criterion.contradicting_evidence_notes ?? []}
+        <InfoPanel
+          title="Zayıflatan Bulgular"
+          tone="danger"
+          items={criterion.negative_findings.map((item) => item.summary)}
+          emptyText="Zayıflatan bulgu çıkarılmadı."
         />
       </div>
-    </section>
+
+      <div className={styles.narrativeGrid}>
+        <InfoPanel
+          title="Eksik Bilgiler"
+          tone="warning"
+          items={criterion.missing_information}
+          emptyText="Eksik bilgi işaretlenmedi."
+        />
+        <InfoPanel
+          title="Risk İşaretleri"
+          tone="danger"
+          items={criterion.red_flags}
+          emptyText="Risk işareti yok."
+        />
+      </div>
+
+      {criterion.coverage_notes.length ? (
+        <div className={styles.coverageCard}>
+          <p className={styles.coverageTitle}>Coverage Notları</p>
+          <ul className={styles.inlineList}>
+            {criterion.coverage_notes.map((item, index) => (
+              <li key={`${criterion.criterion_id}-coverage-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className={styles.evidenceSection}>
+        <div className={styles.sectionHeaderCompact}>
+          <h6 className={styles.evidenceSectionTitle}>Kanıt Kartları</h6>
+          <p className={styles.evidenceSectionText}>
+            Alıntılar doğrudan kullanılan chunk’lardan gelir; her kart neden önemli olduğunu da
+            açıklar.
+          </p>
+        </div>
+        {criterion.evidence_items.length ? (
+          <div className={styles.evidenceGrid}>
+            {criterion.evidence_items.map((item) => (
+              <EvidenceCard key={`${criterion.criterion_id}-${item.chunk_id}-${item.evidence_type}`} item={item} />
+            ))}
+          </div>
+        ) : (
+          <p className={styles.emptyEvidence}>Kanıt kartı bulunamadı.</p>
+        )}
+      </div>
+    </article>
   );
 }
 
-function EvidenceList({
-  title,
-  tone,
-  notes,
+function EvidenceCard({
+  item,
 }: Readonly<{
-  title: string;
-  tone: "positive" | "negative";
-  notes: EvidenceNarrative[];
+  item: CriterionEvaluationResult["evidence_items"][number];
 }>) {
   return (
-    <div className={styles.evidenceGroup}>
-      <p className={styles.evidenceTitle}>{title}</p>
-      {notes.length ? (
-        <div className={styles.evidenceList}>
-          {notes.map((item) => (
-            <article
-              key={`${title}-${item.chunk_id}`}
-              className={tone === "positive" ? styles.positiveCard : styles.negativeCard}
-            >
-              <p className={styles.evidencePath}>{item.location_summary}</p>
-              <p className={styles.evidenceText}>{item.evidence_text}</p>
-              <p className={styles.evidenceReason}>{item.why_it_matters}</p>
-              <p className={styles.evidenceChunkId}>Kaynak chunk: {item.chunk_id}</p>
-            </article>
+    <article className={`${styles.evidenceCard} ${styles[`evidenceCard${capitalize(item.evidence_type)}`]}`}>
+      <div className={styles.evidenceCardTop}>
+        <span className={styles.evidenceType}>{getEvidenceTypeLabel(item.evidence_type)}</span>
+        <span className={styles.evidenceChunk}>Chunk {item.chunk_id}</span>
+      </div>
+      <p className={styles.evidenceLocation}>
+        {formatEvidenceLocation(item.heading_path, item.page_start, item.page_end)}
+      </p>
+      <blockquote className={styles.evidenceQuote}>{item.verbatim_excerpt}</blockquote>
+      <p className={styles.evidenceWhy}>{item.why_it_matters}</p>
+    </article>
+  );
+}
+
+function InfoPanel({
+  title,
+  items,
+  emptyText,
+  tone,
+}: Readonly<{
+  title: string;
+  items: string[];
+  emptyText: string;
+  tone: "positive" | "warning" | "danger";
+}>) {
+  return (
+    <div className={`${styles.infoPanel} ${styles[`infoPanel${capitalize(tone)}`]}`}>
+      <p className={styles.infoPanelTitle}>{title}</p>
+      {items.length ? (
+        <ul className={styles.inlineList}>
+          {items.map((item, index) => (
+            <li key={`${title}-${index}`}>{item}</li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <p className={styles.emptyEvidence}>Kanıt bulunamadı.</p>
+        <p className={styles.infoPanelEmpty}>{emptyText}</p>
       )}
     </div>
   );
 }
 
-function MetaList({
+function InfoList({
   title,
   items,
+  emptyText,
 }: Readonly<{
   title: string;
   items: string[];
+  emptyText: string;
 }>) {
   return (
-    <div className={styles.metaCard}>
-      <p className={styles.metaTitle}>{title}</p>
-      <ul className={styles.metaList}>
-        {items.length ? items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>) : <li>Yok</li>}
-      </ul>
+    <div className={styles.heroList}>
+      <p className={styles.heroListTitle}>{title}</p>
+      {items.length ? (
+        <ul className={styles.inlineList}>
+          {items.map((item, index) => (
+            <li key={`${title}-${index}`}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.infoPanelEmpty}>{emptyText}</p>
+      )}
     </div>
+  );
+}
+
+function MetricPill({
+  label,
+  value,
+  accent = false,
+}: Readonly<{
+  label: string;
+  value: string;
+  accent?: boolean;
+}>) {
+  return (
+    <div className={`${styles.metricPill} ${accent ? styles.metricPillAccent : ""}`}>
+      <span className={styles.metricLabel}>{label}</span>
+      <span className={styles.metricValue}>{value}</span>
+    </div>
+  );
+}
+
+function buildReportDimensions(evaluationState: EvaluationState | null): ReportDimension[] {
+  if (!evaluationState) {
+    return [];
+  }
+
+  const titleByDimension = new Map(
+    evaluationState.main_scores.map((item) => [item.main_dimension_id, item.title]),
+  );
+
+  const subcriteriaByDimension = new Map<string, CriterionEvaluationResult[]>();
+  for (const item of evaluationState.subcriteria_results) {
+    const key = item.main_dimension_id ?? item.category ?? "unknown";
+    const current = subcriteriaByDimension.get(key) ?? [];
+    current.push(item);
+    subcriteriaByDimension.set(key, current);
+  }
+
+  return evaluationState.main_scores.map((item) => ({
+    id: item.main_dimension_id,
+    title: item.title,
+    weight: item.weight,
+    score: item.score,
+    weightedScore: item.weighted_score,
+    summary: item.summary,
+    subcriteria: subcriteriaByDimension.get(item.main_dimension_id) ?? [],
+  })).concat(
+    [...subcriteriaByDimension.entries()]
+      .filter(([dimensionId]) => !titleByDimension.has(dimensionId))
+      .map(([dimensionId, subcriteria]) => ({
+        id: dimensionId,
+        title: dimensionId,
+        weight: 0,
+        score: null,
+        weightedScore: null,
+        summary: "Bu boyut için henüz hesaplanmış skor özeti bulunamadı.",
+        subcriteria,
+      })),
   );
 }
 
@@ -382,4 +596,47 @@ function getDecisionLabel(status: CriterionEvaluationResult["decision_status"]) 
     return "Kanıt çelişkili";
   }
   return "Başarısız";
+}
+
+function getEvidenceTypeLabel(type: CriterionEvaluationResult["evidence_items"][number]["evidence_type"]) {
+  if (type === "positive") {
+    return "Destekleyici Kanıt";
+  }
+  if (type === "negative") {
+    return "Zayıflatan Kanıt";
+  }
+  return "Bağlam";
+}
+
+function formatScore(value: number | null | undefined, scale: number) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return `${value.toFixed(scale === 5 ? 1 : 2)}/${scale}`;
+}
+
+function formatWeightedContribution(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return `${value.toFixed(2)} puan`;
+}
+
+function formatEvidenceLocation(
+  headingPath: string[],
+  pageStart: number | null,
+  pageEnd: number | null,
+) {
+  const headingText = headingPath.length ? headingPath.join(" > ") : "Belirsiz bölüm";
+  if (pageStart === null && pageEnd === null) {
+    return headingText;
+  }
+  if (pageStart === pageEnd) {
+    return `${headingText} · Sayfa ${pageStart}`;
+  }
+  return `${headingText} · Sayfa ${pageStart}-${pageEnd}`;
+}
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

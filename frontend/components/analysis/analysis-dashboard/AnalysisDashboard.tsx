@@ -10,6 +10,7 @@ import {
   fetchCurrentEvaluation,
   fetchCurrentAnalysis,
   startCurrentAnalysis,
+  startCurrentAnalysisUntilChunking,
 } from "../../../lib/analysis";
 import styles from "./analysis-dashboard.module.css";
 import { AnalyzeButton } from "../analyze-button/AnalyzeButton";
@@ -19,6 +20,7 @@ type AnalysisDashboardProps = Readonly<{
   apiBaseUrl: string;
   sessionId: string;
   uploadState: UploadState | null;
+  startMode?: "full" | "chunk_only";
 }>;
 
 const POLLING_INTERVAL_MS = 2500;
@@ -28,6 +30,7 @@ export function AnalysisDashboard({
   apiBaseUrl,
   sessionId,
   uploadState,
+  startMode = "full",
 }: AnalysisDashboardProps) {
   const [analysisState, setAnalysisState] = useState<AnalysisState | null>(null);
   const [evaluationState, setEvaluationState] = useState<EvaluationState | null>(null);
@@ -180,7 +183,10 @@ export function AnalysisDashboard({
     setError("");
 
     try {
-      const nextState = await startCurrentAnalysis(apiBaseUrl, sessionId);
+      const nextState =
+        startMode === "chunk_only"
+          ? await startCurrentAnalysisUntilChunking(apiBaseUrl, sessionId)
+          : await startCurrentAnalysis(apiBaseUrl, sessionId);
       setAnalysisState(nextState);
     } catch (currentError) {
       setError(
@@ -208,6 +214,7 @@ export function AnalysisDashboard({
         disabled={!canStart}
         isBusy={isStarting || isAnalysisRunning(analysisState)}
         onClick={() => void handleStartAnalysis()}
+        mode={startMode}
         helperText={
           uploadState
             ? undefined

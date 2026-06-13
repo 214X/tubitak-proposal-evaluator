@@ -147,20 +147,52 @@ function ChunkCard({
   chunk: ChunkOutput["chunks"][number];
   section: SectionContainer | null;
 }>) {
+  const partLabel =
+    chunk.chunk_type === "narrative" && chunk.part_index && chunk.part_count
+      ? `Parça ${chunk.part_index}/${chunk.part_count}`
+      : null;
+  const workPackageLabel = chunk.work_package_no
+    ? `İş Paketi ${chunk.work_package_no}`
+    : null;
+  const workPackageMeta = [chunk.work_package_code, chunk.work_package_duration_text]
+    .filter(Boolean)
+    .join(" • ");
+  const workPackageTitle =
+    chunk.work_package_title ??
+    section?.work_package_title ??
+    null;
+  const sectionLabel = chunk.work_package_section_no
+    ? `${chunk.work_package_section_no} - ${section?.leaf_heading ?? chunk.heading_path_titles.at(-1) ?? ""}`.trim()
+    : section?.leaf_heading ?? chunk.heading_path_titles.at(-1) ?? chunk.section_id;
+
   return (
     <section className={styles.chunkCard} data-type={chunk.chunk_type}>
       <div className={styles.chunkHeader}>
         <div className={styles.chunkMetaBlock}>
-          <p className={styles.chunkType}>{chunk.chunk_type}</p>
-          <h3 className={styles.chunkTitle}>
-            {section?.leaf_heading ?? chunk.heading_path_titles.at(-1) ?? chunk.section_id}
-          </h3>
+          <div className={styles.chunkBadgeRow}>
+            <p className={styles.chunkType}>{chunk.chunk_type}</p>
+            {partLabel ? <p className={styles.chunkPart}>{partLabel}</p> : null}
+          </div>
+          {workPackageLabel || workPackageTitle || workPackageMeta ? (
+            <div className={styles.chunkContextBlock}>
+              <p className={styles.chunkContextLabel}>İş Paketi</p>
+              <h3 className={styles.chunkTitle}>
+                {workPackageLabel ?? "İş Paketi"}
+                {workPackageTitle ? ` - ${workPackageTitle}` : ""}
+              </h3>
+              {workPackageMeta ? <p className={styles.chunkWorkPackageMeta}>{workPackageMeta}</p> : null}
+            </div>
+          ) : null}
+          <div className={styles.chunkContextBlock}>
+            <p className={styles.chunkContextLabel}>Alt Bölüm</p>
+            <p className={styles.chunkSectionLabel}>{sectionLabel}</p>
+          </div>
           <p className={styles.chunkPath}>{chunk.heading_path_titles.join(" > ")}</p>
         </div>
 
         <div className={styles.chunkMetaSide}>
-          <p className={styles.chunkOrder}>Sıra {chunk.order_in_section}</p>
-          <p className={styles.chunkPage}>
+          <p className={styles.chunkMetaPill}>Sıra {chunk.order_in_section}</p>
+          <p className={styles.chunkMetaPill}>
             Sayfa {chunk.page_start ?? "?"}
             {chunk.page_end && chunk.page_end !== chunk.page_start ? ` - ${chunk.page_end}` : ""}
           </p>

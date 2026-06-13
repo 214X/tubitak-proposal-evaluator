@@ -19,13 +19,26 @@
 .header {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   align-items: flex-start;
 }
 
-.session {
+.headerCopy {
+  display: grid;
+  gap: 10px;
+}
+
+.headerMeta {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.session,
+.statusBadge,
+.metaChip {
   margin: 0;
-  padding: 12px 14px;
+  padding: 10px 14px;
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-tint) 74%, transparent);
   color: var(--accent-strong);
@@ -33,119 +46,101 @@
   font-weight: 700;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 13px;
+.statusBadge {
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+}
+
+.eyebrow,
+.subcriterionEyebrow,
+.dimensionEyebrow,
+.heroLabel,
+.scoreCardId,
+.coverageTitle,
+.evidenceType,
+.infoPanelTitle,
+.heroListTitle {
+  margin: 0;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
 }
 
 .title {
   margin: 0;
-  max-width: 12ch;
+  max-width: 14ch;
   font-family:
     "Iowan Old Style",
     "Palatino Linotype",
     "Book Antiqua",
     Georgia,
     serif;
-  font-size: clamp(2.3rem, 5vw, 4.2rem);
+  font-size: clamp(2.3rem, 5vw, 4.1rem);
   line-height: 1.02;
   letter-spacing: -0.04em;
   color: var(--app-text);
   text-wrap: balance;
 }
 
-.description {
-  margin: 10px 0 0;
-  max-width: 62ch;
+.description,
+.sectionDescription,
+.dimensionText,
+.subcriterionText,
+.scoreCardSummary,
+.heroMeta,
+.evidenceSectionText {
+  margin: 0;
   color: var(--app-muted);
+  line-height: 1.7;
+}
+
+.description {
+  max-width: 64ch;
   font-size: 1rem;
-  line-height: 1.75;
 }
 
-.startButton {
-  min-width: 220px;
-  min-height: 52px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #176753 0%, #2f8c74 100%);
-  color: #f7fff9;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  transition:
-    transform 180ms ease,
-    opacity 180ms ease,
-    box-shadow 180ms ease;
-  box-shadow: 0 16px 30px rgba(23, 103, 83, 0.18);
-}
-
-.startButton:hover:enabled {
-  transform: translateY(-1px);
-}
-
-.startButton:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-}
-
-.helperText,
 .errorText {
   margin: 0;
   padding: 12px 16px;
   border-radius: 16px;
-  font-size: 14px;
-}
-
-.helperText {
-  background: rgba(23, 103, 83, 0.08);
-  color: #275649;
-}
-
-.errorText {
   background: rgba(215, 58, 73, 0.1);
   color: #b42332;
-}
-
-.statusCard {
-  display: grid;
-  gap: 14px;
-  padding: 22px 24px;
-  border-radius: 28px;
-  background: color-mix(in srgb, var(--surface-tint) 78%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 70%, transparent);
-}
-
-.statusRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
   font-size: 14px;
 }
 
-.statusLabel {
-  color: var(--app-muted);
+.heroCard,
+.scoreCard,
+.infoPanel,
+.dimensionAccordion,
+.subcriterionCard,
+.coverageCard {
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow:
+    0 18px 36px rgba(18, 14, 13, 0.06),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
 }
 
-.statusValue {
-  color: var(--app-text);
-  font-weight: 600;
-  text-align: right;
-}
-
-.scoreSummary {
+.heroCard {
   display: grid;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(29, 111, 95, 0.12);
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 18px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 92%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
 }
 
-.scoreValue {
+.heroScore {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, #f19b4f 12%, transparent));
+}
+
+.heroValue {
   margin: 0;
   font-family:
     "Iowan Old Style",
@@ -153,20 +148,155 @@
     "Book Antiqua",
     Georgia,
     serif;
-  font-size: 40px;
-  font-weight: 800;
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  line-height: 0.95;
   color: var(--accent-strong);
+  letter-spacing: -0.05em;
 }
 
-.scoreMeta {
+.heroInsights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.heroList {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface-tint) 82%, transparent);
+}
+
+.sectionHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.sectionTitle {
   margin: 0;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  line-height: 1.1;
+  color: var(--app-text);
+}
+
+.mainScoreSection,
+.tableSection,
+.accordionSection {
+  display: grid;
+  gap: 18px;
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.scoreCard {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 88%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
+}
+
+.scoreCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.scoreCardWeight,
+.scoreCardMeta,
+.tableSubtext,
+.evidenceChunk,
+.metricLabel,
+.infoPanelEmpty,
+.emptyEvidence {
   color: var(--app-muted);
   font-size: 13px;
 }
 
-.workspace {
+.scoreCardTitle,
+.dimensionTitle,
+.subcriterionTitle {
+  margin: 0;
+  color: var(--app-text);
+  line-height: 1.2;
+}
+
+.scoreCardTitle,
+.dimensionTitle {
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+}
+
+.scoreCardTitle {
+  font-size: 1.35rem;
+}
+
+.dimensionTitle {
+  font-size: 1.75rem;
+}
+
+.subcriterionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.scoreCardValue,
+.dimensionScore {
+  margin: 0;
+  color: var(--accent-strong);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.scoreCardValue {
+  font-size: 2rem;
+}
+
+.dimensionScore {
+  font-size: 2.4rem;
+}
+
+.supportSection,
+.narrativeGrid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.infoPanel {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--surface-tint) 82%, transparent);
+}
+
+.infoPanelPositive {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.infoPanelWarning {
+  background: rgba(232, 160, 39, 0.1);
+}
+
+.infoPanelDanger {
+  background: rgba(185, 76, 55, 0.1);
 }
 
 .tableWrap {
@@ -174,13 +304,12 @@
   border-radius: 28px;
   border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
   background: color-mix(in srgb, var(--surface-tint) 80%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 70%, transparent);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 920px;
 }
 
 .table th,
@@ -188,8 +317,8 @@
   padding: 14px 16px;
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 8%, transparent);
   text-align: left;
-  font-size: 14px;
   vertical-align: top;
+  font-size: 14px;
 }
 
 .table th {
@@ -199,188 +328,202 @@
   text-transform: uppercase;
 }
 
-.table tbody tr {
-  cursor: pointer;
+.tableSubtext {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 
-.table tbody tr:hover {
-  background: color-mix(in srgb, var(--accent) 4%, transparent);
-}
-
-.activeRow {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-
-.detailCard {
+.accordionList {
   display: grid;
-  gap: 18px;
-  padding: 26px;
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 90%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
-  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
-  box-shadow:
-    0 18px 36px rgba(18, 14, 13, 0.06),
-    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
-}
-
-.detailHeader {
-  display: flex;
-  justify-content: space-between;
   gap: 16px;
-  align-items: flex-start;
 }
 
-.detailCategory {
-  margin: 0 0 8px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.dimensionAccordion {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 90%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
 }
 
-.detailTitle {
-  margin: 0;
-  font-family:
-    "Iowan Old Style",
-    "Palatino Linotype",
-    "Book Antiqua",
-    Georgia,
-    serif;
-  font-size: 28px;
-  color: var(--app-text);
-  line-height: 1.12;
+.dimensionSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 24px;
+  cursor: pointer;
+  list-style: none;
 }
 
-.detailScoreBlock {
+.dimensionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.dimensionScoreBlock {
   display: grid;
   justify-items: end;
+  gap: 6px;
 }
 
-.detailScore {
-  font-size: 34px;
-  font-weight: 800;
-  color: var(--accent-strong);
-}
-
-.detailScoreMeta {
+.dimensionScoreMeta {
   color: var(--app-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
-.justification {
-  margin: 0;
-  color: var(--app-text);
-  line-height: 1.7;
+.subcriterionList {
+  display: grid;
+  gap: 16px;
+  padding: 0 24px 24px;
 }
 
-.metaGrid {
+.subcriterionCard {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  background: color-mix(in srgb, var(--surface-tint) 84%, transparent);
+}
+
+.subcriterionHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 18px;
+}
+
+.metricPillGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
-.metaCard {
-  padding: 16px;
+.metricPill {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
   border-radius: 18px;
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--app-panel) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
-.metaTitle,
-.reportTitle,
-.reportListTitle,
-.evidenceTitle {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+.metricPillAccent {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), color-mix(in srgb, #f19b4f 10%, transparent));
+}
+
+.metricValue {
+  color: var(--app-text);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.subcriterionMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.metaList,
-.reportList {
+.coverageCard {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  background: rgba(232, 160, 39, 0.08);
+}
+
+.inlineList {
   margin: 0;
   padding-left: 18px;
   color: var(--app-text);
 }
 
-.metaList li,
-.reportList li {
+.inlineList li {
   margin: 0 0 8px;
+  line-height: 1.6;
 }
 
-.evidenceColumns {
+.evidenceSection {
+  display: grid;
+  gap: 14px;
+}
+
+.sectionHeaderCompact {
+  display: grid;
+  gap: 4px;
+}
+
+.evidenceSectionTitle {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.evidenceGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
-.evidenceGroup {
+.evidenceCard {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.evidenceList {
-  display: grid;
-  gap: 12px;
-}
-
-.positiveCard,
-.negativeCard {
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border-radius: 18px;
-}
-
-.positiveCard {
+.evidenceCardPositive {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-.negativeCard {
+.evidenceCardNegative {
   background: rgba(185, 76, 55, 0.08);
-  border: 1px solid rgba(185, 76, 55, 0.18);
 }
 
-.evidencePath {
-  margin: 0;
-  color: var(--app-text);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.6;
+.evidenceCardContext {
+  background: color-mix(in srgb, var(--surface-tint) 78%, transparent);
 }
 
-.evidenceText {
-  margin: 0;
-  color: var(--app-text);
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
+.evidenceCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
 }
 
-.evidenceReason {
+.evidenceLocation,
+.evidenceWhy {
   margin: 0;
   color: var(--app-muted);
   font-size: 13px;
   line-height: 1.65;
 }
 
-.evidenceChunkId {
+.evidenceQuote {
   margin: 0;
-  color: var(--app-muted);
-  font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--app-text);
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
 }
 
 .emptyEvidence,
 .emptyState {
   margin: 0;
-  color: var(--app-muted);
 }
 
 .emptyState {
@@ -390,53 +533,46 @@
   border-radius: 24px;
   background: color-mix(in srgb, var(--surface-tint) 70%, transparent);
   border: 1px dashed color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--app-muted);
 }
 
-.report {
-  display: grid;
-  gap: 22px;
-  padding: 26px;
-  border-radius: 30px;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 92%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
-  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
-  box-shadow:
-    0 18px 36px rgba(18, 14, 13, 0.06),
-    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
-}
+@media (max-width: 1080px) {
+  .heroCard,
+  .subcriterionHeader {
+    grid-template-columns: 1fr;
+  }
 
-.reportText {
-  margin: 0;
-  color: var(--app-text);
-  line-height: 1.7;
-}
-
-.reportColumns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  .heroInsights,
+  .supportSection,
+  .narrativeGrid,
+  .evidenceGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 960px) {
-  .header,
-  .detailHeader {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
   .panel {
     padding: 80px 18px 20px;
     border-radius: 28px;
   }
 
-  .startButton {
-    width: 100%;
+  .header,
+  .dimensionSummary {
+    grid-template-columns: 1fr;
+    display: grid;
   }
 
-  .metaGrid,
-  .evidenceColumns,
-  .reportColumns {
+  .headerMeta,
+  .dimensionScoreBlock {
+    justify-items: start;
+  }
+
+  .scoreGrid,
+  .metricPillGrid {
     grid-template-columns: 1fr;
+  }
+
+  .subcriterionList {
+    padding: 0 16px 16px;
   }
 }

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 ChunkType = Literal["qa", "narrative", "table", "list"]
 
@@ -15,6 +15,14 @@ class SectionContainer(BaseModel):
     page_start: int | None = None                # first page covered by the leaf section
     page_end: int | None = None                  # last page covered by the leaf section
     content_refs: list[str]                      # parser stream refs attached directly to this leaf section
+    work_package_id: str | None = None           # stable work-package identifier when this section belongs to a parsed work package
+    work_package_no: str | None = None           # extracted work-package sıra numarası
+    work_package_code: str | None = None         # extracted work-package code when available
+    work_package_title: str | None = None        # extracted work-package title
+    work_package_date_range: str | None = None   # extracted work-package date range text
+    work_package_duration_text: str | None = None  # extracted work-package duration text
+    work_package_organizations: list[str] = Field(default_factory=list)
+    work_package_section_no: str | None = None   # repeated subsection number such as 1, 2, 3, 4 inside a work package
 
 
 class BaseChunk(BaseModel):
@@ -28,6 +36,14 @@ class BaseChunk(BaseModel):
     page_end: int | None = None                  # last page where this chunk appears
     order_in_section: int                        # deterministic order within the owning section
     text_for_embedding: str                      # normalized, human-readable text representation used for embeddings
+    work_package_id: str | None = None
+    work_package_no: str | None = None
+    work_package_code: str | None = None
+    work_package_title: str | None = None
+    work_package_date_range: str | None = None
+    work_package_duration_text: str | None = None
+    work_package_organizations: list[str] = Field(default_factory=list)
+    work_package_section_no: str | None = None
 
 
 class QAChunk(BaseChunk):
