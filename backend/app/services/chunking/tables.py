@@ -4,6 +4,10 @@ from typing import Any
 
 
 def extract_table_title(payload: Any) -> str | None:
+    if _is_gantt_chart_payload(payload):
+        title = payload.get("title")
+        return title if isinstance(title, str) else "İş Zaman Çubuk Grafiği"
+
     # Some tables start with a merged caption row before the real header row.
     # We treat that first row as a table title only when the shape strongly
     # suggests a single logical label followed by a separate multi-column header.
@@ -19,6 +23,15 @@ def extract_table_title(payload: Any) -> str | None:
 
 
 def extract_table_columns(payload: Any) -> list[str]:
+    if _is_gantt_chart_payload(payload):
+        return [
+            "İş Paketi",
+            "Görev",
+            "Başlangıç Haftası",
+            "Bitiş Haftası",
+            "Ay Aralığı",
+        ]
+
     # Prefer the first detected grid row as headers. When only row dictionaries
     # are available, use their keys as column names in source order.
     normalized_grid = _extract_normalized_grid(payload)
@@ -35,6 +48,29 @@ def extract_table_columns(payload: Any) -> list[str]:
 
 
 def extract_table_rows(payload: Any) -> list[list[str]]:
+    if _is_gantt_chart_payload(payload):
+        rows: list[list[str]] = []
+        for work_package in payload.get("work_packages", []):
+            if not isinstance(work_package, dict):
+                continue
+            work_package_label = normalize_table_cell(work_package.get("label"))
+            tasks = work_package.get("tasks")
+            if not isinstance(tasks, list):
+                continue
+            for task in tasks:
+                if not isinstance(task, dict):
+                    continue
+                rows.append(
+                    [
+                        work_package_label,
+                        normalize_table_cell(task.get("label")),
+                        normalize_table_cell(task.get("start_week")),
+                        normalize_table_cell(task.get("end_week")),
+                        normalize_table_cell(task.get("months")),
+                    ]
+                )
+        return rows
+
     # Table row extraction mirrors column extraction so both paths stay
     # structurally aligned even when Docling emits slightly different payload
     # shapes across documents.
@@ -142,3 +178,7 @@ def _extract_row_dicts(payload: Any) -> list[dict[str, Any]]:
                 return rows
 
     return []
+
+
+def _is_gantt_chart_payload(payload: Any) -> bool:
+    return isinstance(payload, dict) and payload.get("type") == "gantt_chart"

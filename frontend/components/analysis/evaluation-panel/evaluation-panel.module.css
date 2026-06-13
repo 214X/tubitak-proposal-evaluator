@@ -124,7 +124,7 @@
 
 .heroCard {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   padding: 24px;
   background:
@@ -154,20 +154,6 @@
   letter-spacing: -0.05em;
 }
 
-.heroInsights {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.heroList {
-  display: grid;
-  gap: 10px;
-  padding: 18px;
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--surface-tint) 82%, transparent);
-}
-
 .sectionHeader {
   display: grid;
   gap: 6px;
@@ -191,6 +177,19 @@
 .accordionSection {
   display: grid;
   gap: 18px;
+}
+
+.rubricSummaryCard,
+.scoreScaleCard,
+.rubricGroupCard,
+.rubricItemCard,
+.scalePill,
+.rubricModal {
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow:
+    0 18px 36px rgba(18, 14, 13, 0.06),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
 }
 
 .scoreGrid {
@@ -273,7 +272,6 @@
   font-size: 2.4rem;
 }
 
-.supportSection,
 .narrativeGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -304,6 +302,251 @@
   border-radius: 28px;
   border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
   background: color-mix(in srgb, var(--surface-tint) 80%, transparent);
+}
+
+.rubricSummaryCard {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 88%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
+}
+
+.rubricSummaryCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.rubricSummaryEyebrow,
+.rubricItemEyebrow,
+.rubricGroupId,
+.scalePillLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.rubricSummaryTitle,
+.rubricModalTitle,
+.rubricGroupTitle,
+.scoreScaleTitle {
+  margin: 0;
+  color: var(--app-text);
+  line-height: 1.15;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+}
+
+.rubricSummaryTitle {
+  font-size: 1.45rem;
+}
+
+.rubricSummaryText,
+.rubricModalText,
+.rubricGroupMeta,
+.rubricItemDescription,
+.rubricItemExplanation,
+.scoreScaleText,
+.scalePillText {
+  margin: 0;
+  color: var(--app-muted);
+  line-height: 1.65;
+}
+
+.rubricButton,
+.rubricCloseButton {
+  display: inline-grid;
+  gap: 4px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #f19b4f));
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.rubricCloseButton {
+  background: color-mix(in srgb, var(--app-panel) 92%, transparent);
+  color: var(--accent-strong);
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.rubricButtonMeta {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.86;
+}
+
+.rubricModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(16, 12, 10, 0.48);
+  backdrop-filter: blur(12px);
+}
+
+.rubricModal {
+  width: min(1100px, 100%);
+  max-height: min(88vh, 1000px);
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 96%, transparent), color-mix(in srgb, var(--app-panel-strong) 98%, transparent));
+}
+
+.rubricModal::-webkit-scrollbar {
+  display: none;
+}
+
+.rubricModalHeader,
+.rubricGroupHeader,
+.scoreScaleHeader,
+.rubricItemTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.rubricModalTitle {
+  font-size: 2rem;
+}
+
+.rubricGroupList,
+.rubricItemList {
+  display: grid;
+  gap: 16px;
+}
+
+.rubricGroupCard {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  background: color-mix(in srgb, var(--surface-tint) 84%, transparent);
+}
+
+.rubricGroupHeader {
+  align-items: center;
+}
+
+.rubricGroupId {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 8px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.rubricGroupTitle {
+  font-size: 1.35rem;
+}
+
+.rubricItemList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.rubricItemCard {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 252, 249, 0.72));
+}
+
+.rubricItemTitle {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 1.1rem;
+  line-height: 1.25;
+}
+
+.rubricRangePill,
+.rubricSectionChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rubricSectionChipWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rubricItemDescription {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface-tint) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.rubricItemExplanation {
+  padding: 14px 16px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 46%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #f19b4f 14%, transparent),
+      color-mix(in srgb, var(--surface-tint) 92%, transparent)
+    );
+  border: 1px solid color-mix(in srgb, #f19b4f 20%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 10px 24px rgba(54, 33, 18, 0.05);
+  color: color-mix(in srgb, var(--app-text) 88%, var(--accent-strong));
+}
+
+.scoreScaleCard {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, #f19b4f 14%, transparent), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-tint) 88%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
+}
+
+.scoreScaleGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.scalePill {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .table {
@@ -360,6 +603,45 @@
   display: none;
 }
 
+.dimensionSummaryCopy {
+  display: grid;
+  gap: 6px;
+}
+
+.dimensionSummaryAside,
+.subcriterionSummaryAside {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.expandHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.expandHint::before {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent-strong);
+}
+
+.dimensionAccordion[open] .expandHint::before,
+.subcriterionAccordion[open] .expandHint::before,
+.evidenceCard[open] .expandHint::before {
+  content: "−";
+}
+
 .dimensionScoreBlock {
   display: grid;
   justify-items: end;
@@ -382,6 +664,31 @@
   gap: 16px;
   padding: 22px;
   background: color-mix(in srgb, var(--surface-tint) 84%, transparent);
+}
+
+.subcriterionAccordion {
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--surface-tint) 80%, transparent);
+  box-shadow:
+    0 18px 36px rgba(18, 14, 13, 0.06),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 72%, transparent);
+}
+
+.subcriterionSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  padding: 22px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.subcriterionSummary::-webkit-details-marker,
+.evidenceSummary::-webkit-details-marker {
+  display: none;
 }
 
 .subcriterionHeader {
@@ -418,6 +725,52 @@
 .subcriterionMetaRow {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+.explanationCard,
+.findingCard {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.46);
+  border: 1px solid color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.explanationLabel {
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.explanationText,
+.explanationBody,
+.findingLocation,
+.findingText,
+.evidenceLocationCompact {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.explanationText,
+.findingLocation,
+.evidenceLocationCompact {
+  color: var(--app-muted);
+  font-size: 13px;
+}
+
+.explanationBody,
+.findingText {
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.findingList {
+  display: grid;
   gap: 10px;
 }
 
@@ -477,8 +830,7 @@
 
 .evidenceCard {
   display: grid;
-  gap: 10px;
-  padding: 18px;
+  gap: 0;
   border-radius: 22px;
   border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent);
 }
@@ -500,6 +852,22 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+}
+
+.evidenceSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 18px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.evidenceBody {
+  display: grid;
+  gap: 10px;
+  padding: 0 18px 18px;
 }
 
 .evidenceLocation,
@@ -538,14 +906,21 @@
 
 @media (max-width: 1080px) {
   .heroCard,
-  .subcriterionHeader {
+  .subcriterionHeader,
+  .rubricSummaryCard,
+  .rubricModalHeader,
+  .rubricGroupHeader,
+  .rubricItemTop,
+  .scoreScaleHeader,
+  .subcriterionSummary,
+  .evidenceSummary {
     grid-template-columns: 1fr;
   }
 
-  .heroInsights,
-  .supportSection,
   .narrativeGrid,
-  .evidenceGrid {
+  .evidenceGrid,
+  .rubricItemList,
+  .scoreScaleGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -563,7 +938,9 @@
   }
 
   .headerMeta,
-  .dimensionScoreBlock {
+  .dimensionScoreBlock,
+  .dimensionSummaryAside,
+  .subcriterionSummaryAside {
     justify-items: start;
   }
 
@@ -574,5 +951,13 @@
 
   .subcriterionList {
     padding: 0 16px 16px;
+  }
+
+  .rubricModalBackdrop {
+    padding: 12px;
+  }
+
+  .rubricModal {
+    padding: 18px;
   }
 }

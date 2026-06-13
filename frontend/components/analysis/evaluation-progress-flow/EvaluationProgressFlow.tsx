@@ -14,6 +14,7 @@ export type EvaluationStep = {
 // Types matching current evaluation report
 type EvaluationReport = {
   session_id: string;
+  overall_score: number | null;
   total_weighted_score: number | null;
   max_possible_weighted_score: number | null;
   final_summary: string;
@@ -182,10 +183,10 @@ export function EvaluationProgressFlow({
                       <span className={styles.resultScoreLabel}>ALINAN PUAN</span>
                       <div className={styles.resultScoreContainer}>
                         <span className={styles.resultScoreBig}>
-                          {finalReport.total_weighted_score}
+                          {finalReport.overall_score ?? "-"}
                         </span>
                         <span className={styles.resultScoreDivider}>
-                          /{finalReport.max_possible_weighted_score}
+                          /100
                         </span>
                       </div>
                     </div>

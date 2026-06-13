@@ -189,21 +189,21 @@ def validate_coverage(
         return (
             "missing",
             [
-                "Required sections had no primary section-first matches.",
-                f"Missing required sections: {', '.join(missing_sections)}",
+                "Zorunlu bölümler için birincil section-first eşleşmesi bulunamadı.",
+                f"Eksik zorunlu bölümler: {', '.join(missing_sections)}",
             ],
         )
     if missing_sections:
         return (
             "partial",
             [
-                f"Covered required sections: {', '.join(covered_sections)}",
-                f"Missing required sections: {', '.join(missing_sections)}",
+                f"Karşılanan zorunlu bölümler: {', '.join(covered_sections)}",
+                f"Eksik zorunlu bölümler: {', '.join(missing_sections)}",
             ],
         )
     return (
         "complete",
-        [f"All required sections were covered: {', '.join(covered_sections)}"],
+        [f"Tüm zorunlu bölümler karşılandı: {', '.join(covered_sections)}"],
     )
 
 

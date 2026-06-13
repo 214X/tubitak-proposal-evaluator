@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   type AnalysisState,
+  type ParserGanttChartContent,
   type HeadingHierarchyNode,
   type ParserListContent,
   type ParserOutput,
@@ -466,6 +467,8 @@ function DocumentContentBlock({ item }: Readonly<{ item: ParserStreamItem }>) {
       ? "Metin Bloğu"
       : item.item_type === "table"
         ? "Tablo Bloğu"
+        : item.item_type === "picture" && isNormalizedGanttChartContent(item.content)
+          ? "İş Grafiği"
         : item.item_type === "group"
           ? "Liste Bloğu"
           : "Ham Veri";
@@ -493,6 +496,15 @@ function DocumentContentBlock({ item }: Readonly<{ item: ParserStreamItem }>) {
       <div className={styles.contentBlock}>
         <p className={styles.contentBlockLabel}>{blockLabel}</p>
         <DocumentList items={item.content.items} />
+      </div>
+    );
+  }
+
+  if (item.item_type === "picture" && isNormalizedGanttChartContent(item.content)) {
+    return (
+      <div className={styles.contentBlock}>
+        <p className={styles.contentBlockLabel}>{blockLabel}</p>
+        <DocumentGanttChart chart={item.content} />
       </div>
     );
   }
@@ -643,6 +655,103 @@ function DocumentList({ items }: Readonly<{ items: string[] }>) {
   );
 }
 
+function DocumentGanttChart({
+  chart,
+}: Readonly<{
+  chart: ParserGanttChartContent;
+}>) {
+  const monthLabels = chart.months.length ? chart.months : Array.from({ length: 12 }, (_, index) => `Ay ${index + 1}`);
+  const weekCount = chart.week_count > 0 ? chart.week_count : 48;
+  const weekLabels = Array.from({ length: weekCount }, (_, index) => index + 1);
+
+  return (
+    <div className={styles.ganttCard}>
+      <div className={styles.ganttHeader}>
+        <div>
+          <p className={styles.ganttEyebrow}>Normalize Edilmiş İş Grafiği</p>
+          <h4 className={styles.ganttTitle}>{chart.title}</h4>
+        </div>
+        <p className={styles.ganttMeta}>
+          {chart.work_packages.length} iş paketi • {chart.work_packages.reduce((total, current) => total + current.tasks.length, 0)} görev
+        </p>
+      </div>
+
+      <div className={styles.ganttTimelineShell}>
+        <div className={styles.ganttTimelineHeader}>
+          <div className={styles.ganttTaskHeader}>Görevler</div>
+          <div className={styles.ganttScale}>
+            <div className={styles.ganttMonths}>
+              {monthLabels.map((monthLabel, index) => (
+                <div
+                  key={`${monthLabel}-${index}`}
+                  className={styles.ganttMonthCell}
+                  style={{ gridColumn: `${index * 4 + 1} / span 4` }}
+                >
+                  {monthLabel}
+                </div>
+              ))}
+            </div>
+            <div className={styles.ganttWeeks}>
+              {weekLabels.map((weekLabel) => (
+                <div key={`week-${weekLabel}`} className={styles.ganttWeekCell}>
+                  {weekLabel}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.ganttPackages}>
+          {chart.work_packages.map((workPackage, packageIndex) => (
+            <section key={`${workPackage.label}-${packageIndex}`} className={styles.ganttPackage}>
+              <div className={styles.ganttPackageHeading}>
+                <p className={styles.ganttPackageBadge}>{workPackage.label}</p>
+                <p className={styles.ganttPackageMeta}>{workPackage.tasks.length} görev</p>
+              </div>
+
+              <div className={styles.ganttTaskRows}>
+                {workPackage.tasks.map((task, taskIndex) => (
+                  <div key={`${workPackage.label}-${task.label}-${taskIndex}`} className={styles.ganttTaskRow}>
+                    <div className={styles.ganttTaskLabelWrap}>
+                      <p className={styles.ganttTaskLabel}>{task.label}</p>
+                      <p className={styles.ganttTaskMeta}>
+                        Hafta {task.start_week} - {task.end_week}
+                        {task.months ? ` • ${task.months}` : ""}
+                      </p>
+                    </div>
+
+                    <div
+                      className={styles.ganttTrack}
+                      style={{ gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))` }}
+                    >
+                      {weekLabels.map((weekLabel) => (
+                        <span key={`grid-${workPackage.label}-${taskIndex}-${weekLabel}`} className={styles.ganttGridCell} />
+                      ))}
+                      <span
+                        className={styles.ganttBar}
+                        style={{
+                          gridColumn: `${task.start_week} / ${Math.min(weekCount + 1, task.end_week + 1)}`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+
+      {typeof chart.image_uri === "string" && chart.image_uri ? (
+        <details className={styles.ganttSource}>
+          <summary className={styles.ganttSourceSummary}>Kaynak görseli göster</summary>
+          <img src={chart.image_uri} alt={chart.title} className={styles.ganttSourceImage} />
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
 function isDoclingTableData(value: unknown): value is {
   table_cells?: Array<{
     text?: string;
@@ -664,4 +773,13 @@ function isNormalizedListContent(value: unknown): value is ParserListContent {
 
   const candidate = value as Partial<ParserListContent>;
   return candidate.type === "list" && Array.isArray(candidate.items);
+}
+
+function isNormalizedGanttChartContent(value: unknown): value is ParserGanttChartContent {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<ParserGanttChartContent>;
+  return candidate.type === "gantt_chart" && Array.isArray(candidate.work_packages);
 }

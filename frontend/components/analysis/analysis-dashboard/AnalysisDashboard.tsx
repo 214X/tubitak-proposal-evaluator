@@ -475,7 +475,7 @@ function EvaluationSummary({
         {evaluationState.final_report ? (
           <SummaryItem
             label="Skor"
-            value={`${evaluationState.final_report.total_weighted_score}/${evaluationState.final_report.max_possible_weighted_score}`}
+            value={`${evaluationState.final_report.overall_score ?? "-"}/100`}
           />
         ) : evaluationState.active_criterion_title ? (
           <SummaryItem label="Aktif Kriter" value={evaluationState.active_criterion_title} />

@@ -27,6 +27,8 @@ from app.services.upload.service import get_session_upload, validate_session_id
 
 RUNNER_LOCK = Lock()
 ACTIVE_RUNNERS: dict[str, Thread] = {}
+MISSING_COVERAGE_SCORE_PENALTY = 15.0
+PARTIAL_COVERAGE_SCORE_PENALTY = 7.0
 
 
 class SessionSupersededError(RuntimeError):
@@ -147,8 +149,8 @@ def _run_evaluation_pipeline(
             )
             evidence = retrieve_evidence_for_subcriterion(session_id, subcriterion)
 
-            if evidence.coverage_status == "missing" or _total_evidence_count(evidence) < subcriterion.minimum_evidence_count:
-                results.append(_build_insufficient_result(subcriterion, evidence))
+            if _total_evidence_count(evidence) < subcriterion.minimum_evidence_count:
+                results.append(_build_no_evidence_result(subcriterion, evidence))
                 continue
 
             _assert_evaluation_context_is_current(
@@ -169,7 +171,8 @@ def _run_evaluation_pipeline(
                     error=None,
                 )
             )
-            results.append(provider.evaluate_criterion(subcriterion, evidence))
+            raw_result = provider.evaluate_criterion(subcriterion, evidence)
+            results.append(_finalize_result(subcriterion, evidence, raw_result))
 
         _assert_evaluation_context_is_current(
             session_id,
@@ -240,7 +243,7 @@ def _run_evaluation_pipeline(
             ACTIVE_RUNNERS.pop(session_id, None)
 
 
-def _build_insufficient_result(
+def _build_no_evidence_result(
     criterion: EvaluationCriterion,
     evidence: CriterionEvidence,
 ) -> CriterionEvaluationResult:
@@ -249,19 +252,19 @@ def _build_insufficient_result(
         main_dimension_id=criterion.main_dimension_id,
         category=criterion.category,
         title=criterion.title,
-        score=None,
-        claim_strength=None,
-        evidence_quality=None,
+        score=0.0,
+        claim_strength=0.0,
+        evidence_quality=0.0,
         weight=criterion.weight,
-        weighted_score=None,
-        confidence=0.0,
-        decision_status="insufficient_evidence",
-        justification="Kriteri puanlamak için yeterli kanıt bulunamadı.",
+        weighted_score=0.0,
+        confidence=0.15,
+        decision_status="scored",
+        justification="Bu kriter için kullanılabilir kanıt bulunamadığı için taban puan verildi.",
         criterion_explanation=(
-            "Gerekli bölüm eşleşmeleri veya yeterli section-first kanıt bulunamadığı için "
-            "kriter değerlendirmesi başlatılmadı."
+            "Kriteri destekleyecek veya zayıflatacak kullanılabilir chunk bulunamadı. "
+            "Bu nedenle kriter değerlendirmesi en düşük puan seviyesinden sonuçlandırıldı."
         ),
-        short_assessment="Section-first coverage yetersiz.",
+        short_assessment="Kullanılabilir kanıt bulunamadı; kriter taban puanla sonuçlandırıldı.",
         coverage_status=evidence.coverage_status,
         coverage_notes=evidence.coverage_notes,
         primary_section_chunks=evidence.primary_section_chunks,
@@ -284,6 +287,100 @@ def _build_insufficient_result(
     )
 
 
+def _finalize_result(
+    criterion: EvaluationCriterion,
+    evidence: CriterionEvidence,
+    result: CriterionEvaluationResult,
+) -> CriterionEvaluationResult:
+    if result.decision_status == "failed":
+        return result
+
+    evidence_count = _total_evidence_count(evidence)
+    if result.score is None:
+        if evidence_count > 0:
+            return _build_penalized_fallback_result(criterion, evidence, result)
+        return _build_no_evidence_result(criterion, evidence)
+
+    penalty = _coverage_penalty(evidence.coverage_status)
+    if penalty <= 0:
+        return result
+
+    adjusted_score = max(0.0, round(result.score - penalty, 2))
+    updated_justification = (
+        f"{result.justification} "
+        f"Birincil bölüm kapsaması '{evidence.coverage_status}' olduğu için {penalty:.0f} puan ceza uygulandı."
+    ).strip()
+    updated_explanation = (
+        f"{result.criterion_explanation} "
+        f"Zorunlu bölüm kapsamasındaki eksiklik skora ceza olarak yansıtıldı."
+    ).strip()
+    updated_missing_information = _dedupe_strings(
+        [*result.missing_information, *_coverage_penalty_notes(evidence.coverage_status)]
+    )
+
+    return result.model_copy(
+        update={
+            "score": adjusted_score,
+            "weighted_score": adjusted_score,
+            "decision_status": "scored",
+            "justification": updated_justification,
+            "criterion_explanation": updated_explanation,
+            "missing_information": updated_missing_information,
+        }
+    )
+
+
+def _build_penalized_fallback_result(
+    criterion: EvaluationCriterion,
+    evidence: CriterionEvidence,
+    result: CriterionEvaluationResult,
+) -> CriterionEvaluationResult:
+    penalty = _coverage_penalty(evidence.coverage_status)
+    base_score = max(0.0, round(30.0 - penalty, 2))
+    return result.model_copy(
+        update={
+            "score": base_score,
+            "claim_strength": 20.0,
+            "evidence_quality": 20.0,
+            "weighted_score": base_score,
+            "confidence": max(result.confidence, 0.2),
+            "decision_status": "scored",
+            "criterion_explanation": (
+                "Birincil bölüm eşleşmesi bulunamadı; kriter mevcut anlamsal ve bağlamsal "
+                "kanıtlarla ihtiyatlı biçimde puanlandı."
+            ),
+            "short_assessment": "Birincil bölüm eksik olsa da diğer kanıtlarla düşük güvenli puan üretildi.",
+            "justification": (
+                "Zorunlu bölüm eşleşmesi eksik kaldı. Buna rağmen anlamsal destek ve bağlam "
+                "kanıtları kullanılarak düşük güvenli bir puan üretildi."
+            ),
+            "missing_information": _dedupe_strings(
+                [*result.missing_information, *_coverage_penalty_notes(evidence.coverage_status)]
+            ),
+        }
+    )
+
+
+def _coverage_penalty(coverage_status: str) -> float:
+    if coverage_status == "missing":
+        return MISSING_COVERAGE_SCORE_PENALTY
+    if coverage_status == "partial":
+        return PARTIAL_COVERAGE_SCORE_PENALTY
+    return 0.0
+
+
+def _coverage_penalty_notes(coverage_status: str) -> list[str]:
+    if coverage_status == "missing":
+        return [
+            "Zorunlu birincil bölüm bulunamadı; bu nedenle skora ilave kapsama cezası uygulandı."
+        ]
+    if coverage_status == "partial":
+        return [
+            "Zorunlu birincil bölümlerin bir kısmı eksik kaldı; bu nedenle skora kısmi kapsama cezası uygulandı."
+        ]
+    return []
+
+
 def _aggregate_results(
     session_id: str,
     rubric: EvaluationRubric,
@@ -293,15 +390,10 @@ def _aggregate_results(
     main_scores = _build_main_scores(rubric.main_dimensions, rubric.subcriteria, results)
     overall_score = _compute_overall_score(main_scores)
 
-    total_weight = sum(item.weight for item in rubric.subcriteria)
-    total_weighted_score = sum(item.weighted_score or 0.0 for item in results)
-    max_possible_weighted_score = sum(item.weight * item.score_max for item in rubric.subcriteria)
+    total_weight = len(rubric.subcriteria)
+    total_weighted_score = sum(item.score or 0.0 for item in results)
+    max_possible_weighted_score = sum(item.score_max for item in rubric.subcriteria)
     scored_criteria_count = sum(1 for item in results if item.score is not None)
-
-    major_strengths = _build_major_strengths(results)
-    major_weaknesses = _build_major_weaknesses(results)
-    critical_missing_information = _build_critical_missing_information(results, main_scores)
-    red_flags = _build_red_flags(results)
 
     return EvaluationReport(
         session_id=session_id,
@@ -311,17 +403,17 @@ def _aggregate_results(
         main_scores=main_scores,
         subcriteria_results=results,
         rubric_table=rubric_table,
-        major_strengths=major_strengths,
-        major_weaknesses=major_weaknesses,
-        critical_missing_information=critical_missing_information,
-        red_flags=red_flags,
+        major_strengths=[],
+        major_weaknesses=[],
+        critical_missing_information=[],
+        red_flags=[],
         total_weight=total_weight,
         total_weighted_score=round(total_weighted_score, 2),
         max_possible_weighted_score=float(max_possible_weighted_score),
         scored_criteria_count=scored_criteria_count,
         criterion_results=results,
-        strengths=major_strengths,
-        weaknesses=major_weaknesses,
+        strengths=[],
+        weaknesses=[],
         final_summary=_build_final_summary(overall_score, main_scores, results),
     )
 
@@ -369,9 +461,9 @@ def _build_main_scores(
         ]
         scored_results = [item for item in dimension_results if item.score is not None]
 
-        weighted_score_sum = sum((item.score or 0.0) * item.weight for item in scored_results)
-        scored_weight_sum = sum(item.weight for item in scored_results)
-        score = round((weighted_score_sum / scored_weight_sum) * 20, 2) if scored_weight_sum else None
+        score_sum = sum(item.score or 0.0 for item in scored_results)
+        scored_count = len(scored_results)
+        score = round(score_sum / scored_count, 2) if scored_count else None
         weighted_score = round((score or 0.0) * (dimension.weight / 100), 2)
 
         main_scores.append(
@@ -409,85 +501,6 @@ def _compute_overall_score(
     return round(weighted_sum / total_available_weight, 2)
 
 
-def _build_major_strengths(
-    results: list[CriterionEvaluationResult],
-) -> list[str]:
-    strengths: list[str] = []
-    scored_results = sorted(
-        [item for item in results if item.score is not None],
-        key=lambda item: (item.score or 0.0, item.confidence),
-        reverse=True,
-    )
-
-    for item in scored_results:
-        if (item.score or 0.0) < 3.5:
-            continue
-        if item.positive_findings:
-            strengths.append(f"{item.title}: {item.positive_findings[0].summary}")
-        elif item.justification:
-            strengths.append(f"{item.title}: {item.justification}")
-        if len(strengths) >= 5:
-            break
-
-    return strengths
-
-
-def _build_major_weaknesses(
-    results: list[CriterionEvaluationResult],
-) -> list[str]:
-    weaknesses: list[str] = []
-    ordered_results = sorted(
-        results,
-        key=lambda item: (
-            item.score is None,
-            item.score if item.score is not None else -1.0,
-        ),
-    )
-
-    for item in ordered_results:
-        include = item.score is None or (item.score or 0.0) <= 2.5 or item.decision_status != "scored"
-        if not include:
-            continue
-        if item.negative_findings:
-            weaknesses.append(f"{item.title}: {item.negative_findings[0].summary}")
-        elif item.justification:
-            weaknesses.append(f"{item.title}: {item.justification}")
-        if len(weaknesses) >= 5:
-            break
-
-    return weaknesses
-
-
-def _build_critical_missing_information(
-    results: list[CriterionEvaluationResult],
-    main_scores: list[MainDimensionScore],
-) -> list[str]:
-    missing_information: list[str] = []
-    for item in results:
-        for missing_item in item.missing_information:
-            if missing_item not in missing_information:
-                missing_information.append(missing_item)
-
-    for dimension_score in main_scores:
-        if dimension_score.score is None:
-            missing_information.append(
-                f"{dimension_score.main_dimension_id} boyutunda skor üretmek için yeterli alt kriter kanıtı yok."
-            )
-
-    return missing_information[:10]
-
-
-def _build_red_flags(
-    results: list[CriterionEvaluationResult],
-) -> list[str]:
-    red_flags: list[str] = []
-    for item in results:
-        for flag in item.red_flags:
-            if flag not in red_flags:
-                red_flags.append(flag)
-    return red_flags[:10]
-
-
 def _build_main_dimension_summary(
     dimension: EvaluationMainDimension,
     dimension_results: list[CriterionEvaluationResult],
@@ -498,11 +511,19 @@ def _build_main_dimension_summary(
     if score is None:
         return f"{dimension.dimension_id} boyutunda yeterli puanlanmış alt kriter bulunamadı."
 
-    insufficient_count = sum(1 for item in dimension_results if item.score is None)
-    if insufficient_count:
+    unscored_count = sum(1 for item in dimension_results if item.score is None)
+    penalized_count = sum(
+        1 for item in dimension_results if item.coverage_status in {"missing", "partial"}
+    )
+    if unscored_count:
         return (
             f"{dimension.dimension_id} boyutu {score}/100 hesaplandı. "
-            f"{insufficient_count} alt kriter yetersiz kanıt nedeniyle skora katılamadı."
+            f"{unscored_count} alt kriter model hatası veya sıfır kanıt nedeniyle puansız kaldı."
+        )
+    if penalized_count:
+        return (
+            f"{dimension.dimension_id} boyutu {score}/100 hesaplandı. "
+            f"{penalized_count} alt kriterde birincil bölüm eksikliği nedeniyle kapsama cezası uygulandı."
         )
     return f"{dimension.dimension_id} boyutu {score}/100 olarak hesaplandı."
 
@@ -517,17 +538,25 @@ def _build_final_summary(
     if overall_score is None:
         return "Puanlanmış alt kriter bulunamadığı için genel skor hesaplanamadı."
 
-    insufficient_count = sum(1 for item in results if item.score is None)
+    unscored_count = sum(1 for item in results if item.score is None)
+    penalized_count = sum(
+        1 for item in results if item.coverage_status in {"missing", "partial"}
+    )
     available_dimensions = [item.main_dimension_id for item in main_scores if item.score is not None]
-    if insufficient_count:
+    if unscored_count:
         return (
             f"Genel skor {overall_score}/100. "
             f"Skor {', '.join(available_dimensions)} boyutlarındaki puanlanmış alt kriterlerden matematiksel olarak üretildi. "
-            f"{insufficient_count} alt kriter yetersiz kanıt nedeniyle dışarıda bırakıldı."
+            f"{unscored_count} alt kriter model hatası veya sıfır kanıt nedeniyle puansız kaldı."
+        )
+    if penalized_count:
+        return (
+            f"Genel skor {overall_score}/100. "
+            f"{penalized_count} alt kriterde zorunlu bölüm eksikliği bulunduğu için kapsama cezası uygulanarak değerlendirme tamamlandı."
         )
     return (
         f"Genel skor {overall_score}/100. "
-        "Tüm ana boyut skorları alt kriter puanlarının ağırlıklı ortalaması ile hesaplandı."
+        "Tüm ana boyut skorları alt kriter puanlarının eşit ağırlıklı ortalaması ile hesaplandı."
     )
 
 

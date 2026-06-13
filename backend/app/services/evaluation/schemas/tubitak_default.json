@@ -1,277 +1,474 @@
 {
   "rubric_id": "tubitak-1501-1507",
-  "version": "v2",
-  "program_codes": ["1501", "1507"],
+  "version": "v3",
+  "program_codes": [
+    "1501",
+    "1507"
+  ],
   "main_dimensions": [
     {
       "dimension_id": "A",
-      "title": "Endustriyel Ar-Ge Icerigi, Teknoloji Duzeyi ve Yenilikci Yonu",
-      "description": "Projenin Ar-Ge derinligi, teknik yenilik seviyesi ve somut teknik hedeflerinin degerlendirilmesi.",
+      "title": "Endüstriyel Ar-Ge İçeriği, Teknoloji Düzeyi ve Yenilikçi Yönü",
+      "description": "Projenin Ar-Ge derinliği, teknik yenilik seviyesi ve somut teknik hedeflerinin değerlendirilmesi.",
       "weight": 45,
       "ui_label": "A Boyutu",
-      "ui_explanation": "Bu boyut projenin gercek bir Ar-Ge problemi cozup cozmedigini, teknik belirsizlik ve yenilik seviyesini inceler."
+      "ui_explanation": "Bu boyut projenin gerçek bir Ar-Ge problemi çözüp çözmediğini, teknik belirsizlik düzeyini, teknoloji seviyesini ve yenilikçi yönünü inceler."
     },
     {
       "dimension_id": "B",
-      "title": "Proje Plani ve Kurulus Altyapisinin Proje Icin Uygunlugu",
-      "description": "Is paketleri, zaman plani, ekip, altyapi ve yonetim kabiliyetinin degerlendirilmesi.",
+      "title": "Proje Planı ve Kuruluş Altyapısının Proje İçin Uygunluğu",
+      "description": "İş paketleri, zaman planı, ekip, altyapı ve yönetim kabiliyetinin değerlendirilmesi.",
       "weight": 30,
       "ui_label": "B Boyutu",
-      "ui_explanation": "Bu boyut projenin uygulanabilir bir planla, uygun ekip ve kurumsal kapasiteyle yurutup yuruyemeyecegini inceler."
+      "ui_explanation": "Bu boyut projenin uygulanabilir bir planla, uygun ekip ve yeterli kurumsal kapasiteyle yürütülüp yürütülemeyeceğini inceler."
     },
     {
       "dimension_id": "C",
-      "title": "Proje Ciktilarinin Ekonomik Yarara ve Ulusal Kazanima Donusebilirligi",
-      "description": "Ticarilesme, ekonomik getiri, rekabet gucu ve ulusal kazanimin degerlendirilmesi.",
+      "title": "Proje Çıktılarının Ekonomik Yarara ve Ulusal Kazanıma Dönüşebilirliği",
+      "description": "Ticarileşme, ekonomik getiri, rekabet gücü ve ulusal kazanım potansiyelinin değerlendirilmesi.",
       "weight": 25,
       "ui_label": "C Boyutu",
-      "ui_explanation": "Bu boyut projenin pazarda deger uretme, ekonomik fayda saglama ve ulusal katkı potansiyelini inceler."
+      "ui_explanation": "Bu boyut projenin pazarda değer üretme, ekonomik fayda sağlama ve ulusal katkı oluşturma potansiyelini inceler."
     }
   ],
   "subcriteria": [
     {
       "criterion_id": "A1",
       "main_dimension_id": "A",
-      "title": "Ar-Ge Niteligi",
-      "description": "Projenin rutin muhendislikten ayrisan, bilgi uretimi ve teknik gelisim hedefleyen bir Ar-Ge calismasi olup olmadigi.",
-      "question": "Proje gercek bir Ar-Ge faaliyeti niteliginde mi ve bu nitelik basvuruda acikca gosteriliyor mu?",
+      "title": "Ar-Ge Niteliği",
+      "description": "Projenin rutin mühendislikten ayrışan, bilgi üretimi ve teknik gelişim hedefleyen gerçek bir Ar-Ge çalışması olup olmadığı.",
+      "question": "Proje gerçek bir Ar-Ge faaliyeti niteliğinde mi ve bu nitelik başvuruda açıkça gösteriliyor mu?",
       "weight": 8,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B", "B.3", "B.4"],
-      "required_sections": ["B.3"],
-      "fallback_sections": ["B.4", "A"],
-      "semantic_queries": ["ar-ge niteligi", "teknik problem", "bilimsel teknik gelisim", "rutin faaliyetten farki"],
+      "score_max": 100,
+      "source_sections": [
+        "B.1",
+        "B.3",
+        "B.4"
+      ],
+      "required_sections": [
+        "B.1",
+        "B.3"
+      ],
+      "fallback_sections": [
+        "A.3",
+        "B.4"
+      ],
+      "semantic_queries": [
+        "Ar-Ge niteliği",
+        "teknik problem",
+        "bilgi üretimi",
+        "rutin faaliyetten farkı"
+      ],
       "ui_label": "A1",
-      "ui_explanation": "Bu kriter, projenin standart uygulama degil, teknik belirsizlik ve bilgi uretimi iceren bir Ar-Ge isi oldugunu arar."
+      "ui_explanation": "Bu kriter, projenin standart uygulama değil; teknik belirsizlik, bilgi üretimi ve çözüm geliştirme içeren bir Ar-Ge işi olduğunu arar."
     },
     {
       "criterion_id": "A2",
       "main_dimension_id": "A",
       "title": "Teknik Belirsizlik",
-      "description": "Projedeki cozum yolunun onceden kesinlesmemis olmasi ve teknik risklerin acikca tanimlanmasi.",
-      "question": "Projede cozumlenmesi gereken teknik belirsizlikler yeterince somut bicimde tanimlanmis mi?",
+      "description": "Projede çözülmesi gereken teknik problemlerin ve belirsizliklerin somut, sınanabilir ve ikna edici biçimde tanımlanması.",
+      "question": "Projede çözümlenmesi gereken teknik belirsizlikler yeterince somut biçimde tanımlanmış mı?",
       "weight": 7,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B.3"],
-      "required_sections": ["B.3"],
-      "fallback_sections": ["B", "B.4"],
-      "semantic_queries": ["teknik belirsizlik", "teknik risk", "cozumu net olmayan problem", "arastirma gereksinimi"],
+      "score_max": 100,
+      "source_sections": [
+        "B.3",
+        "B.2"
+      ],
+      "required_sections": [
+        "B.3"
+      ],
+      "fallback_sections": [
+        "B.1",
+        "B.4"
+      ],
+      "semantic_queries": [
+        "teknik belirsizlik",
+        "teknik risk",
+        "çözümü net olmayan problem",
+        "araştırma gereksinimi"
+      ],
       "ui_label": "A2",
-      "ui_explanation": "Bu kriter, projenin neden zor oldugunu ve teknik acidan hangi belirsizlikleri tasidigini arar."
+      "ui_explanation": "Bu kriter, projenin neden zor olduğunu ve teknik açıdan hangi belirsizlikleri taşıdığını arar."
     },
     {
       "criterion_id": "A3",
       "main_dimension_id": "A",
-      "title": "Teknoloji Duzeyi",
-      "description": "Mevcut teknolojik seviye ile hedeflenen cozum arasindaki teknik ilerleme duzeyi.",
-      "question": "Proje mevcut duruma gore anlamli bir teknoloji seviyesi artisi ortaya koyuyor mu?",
+      "title": "Teknoloji Düzeyi",
+      "description": "Mevcut teknolojik seviye ile hedeflenen çözüm arasındaki teknik ilerleme düzeyi ve state-of-the-art farkının açıklığı.",
+      "question": "Proje mevcut duruma göre anlamlı bir teknoloji seviyesi artışı ortaya koyuyor mu?",
       "weight": 7,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B.3"],
-      "required_sections": ["B.3"],
-      "fallback_sections": ["B.5", "D.2"],
-      "semantic_queries": ["teknoloji duzeyi", "mevcut durum", "state of the art", "teknik ustunluk"],
+      "score_max": 100,
+      "source_sections": [
+        "B.2",
+        "B.3"
+      ],
+      "required_sections": [
+        "B.2"
+      ],
+      "fallback_sections": [
+        "B.4",
+        "B.1"
+      ],
+      "semantic_queries": [
+        "teknoloji düzeyi",
+        "mevcut durum",
+        "state of the art",
+        "teknik üstünlük"
+      ],
       "ui_label": "A3",
-      "ui_explanation": "Bu kriter, projenin mevcut cozumlere gore ne kadar ileri bir teknik seviye hedefledigini degerlendirir."
+      "ui_explanation": "Bu kriter, projenin mevcut çözümlere göre ne kadar ileri bir teknik seviye hedeflediğini değerlendirir."
     },
     {
       "criterion_id": "A4",
       "main_dimension_id": "A",
-      "title": "Yenilikci Yon",
-      "description": "Proje ciktisinin farklilastirici, ozgun veya rekabetten ayrisan yenilik unsurlari.",
-      "question": "Projenin yenilik unsurlari acik ve ikna edici bicimde ortaya konmus mu?",
+      "title": "Yenilikçi Yön",
+      "description": "Proje çıktısının farklılaştırıcı, özgün veya rekabetten ayrışan yenilik unsurlarının açık biçimde ortaya konması.",
+      "question": "Projenin yenilik unsurları açık ve ikna edici biçimde ortaya konmuş mu?",
       "weight": 8,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B.5"],
-      "required_sections": ["B.5"],
-      "fallback_sections": ["B.3", "D.2"],
-      "semantic_queries": ["yenilikci yon", "ozgun deger", "farklilastirici ozellik", "rakiplerden farki"],
+      "score_max": 100,
+      "source_sections": [
+        "B.4"
+      ],
+      "required_sections": [
+        "B.4"
+      ],
+      "fallback_sections": [
+        "B.3",
+        "B.2"
+      ],
+      "semantic_queries": [
+        "yenilikçi yön",
+        "özgün değer",
+        "farklılaştırıcı özellik",
+        "rakiplerden farkı"
+      ],
       "ui_label": "A4",
-      "ui_explanation": "Bu kriter, projenin neden yeni veya ayristirici oldugunu ve bunun somut bicimde anlatilip anlatilmadigini arar."
+      "ui_explanation": "Bu kriter, projenin neden yeni veya ayrıştırıcı olduğunu ve bunun somut biçimde anlatılıp anlatılmadığını arar."
     },
     {
       "criterion_id": "A5",
       "main_dimension_id": "A",
-      "title": "Olculebilir Teknik Hedefler",
-      "description": "Teknik basarinin olculebilir performans hedefleri, kriterleri ve cikti metrikleri ile ifade edilmesi.",
-      "question": "Teknik hedefler olculebilir, dogrulanabilir ve sayisal basari kriterleriyle tanimlanmis mi?",
+      "title": "Ölçülebilir Teknik Hedefler",
+      "description": "Teknik başarının ölçülebilir performans hedefleri, başarı kriterleri ve çıktı metrikleri ile ifade edilmesi.",
+      "question": "Teknik hedefler ölçülebilir, doğrulanabilir ve sayısal başarı kriterleriyle tanımlanmış mı?",
       "weight": 8,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B.4"],
-      "required_sections": ["B.4"],
-      "fallback_sections": ["C.1", "B.3"],
-      "semantic_queries": ["teknik hedef", "olculebilir basari kriteri", "performans metriği", "dogrulama kriteri"],
+      "score_max": 100,
+      "source_sections": [
+        "B.3"
+      ],
+      "required_sections": [
+        "B.3"
+      ],
+      "fallback_sections": [
+        "C.1",
+        "B.1"
+      ],
+      "semantic_queries": [
+        "teknik hedef",
+        "ölçülebilir başarı kriteri",
+        "performans metriği",
+        "doğrulama kriteri"
+      ],
       "ui_label": "A5",
-      "ui_explanation": "Bu kriter, teknik hedeflerin soyut degil olculebilir ve test edilebilir bicimde kurulmasini arar."
+      "ui_explanation": "Bu kriter, teknik hedeflerin soyut değil; ölçülebilir, test edilebilir ve doğrulanabilir biçimde kurulmasını arar."
     },
     {
       "criterion_id": "A6",
       "main_dimension_id": "A",
-      "title": "Ar-Ge Sistematigi ve Yontem",
-      "description": "Projenin deney, gelistirme, dogrulama ve iterasyon mantigina dayali metodolojik kurgusu.",
-      "question": "Proje yontemi sistematik bir Ar-Ge yaklasimi sunuyor mu?",
+      "title": "Ar-Ge Sistematiği ve Yöntem",
+      "description": "Projenin deney, geliştirme, doğrulama ve iterasyon mantığına dayalı sistematik bir Ar-Ge metodolojisi sunması.",
+      "question": "Proje yöntemi sistematik bir Ar-Ge yaklaşımı sunuyor mu?",
       "weight": 7,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["B.4"],
-      "required_sections": ["B.4"],
-      "fallback_sections": ["C.1", "C.2"],
-      "semantic_queries": ["ar-ge yontemi", "deney planı", "gelistirme adimlari", "dogrulama yaklasimi"],
+      "score_max": 100,
+      "source_sections": [
+        "B.3"
+      ],
+      "required_sections": [
+        "B.3"
+      ],
+      "fallback_sections": [
+        "C.1",
+        "C.2",
+        "B.2"
+      ],
+      "semantic_queries": [
+        "Ar-Ge yöntemi",
+        "deney planı",
+        "geliştirme adımları",
+        "doğrulama yaklaşımı"
+      ],
       "ui_label": "A6",
-      "ui_explanation": "Bu kriter, calismanin rastgele degil planli bir Ar-Ge metodolojisine dayanmasini arar."
+      "ui_explanation": "Bu kriter, çalışmanın rastgele değil; planlı, sistematik ve doğrulama mantığı olan bir Ar-Ge metodolojisine dayanmasını arar."
     },
     {
       "criterion_id": "B1",
       "main_dimension_id": "B",
-      "title": "Is Paketleri",
-      "description": "Is paketlerinin kapsam, amac, girdi-cikti ve sorumluluklar acisindan yeterli tanimlanmasi.",
-      "question": "Is paketleri proje akisini tasiyacak netlikte ve yeterlilikte tanimlanmis mi?",
+      "title": "İş Paketleri",
+      "description": "İş paketlerinin kapsam, amaç, girdi-çıktı ve sorumluluklar açısından yeterli tanımlanması.",
+      "question": "İş paketleri proje akışını taşıyacak netlikte ve yeterlilikte tanımlanmış mı?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["C.1"],
-      "required_sections": ["C.1"],
-      "fallback_sections": ["C", "B.4"],
-      "semantic_queries": ["is paketi", "work package", "faaliyet plani", "is paketi ciktisi"],
+      "score_max": 100,
+      "source_sections": [
+        "C.1"
+      ],
+      "required_sections": [
+        "C.1"
+      ],
+      "fallback_sections": [
+        "C",
+        "B.3"
+      ],
+      "semantic_queries": [
+        "iş paketi",
+        "work package",
+        "faaliyet planı",
+        "iş paketi çıktısı"
+      ],
       "ui_label": "B1",
-      "ui_explanation": "Bu kriter, projenin islere nasil bolundugunu ve her paketin ne uretecegini inceler."
+      "ui_explanation": "Bu kriter, projenin işlere nasıl bölündüğünü ve her paketin ne üreteceğini inceler."
     },
     {
       "criterion_id": "B2",
       "main_dimension_id": "B",
-      "title": "Zaman Plani ve Kilometre Taslari",
-      "description": "Faaliyetlerin zamanlamasi, bagimliliklari ve kritik kilometre taslarinin izlenebilir sekilde kurulmasi.",
-      "question": "Zaman plani ve kilometre taslari uygulanabilir ve takip edilebilir bicimde sunulmus mu?",
+      "title": "Zaman Planı ve Kilometre Taşları",
+      "description": "Faaliyetlerin zamanlaması, bağımlılıkları ve kritik kilometre taşlarının izlenebilir şekilde kurulması.",
+      "question": "Zaman planı ve kilometre taşları uygulanabilir ve takip edilebilir biçimde sunulmuş mu?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["C.1"],
-      "required_sections": ["C.1"],
-      "fallback_sections": ["E", "B.4"],
-      "semantic_queries": ["zaman plani", "kilometre tasi", "takvim", "sure planlamasi"],
+      "score_max": 100,
+      "source_sections": [
+        "C.1"
+      ],
+      "required_sections": [
+        "C.1"
+      ],
+      "fallback_sections": [
+        "E",
+        "C.2"
+      ],
+      "semantic_queries": [
+        "zaman planı",
+        "kilometre taşı",
+        "takvim",
+        "süre planlaması"
+      ],
       "ui_label": "B2",
-      "ui_explanation": "Bu kriter, projenin ne zaman hangi asamadan gececegini gosteren zamanlama mantigini arar."
+      "ui_explanation": "Bu kriter, projenin ne zaman hangi aşamadan geçeceğini gösteren zamanlama mantığını arar."
     },
     {
       "criterion_id": "B3",
       "main_dimension_id": "B",
-      "title": "Ekip Yetkinligi",
-      "description": "Proje ekibinin teknik uzmanligi, gorev dagilimi ve onceki deneyimlerinin proje ihtiyaciyla uyumu.",
-      "question": "Proje ekibi bu isi yurutmek icin gerekli teknik yetkinlik ve deneyime sahip mi?",
+      "title": "Ekip Yetkinliği",
+      "description": "Proje ekibinin teknik uzmanlığı, görev dağılımı ve önceki deneyimlerinin proje ihtiyacıyla uyumu.",
+      "question": "Proje ekibi bu işi yürütmek için gerekli teknik yetkinlik ve deneyime sahip mi?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["C.2"],
-      "required_sections": ["C.2"],
-      "fallback_sections": ["C", "B.3"],
-      "semantic_queries": ["ekip yetkinligi", "uzmanlik", "proje ekibi deneyimi", "gorev dagilimi"],
+      "score_max": 100,
+      "source_sections": [
+        "C.2"
+      ],
+      "required_sections": [
+        "C.2"
+      ],
+      "fallback_sections": [
+        "C",
+        "B.3"
+      ],
+      "semantic_queries": [
+        "ekip yetkinliği",
+        "uzmanlık",
+        "proje ekibi deneyimi",
+        "görev dağılımı"
+      ],
       "ui_label": "B3",
-      "ui_explanation": "Bu kriter, ekip yapisinin teknik hedeflerle uyumlu olup olmadigini inceler."
+      "ui_explanation": "Bu kriter, ekip yapısının teknik hedeflerle uyumlu olup olmadığını inceler."
     },
     {
       "criterion_id": "B4",
       "main_dimension_id": "B",
-      "title": "Kurulus Altyapisi",
-      "description": "Kurulusun laboratuvar, ekipman, yazilim, test ortami veya operasyonel altyapisinin proje icin uygunlugu.",
-      "question": "Kurulusun mevcut altyapisi projeyi yurutecek yeterlilikte mi?",
+      "title": "Kuruluş Altyapısı",
+      "description": "Kuruluşun laboratuvar, ekipman, yazılım, test ortamı veya operasyonel altyapısının proje için uygunluğu.",
+      "question": "Kuruluşun mevcut altyapısı projeyi yürütecek yeterlilikte mi?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["C.3"],
-      "required_sections": ["C.3"],
-      "fallback_sections": ["C.2", "B.4"],
-      "semantic_queries": ["kurulus altyapisi", "laboratuvar", "ekipman", "test ortami"],
+      "score_max": 100,
+      "source_sections": [
+        "C.3"
+      ],
+      "required_sections": [
+        "C.3"
+      ],
+      "fallback_sections": [
+        "C.2",
+        "A.2"
+      ],
+      "semantic_queries": [
+        "kuruluş altyapısı",
+        "laboratuvar",
+        "ekipman",
+        "test ortamı"
+      ],
       "ui_label": "B4",
-      "ui_explanation": "Bu kriter, projenin gerekli teknik ve fiziksel imkanlarla desteklenip desteklenmedigini arar."
+      "ui_explanation": "Bu kriter, projenin gerekli teknik ve fiziksel imkânlarla desteklenip desteklenmediğini arar."
     },
     {
       "criterion_id": "B5",
       "main_dimension_id": "B",
-      "title": "Risk ve Finansman Yonetimi",
-      "description": "Teknik, operasyonel ve finansal risklerin tanimi ile bunlara yonelik yonetim yaklasimi.",
-      "question": "Proje riskleri ve finansman yonetimi yeterince dusunulmus ve planlanmis mi?",
+      "title": "Risk ve Finansman Yönetimi",
+      "description": "Teknik, operasyonel ve finansal risklerin tanımı ile bunlara yönelik yönetim yaklaşımı.",
+      "question": "Proje riskleri ve finansman yönetimi yeterince düşünülmüş ve planlanmış mı?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["E"],
-      "required_sections": ["E"],
-      "fallback_sections": ["C.1", "D.1"],
-      "semantic_queries": ["risk yonetimi", "finansman plani", "butce riski", "onlem plani"],
+      "score_max": 100,
+      "source_sections": [
+        "E"
+      ],
+      "required_sections": [
+        "E"
+      ],
+      "fallback_sections": [
+        "F",
+        "C.1"
+      ],
+      "semantic_queries": [
+        "risk yönetimi",
+        "finansman planı",
+        "bütçe riski",
+        "önlem planı"
+      ],
       "ui_label": "B5",
-      "ui_explanation": "Bu kriter, projenin zorluk ve kaynak risklerini ne kadar gercekci yonettigini inceler."
+      "ui_explanation": "Bu kriter, projenin zorluk ve kaynak risklerini ne kadar gerçekçi yönettiğini inceler."
     },
     {
       "criterion_id": "C1",
       "main_dimension_id": "C",
-      "title": "Ticarilesme Potansiyeli",
-      "description": "Proje ciktisinin pazara cikis, musteriye erisim ve urunlestirme potansiyeli.",
-      "question": "Projenin ciktisi gercek bir ticarilesme yoluna sahip gorunuyor mu?",
+      "title": "Ticarileşme Potansiyeli",
+      "description": "Proje çıktısının pazara çıkış, müşteriye erişim ve ürünleştirme potansiyeli.",
+      "question": "Projenin çıktısı gerçek bir ticarileşme yoluna sahip görünüyor mu?",
       "weight": 7,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "required_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "fallback_sections": ["Ekonomik ve Ulusal Kazanımlar", "PAZAR FIRSATI"],
-      "semantic_queries": ["ticarilesme", "pazara cikis", "urunlestirme", "musteri kazanimi"],
+      "score_max": 100,
+      "source_sections": [
+        "D.1",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "required_sections": [
+        "D.1",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "fallback_sections": [
+        "C.3",
+        "A.3",
+        "PAZAR FIRSATI"
+      ],
+      "semantic_queries": [
+        "ticarileşme",
+        "pazara çıkış",
+        "ürünleştirme",
+        "müşteriye erişim"
+      ],
       "ui_label": "C1",
-      "ui_explanation": "Bu kriter, proje sonucunun pazara tasinabilir ve satilabilir olmasini arar."
+      "ui_explanation": "Bu kriter, proje sonucunun pazara taşınabilir ve satılabilir olmasını arar."
     },
     {
       "criterion_id": "C2",
       "main_dimension_id": "C",
       "title": "Ekonomik Getiri",
-      "description": "Gelir, katma deger, verimlilik veya maliyet avantaji gibi ekonomik etkilerin ikna edici bicimde sunulmasi.",
-      "question": "Proje ekonomik fayda ve getiri acisindan ikna edici bir potansiyel gosteriyor mu?",
+      "description": "Gelir, katma değer, verimlilik veya maliyet avantajı gibi ekonomik etkilerin ikna edici biçimde sunulması.",
+      "question": "Proje ekonomik fayda ve getiri açısından ikna edici bir potansiyel gösteriyor mu?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "required_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "fallback_sections": ["Ekonomik ve Ulusal Kazanımlar", "KAYNAK YÖNETİMİ"],
-      "semantic_queries": ["ekonomik getiri", "katma deger", "gelir potansiyeli", "maliyet avantaji"],
+      "score_max": 100,
+      "source_sections": [
+        "D.1",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "required_sections": [
+        "D.1",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "fallback_sections": [
+        "C.3",
+        "A.3",
+        "Ekonomik ve Ulusal Kazanımlar"
+      ],
+      "semantic_queries": [
+        "ekonomik getiri",
+        "katma değer",
+        "gelir potansiyeli",
+        "maliyet avantajı"
+      ],
       "ui_label": "C2",
-      "ui_explanation": "Bu kriter, projenin parasal veya operasyonel ekonomik fayda uretme kapasitesini inceler."
+      "ui_explanation": "Bu kriter, projenin parasal veya operasyonel ekonomik fayda üretme kapasitesini inceler."
     },
     {
       "criterion_id": "C3",
       "main_dimension_id": "C",
-      "title": "Rekabet Gucu, Ihracat ve Ithal Ikamesi",
-      "description": "Projenin rekabet avantajina, ihracat kabiliyetine veya ithal urunlerin yerlilesmesine katkisi.",
-      "question": "Proje rekabet gucunu artirma, ihracat potansiyeli yaratma veya ithal ikamesi saglama acisindan guclu mu?",
+      "title": "Rekabet Gücü, İhracat ve İthal İkamesi",
+      "description": "Projenin rekabet avantajına, ihracat kabiliyetine veya ithal ürünlerin yerlileşmesine katkısı.",
+      "question": "Proje rekabet gücünü artırma, ihracat potansiyeli yaratma veya ithal ikamesi sağlama açısından güçlü mü?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
-      "source_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "required_sections": ["ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "fallback_sections": ["PAZAR FIRSATI", "Ekonomik ve Ulusal Kazanımlar", "KAYNAK YÖNETİMİ"],
-      "semantic_queries": ["rekabet avantaji", "ihracat", "ithal ikamesi", "pazar ustunlugu"],
+      "score_max": 100,
+      "source_sections": [
+        "D.1",
+        "D.2",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "required_sections": [
+        "D.1",
+        "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"
+      ],
+      "fallback_sections": [
+        "C.3",
+        "Ekonomik ve Ulusal Kazanımlar"
+      ],
+      "semantic_queries": [
+        "rekabet avantajı",
+        "ihracat",
+        "ithal ikamesi",
+        "pazar üstünlüğü"
+      ],
       "ui_label": "C3",
-      "ui_explanation": "Bu kriter, projenin pazarda ve uluslararasi ortamda stratejik avantaj uretip uretmeyecegini arar."
+      "ui_explanation": "Bu kriter, projenin pazarda ve uluslararası ortamda stratejik avantaj üretip üretmeyeceğini arar."
     },
     {
       "criterion_id": "C4",
       "main_dimension_id": "C",
-      "title": "Ulusal Kazanim",
-      "description": "Ulke icin bilgi birikimi, yerlilesme, stratejik kapasite veya sektorel yayilim gibi ulusal etkiler.",
-      "question": "Proje ulusal duzeyde teknolojik, ekonomik veya stratejik bir kazanima donusebilir mi?",
+      "title": "Ulusal Kazanım",
+      "description": "Ülke için bilgi birikimi, yerlileşme, stratejik kapasite veya sektörel yayılım gibi ulusal etkiler.",
+      "question": "Proje ulusal düzeyde teknolojik, ekonomik veya stratejik bir kazanıma dönüşebilir mi?",
       "weight": 6,
       "score_min": 0,
-      "score_max": 5,
+      "score_max": 100,
       "source_sections": [
+        "D.2",
         "Projenin sağlayabileceği ulusal kazanımları, aşağıdaki başlıklardan ilgili gördüklerinizi dikkate alarak belirtiniz."
       ],
       "required_sections": [
+        "D.2",
         "Projenin sağlayabileceği ulusal kazanımları, aşağıdaki başlıklardan ilgili gördüklerinizi dikkate alarak belirtiniz."
       ],
-      "fallback_sections": ["Ekonomik ve Ulusal Kazanımlar", "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ"],
-      "semantic_queries": ["ulusal kazanim", "yerlilesme", "stratejik katkı", "ulke ekonomisine katkı"],
+      "fallback_sections": [
+        "D.1",
+        "C.3",
+        "Ekonomik ve Ulusal Kazanımlar"
+      ],
+      "semantic_queries": [
+        "ulusal kazanım",
+        "yerlileşme",
+        "stratejik katkı",
+        "ülke ekonomisine katkı"
+      ],
       "ui_label": "C4",
-      "ui_explanation": "Bu kriter, projenin sirket duzeyini asan daha genis bir ulusal etki uretme potansiyelini degerlendirir."
+      "ui_explanation": "Bu kriter, projenin şirket düzeyini aşan daha geniş bir ulusal etki üretme potansiyelini değerlendirir."
     }
   ]
 }

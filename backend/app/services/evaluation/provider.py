@@ -58,7 +58,9 @@ class OllamaAyaProvider:
         return self._build_failed_result(
             criterion=criterion,
             evidence=evidence,
-            error_message=str(last_error) if last_error else "Judge response could not be parsed.",
+            error_message=self._localize_error_message(
+                str(last_error) if last_error else "Judge response could not be parsed.",
+            ),
         )
 
     def _send_chat_request(self, payload: dict) -> str:
@@ -74,14 +76,14 @@ class OllamaAyaProvider:
                 payload = json.loads(response.read().decode("utf-8"))
         except error.URLError as exc:
             raise RuntimeError(
-                f"Ollama request failed. Ensure Ollama is running at {self.base_url} "
-                f"and model '{self.model_name}' is available."
+                f"Ollama isteği başarısız oldu. Ollama servisinin {self.base_url} "
+                f"adresinde çalıştığından ve '{self.model_name}' modelinin yüklü olduğundan emin olun."
             ) from exc
 
         message = payload.get("message", {})
         content = message.get("content")
         if not isinstance(content, str) or not content.strip():
-            raise RuntimeError("Ollama returned an empty response.")
+            raise RuntimeError("Ollama boş bir yanıt döndürdü.")
         return content
 
     def _parse_content(self, raw_content: str) -> CriterionJudgeResponse:
@@ -91,10 +93,10 @@ class OllamaAyaProvider:
             start = raw_content.find("{")
             end = raw_content.rfind("}")
             if start == -1 or end == -1 or end <= start:
-                raise RuntimeError("Ollama response could not be parsed as JSON.")
+                raise RuntimeError("Ollama yanıtı JSON olarak ayrıştırılamadı.")
             return CriterionJudgeResponse.model_validate(json.loads(raw_content[start : end + 1]))
         except Exception as exc:
-            raise RuntimeError(f"Judge response did not match schema: {exc}") from exc
+            raise RuntimeError(f"Judge yanıtı beklenen şemaya uymadı: {exc}") from exc
 
     def _sanitize_response(
         self,
@@ -160,9 +162,9 @@ class OllamaAyaProvider:
             criterion_id=parsed.criterion_id or criterion.criterion_id,
             main_dimension_id=parsed.main_dimension_id or criterion.main_dimension_id,
             title=parsed.title or criterion.title,
-            score=parsed.score,
-            claim_strength=parsed.claim_strength,
-            evidence_quality=parsed.evidence_quality,
+            score=_normalize_score_scale(parsed.score),
+            claim_strength=_normalize_score_scale(parsed.claim_strength),
+            evidence_quality=_normalize_score_scale(parsed.evidence_quality),
             confidence=parsed.confidence,
             decision_status=parsed.decision_status,
             criterion_explanation=parsed.criterion_explanation or parsed.justification,
@@ -194,7 +196,7 @@ class OllamaAyaProvider:
             claim_strength=parsed.claim_strength,
             evidence_quality=parsed.evidence_quality,
             weight=criterion.weight,
-            weighted_score=(parsed.score * criterion.weight) if parsed.score is not None else None,
+            weighted_score=parsed.score,
             confidence=parsed.confidence,
             decision_status=parsed.decision_status,
             criterion_explanation=parsed.criterion_explanation,
@@ -302,6 +304,23 @@ class OllamaAyaProvider:
             )
         return items
 
+    def _localize_error_message(self, message: str) -> str:
+        localized = message
+        replacements = {
+            "Judge response did not match schema": "Judge yanıtı beklenen şemaya uymadı",
+            "Judge response could not be parsed.": "Judge yanıtı ayrıştırılamadı.",
+            "Ollama response could not be parsed as JSON.": "Ollama yanıtı JSON olarak ayrıştırılamadı.",
+            "Ollama returned an empty response.": "Ollama boş bir yanıt döndürdü.",
+            "Field required": "Alan zorunlu",
+            "For further information visit": "Ayrıntı için ziyaret edin",
+            "validation errors for CriterionJudgeResponse": "CriterionJudgeResponse için doğrulama hataları",
+            "input_value": "gelen_deger",
+            "input_type": "gelen_tip",
+        }
+        for source, target in replacements.items():
+            localized = localized.replace(source, target)
+        return localized
+
     def _evidence_items_to_notes(
         self,
         items: list[EvidenceItem],
@@ -384,3 +403,11 @@ class OllamaAyaProvider:
 
 def get_judge_provider() -> OllamaAyaProvider:
     return OllamaAyaProvider()
+
+
+def _normalize_score_scale(value: float | None) -> float | None:
+    if value is None:
+        return None
+    if 0.0 <= value <= 5.0:
+        return round(value * 20, 2)
+    return value

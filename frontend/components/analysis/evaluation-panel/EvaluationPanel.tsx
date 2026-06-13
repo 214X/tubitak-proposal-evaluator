@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   type CriterionEvaluationResult,
@@ -25,6 +26,14 @@ type ReportDimension = {
   subcriteria: CriterionEvaluationResult[];
 };
 
+type RubricEntry = EvaluationState["rubric_table"][number];
+
+type RubricGroup = {
+  mainDimensionId: string;
+  mainDimensionTitle: string;
+  items: RubricEntry[];
+};
+
 const POLLING_INTERVAL_MS = 2500;
 
 export function EvaluationReportViewer({
@@ -34,6 +43,12 @@ export function EvaluationReportViewer({
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [evaluationState, setEvaluationState] = useState<EvaluationState | null>(null);
   const [error, setError] = useState("");
+  const [isRubricOpen, setIsRubricOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -59,6 +74,7 @@ export function EvaluationReportViewer({
     function loadForSession(nextSessionId: string | null) {
       setSessionId(nextSessionId);
       setEvaluationState(null);
+      setIsRubricOpen(false);
 
       if (!nextSessionId) {
         setError("Aktif bir evaluation oturumu bulunamadı.");
@@ -113,12 +129,136 @@ export function EvaluationReportViewer({
     };
   }, [apiBaseUrl, evaluationState, sessionId]);
 
+  useEffect(() => {
+    if (!isRubricOpen || !isClient) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsRubricOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isClient, isRubricOpen]);
+
   const dimensions = useMemo(() => buildReportDimensions(evaluationState), [evaluationState]);
+  const rubricGroups = useMemo(
+    () => buildRubricGroups(evaluationState?.rubric_table ?? []),
+    [evaluationState],
+  );
   const reportAvailable = Boolean(
     evaluationState?.subcriteria_results.length ||
       evaluationState?.main_scores.length ||
       evaluationState?.rubric_table.length,
   );
+  const rubricModal = isRubricOpen ? (
+    <div
+      className={styles.rubricModalBackdrop}
+      onClick={() => setIsRubricOpen(false)}
+      role="presentation"
+    >
+      <div
+        className={styles.rubricModal}
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Rubric açıklama paneli"
+      >
+        <div className={styles.rubricModalHeader}>
+          <div>
+            <p className={styles.rubricSummaryEyebrow}>RUBRIC DETAYI</p>
+            <h4 className={styles.rubricModalTitle}>
+              Resmi bölüm eşleştirmeleri ve açıklamalar
+            </h4>
+            <p className={styles.rubricModalText}>
+              Kaynak bölümler resmi template’e göre hizalandı. Alt kriterler eşit
+              ağırlıklı yorumlanır; genel skorda yalnızca ana boyut yüzdeleri etkili olur.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.rubricCloseButton}
+            onClick={() => setIsRubricOpen(false)}
+          >
+            Kapat
+          </button>
+        </div>
+
+        <div className={styles.rubricGroupList}>
+          {rubricGroups.map((group) => (
+            <article key={group.mainDimensionId} className={styles.rubricGroupCard}>
+              <div className={styles.rubricGroupHeader}>
+                <span className={styles.rubricGroupId}>{group.mainDimensionId}</span>
+                <div>
+                  <h5 className={styles.rubricGroupTitle}>{group.mainDimensionTitle}</h5>
+                  <p className={styles.rubricGroupMeta}>
+                    {group.items.length} alt kriter · eşit alt kriter ağırlığı
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.rubricItemList}>
+                {group.items.map((item) => (
+                  <article key={item.criterion_id} className={styles.rubricItemCard}>
+                    <div className={styles.rubricItemTop}>
+                      <div>
+                        <p className={styles.rubricItemEyebrow}>
+                          {item.ui_label || item.criterion_id}
+                        </p>
+                        <h6 className={styles.rubricItemTitle}>{item.criterion_title}</h6>
+                      </div>
+                      <span className={styles.rubricRangePill}>
+                        {item.score_min}-{item.score_max} puan
+                      </span>
+                    </div>
+                    <p className={styles.rubricItemDescription}>{item.description}</p>
+                    <p className={styles.rubricItemExplanation}>{item.ui_explanation}</p>
+                    <div className={styles.rubricSectionChipWrap}>
+                      {item.source_sections.map((section) => (
+                        <span
+                          key={`${item.criterion_id}-${section}`}
+                          className={styles.rubricSectionChip}
+                        >
+                          {formatSourceSectionLabel(section)}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.scoreScaleCard}>
+          <div className={styles.scoreScaleHeader}>
+            <h5 className={styles.scoreScaleTitle}>Puanlama ölçeği</h5>
+            <p className={styles.scoreScaleText}>
+              Alt kriterler doğrudan 0-100 arası puanlanır. Ana boyut skoru bu alt
+              kriterlerin eşit ağırlıklı ortalamasıdır. Genel skor ise ana boyut
+              yüzdelerinin ağırlıklı birleşimidir.
+            </p>
+          </div>
+          <div className={styles.scoreScaleGrid}>
+            <ScalePill label="0-19" text="Kanıt yok veya iddia ikna edici değil." />
+            <ScalePill label="20-39" text="Zayıf, eksik veya çok sınırlı kanıt." />
+            <ScalePill label="40-59" text="Orta düzey, kısmen ikna edici." />
+            <ScalePill label="60-79" text="Güçlü ama bazı boşluklar içeriyor." />
+            <ScalePill label="80-100" text="Çok güçlü, açık ve iyi kanıtlanmış." />
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <section className={styles.panel}>
@@ -146,21 +286,8 @@ export function EvaluationReportViewer({
           <p className={styles.heroMeta}>
             {evaluationState?.active_subcriterion_title
               ? `Son işlenen alt kriter: ${evaluationState.active_subcriterion_title}`
-              : "Alt kriter bazlı matematiksel agregasyon"}
+              : "Alt kriterler kendi ana boyutunda eşit ağırlıklı hesaplanır"}
           </p>
-        </div>
-
-        <div className={styles.heroInsights}>
-          <InfoList
-            title="Öne Çıkan Güçlü Alanlar"
-            items={evaluationState?.major_strengths ?? []}
-            emptyText="Belirgin güçlü alan henüz çıkarılamadı."
-          />
-          <InfoList
-            title="Önemli Zayıflıklar"
-            items={evaluationState?.major_weaknesses ?? []}
-            emptyText="Belirgin zayıf alan henüz çıkarılamadı."
-          />
         </div>
       </section>
 
@@ -168,7 +295,8 @@ export function EvaluationReportViewer({
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>Ana Boyut Skorları</h3>
           <p className={styles.sectionDescription}>
-            Ana skorlar alt kriter puanlarının ağırlıklı ortalamasından hesaplanır.
+            Ana skorlar alt kriter puanlarının eşit ağırlıklı ortalamasından hesaplanır.
+            Genel skorda ise sadece ana boyut yüzdeleri uygulanır.
           </p>
         </div>
         <div className={styles.scoreGrid}>
@@ -189,60 +317,39 @@ export function EvaluationReportViewer({
         </div>
       </section>
 
-      <section className={styles.supportSection}>
-        <InfoPanel
-          title="Kritik Eksik Bilgiler"
-          tone="warning"
-          items={evaluationState?.critical_missing_information ?? []}
-          emptyText="Kritik eksik bilgi listelenmedi."
-        />
-        <InfoPanel
-          title="Risk İşaretleri"
-          tone="danger"
-          items={evaluationState?.red_flags ?? []}
-          emptyText="Belirgin risk işareti listelenmedi."
-        />
-      </section>
-
       <section className={styles.tableSection}>
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>Rubric Açıklama Tablosu</h3>
+          <h3 className={styles.sectionTitle}>Rubric Açıklama Paneli</h3>
           <p className={styles.sectionDescription}>
-            Alt kriterlerin neden önemli olduğu ve hangi bölüm kaynaklarına baktığı bu tabloyla
-            özetlenir.
+            Alt kriterlerin neden önemli olduğu, hangi resmi bölüm kaynaklarına baktığı ve
+            puanların nasıl yorumlandığı tek bir panelde toplanır.
           </p>
         </div>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Ana Boyut</th>
-                <th>Alt Kriter</th>
-                <th>Ağırlık</th>
-                <th>Kaynak Bölümler</th>
-                <th>Açıklama</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(evaluationState?.rubric_table ?? []).map((item) => (
-                <tr key={item.criterion_id}>
-                  <td>
-                    <strong>{item.main_dimension_id}</strong>
-                    <span className={styles.tableSubtext}>{item.main_dimension_title}</span>
-                  </td>
-                  <td>
-                    <strong>{item.ui_label || item.criterion_id}</strong>
-                    <span className={styles.tableSubtext}>{item.criterion_title}</span>
-                  </td>
-                  <td>%{item.weight}</td>
-                  <td>{item.source_sections.map(formatSourceSectionLabel).join(", ")}</td>
-                  <td>{item.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className={styles.rubricSummaryCard}>
+          <div className={styles.rubricSummaryCopy}>
+            <p className={styles.rubricSummaryEyebrow}>RUBRIC PANELİ</p>
+            <h4 className={styles.rubricSummaryTitle}>
+              Gruplanmış kaynak eşleştirmeleri ve puan ölçeği
+            </h4>
+            <p className={styles.rubricSummaryText}>
+              Ana boyut tekrarları kaldırıldı. Alt kriterler modal içinde ana boyuta göre
+              gruplanır ve her alt kriter kendi boyutunda eşit etkili hesaplanır.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.rubricButton}
+            onClick={() => setIsRubricOpen(true)}
+          >
+            Rubriği Aç
+            <span className={styles.rubricButtonMeta}>
+              {evaluationState?.rubric_table.length ?? 0} alt kriter
+            </span>
+          </button>
         </div>
       </section>
+
+      {isClient && rubricModal ? createPortal(rubricModal, document.body) : null}
 
       {reportAvailable ? (
         <section className={styles.accordionSection}>
@@ -254,27 +361,26 @@ export function EvaluationReportViewer({
           </div>
 
           <div className={styles.accordionList}>
-            {dimensions.map((dimension, index) => (
-              <details
-                key={dimension.id}
-                className={styles.dimensionAccordion}
-                open={index === 0}
-              >
+            {dimensions.map((dimension) => (
+              <details key={dimension.id} className={styles.dimensionAccordion}>
                 <summary className={styles.dimensionSummary}>
-                  <div>
+                  <div className={styles.dimensionSummaryCopy}>
                     <p className={styles.dimensionEyebrow}>
                       {dimension.id} Boyutu · %{dimension.weight}
                     </p>
                     <h4 className={styles.dimensionTitle}>{dimension.title}</h4>
                     <p className={styles.dimensionText}>{dimension.summary}</p>
                   </div>
-                  <div className={styles.dimensionScoreBlock}>
-                    <span className={styles.dimensionScore}>
-                      {formatScore(dimension.score, 100)}
-                    </span>
-                    <span className={styles.dimensionScoreMeta}>
-                      Ağırlıklı katkı {formatWeightedContribution(dimension.weightedScore)}
-                    </span>
+                  <div className={styles.dimensionSummaryAside}>
+                    <div className={styles.dimensionScoreBlock}>
+                      <span className={styles.dimensionScore}>
+                        {formatScore(dimension.score, 100)}
+                      </span>
+                      <span className={styles.dimensionScoreMeta}>
+                        Ağırlıklı katkı {formatWeightedContribution(dimension.weightedScore)}
+                      </span>
+                    </div>
+                    <span className={styles.expandHint}>Detayı aç</span>
                   </div>
                 </summary>
 
@@ -300,6 +406,26 @@ export function EvaluationReportViewer({
 function formatSourceSectionLabel(section: string) {
   const normalized = section.trim();
 
+  const sectionLabels: Record<string, string> = {
+    "A.2": "A.2 > Kuruluş Bilgileri",
+    "A.3": "A.3 > Proje Kısa Tanıtımı",
+    "B.1": "B.1 > Çağrı Konusuyla İlişki ve Hedefler",
+    "B.2": "B.2 > Projenin Teknoloji Düzeyi",
+    "B.3": "B.3 > Somut / Ölçülebilir Hedefler ve Çözüm Yaklaşımı",
+    "B.4": "B.4 > Projenin Yenilikçi Yönleri",
+    "C.1": "C.1 > İş Planı",
+    "C.2": "C.2 > Proje Yönetimi ve Organizasyonu",
+    "C.3": "C.3 > Kuruluş Altyapısı",
+    "D.1": "D.1 > Ekonomik Öngörüler",
+    "D.2": "D.2 > Ulusal Kazanımlar",
+    E: "E > Risk ve Finansman Yapısı",
+    F: "F > Proje Bütçesi",
+  };
+
+  if (normalized in sectionLabels) {
+    return sectionLabels[normalized] ?? normalized;
+  }
+
   if (normalized === "ÜRÜN SATIŞI VE TİCARİLEŞME ÖNGÖRÜLERİ") {
     return "C.3 > Ürün Satışı ve Ticarileşme Öngörüleri";
   }
@@ -313,17 +439,28 @@ function formatSourceSectionLabel(section: string) {
   }
 
   if (normalized === "Ekonomik ve Ulusal Kazanımlar") {
-    return "A.4.1 > Ekonomik ve Ulusal Kazanımlar";
+    return "A.3 > Proje Kısa Tanıtımı > Ekonomik ve Ulusal Kazanımlar";
   }
 
   if (
     normalized ===
     "Projenin sağlayabileceği ulusal kazanımları, aşağıdaki başlıklardan ilgili gördüklerinizi dikkate alarak belirtiniz."
   ) {
-    return "C.3 > Ürün Satışı ve Ticarileşme Öngörüleri > 2.7 Ulusal Kazanımlar";
+    return "D.2 > Ulusal Kazanımlar";
   }
 
   return normalized;
+}
+
+function formatUserFacingText(value: string) {
+  return value
+    .replaceAll("Judge response did not match schema", "Judge yanıtı beklenen şemaya uymadı")
+    .replaceAll("Judge response could not be parsed.", "Judge yanıtı ayrıştırılamadı.")
+    .replaceAll("Field required", "Alan zorunlu")
+    .replaceAll("For further information visit", "Ayrıntı için ziyaret edin")
+    .replaceAll("validation errors for CriterionJudgeResponse", "CriterionJudgeResponse için doğrulama hataları")
+    .replaceAll("input_value", "gelen_deger")
+    .replaceAll("input_type", "gelen_tip");
 }
 
 function SubcriterionCard({
@@ -331,103 +468,126 @@ function SubcriterionCard({
 }: Readonly<{
   criterion: CriterionEvaluationResult;
 }>) {
+  const evidenceByChunkId = buildCriterionEvidenceMap(criterion);
+
   return (
-    <article className={styles.subcriterionCard}>
-      <div className={styles.subcriterionHeader}>
+    <details className={styles.subcriterionAccordion}>
+      <summary className={styles.subcriterionSummary}>
         <div>
           <p className={styles.subcriterionEyebrow}>
             {criterion.main_dimension_id ?? criterion.category ?? "?"} · {criterion.criterion_id}
           </p>
           <h5 className={styles.subcriterionTitle}>{criterion.title}</h5>
           <p className={styles.subcriterionText}>
-            {criterion.criterion_explanation || criterion.justification || "Açıklama bulunamadı."}
+            {formatUserFacingText(
+              criterion.short_assessment || criterion.justification || "Kısa değerlendirme bulunamadı.",
+            )}
           </p>
         </div>
-        <div className={styles.metricPillGrid}>
-          <MetricPill label="Skor" value={formatScore(criterion.score, 5)} accent />
-          <MetricPill
-            label="İddia Gücü"
-            value={formatScore(criterion.claim_strength, 5)}
-          />
-          <MetricPill
-            label="Kanıt Kalitesi"
-            value={formatScore(criterion.evidence_quality, 5)}
-          />
-          <MetricPill
-            label="Güven"
-            value={criterion.confidence.toFixed(2)}
-          />
-        </div>
-      </div>
-
-      <div className={styles.subcriterionMetaRow}>
-        <span className={styles.statusChip}>{getDecisionLabel(criterion.decision_status)}</span>
-        <span className={styles.metaChip}>Ağırlık %{criterion.weight}</span>
-        <span className={styles.metaChip}>
-          Coverage: {criterion.coverage_status}
-        </span>
-      </div>
-
-      <div className={styles.narrativeGrid}>
-        <InfoPanel
-          title="Olumlu Bulgular"
-          tone="positive"
-          items={criterion.positive_findings.map((item) => item.summary)}
-          emptyText="Olumlu bulgu çıkarılmadı."
-        />
-        <InfoPanel
-          title="Zayıflatan Bulgular"
-          tone="danger"
-          items={criterion.negative_findings.map((item) => item.summary)}
-          emptyText="Zayıflatan bulgu çıkarılmadı."
-        />
-      </div>
-
-      <div className={styles.narrativeGrid}>
-        <InfoPanel
-          title="Eksik Bilgiler"
-          tone="warning"
-          items={criterion.missing_information}
-          emptyText="Eksik bilgi işaretlenmedi."
-        />
-        <InfoPanel
-          title="Risk İşaretleri"
-          tone="danger"
-          items={criterion.red_flags}
-          emptyText="Risk işareti yok."
-        />
-      </div>
-
-      {criterion.coverage_notes.length ? (
-        <div className={styles.coverageCard}>
-          <p className={styles.coverageTitle}>Coverage Notları</p>
-          <ul className={styles.inlineList}>
-            {criterion.coverage_notes.map((item, index) => (
-              <li key={`${criterion.criterion_id}-coverage-${index}`}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      <div className={styles.evidenceSection}>
-        <div className={styles.sectionHeaderCompact}>
-          <h6 className={styles.evidenceSectionTitle}>Kanıt Kartları</h6>
-          <p className={styles.evidenceSectionText}>
-            Alıntılar doğrudan kullanılan chunk’lardan gelir; her kart neden önemli olduğunu da
-            açıklar.
-          </p>
-        </div>
-        {criterion.evidence_items.length ? (
-          <div className={styles.evidenceGrid}>
-            {criterion.evidence_items.map((item) => (
-              <EvidenceCard key={`${criterion.criterion_id}-${item.chunk_id}-${item.evidence_type}`} item={item} />
-            ))}
+        <div className={styles.subcriterionSummaryAside}>
+          <div className={styles.metricPillGrid}>
+            <MetricPill label="Skor" value={formatScore(criterion.score, 100)} accent />
+            <MetricPill label="İddia Gücü" value={formatScore(criterion.claim_strength, 100)} />
+            <MetricPill
+              label="Kanıt Kalitesi"
+              value={formatScore(criterion.evidence_quality, 100)}
+            />
+            <MetricPill label="Güven" value={criterion.confidence.toFixed(2)} />
           </div>
-        ) : (
-          <p className={styles.emptyEvidence}>Kanıt kartı bulunamadı.</p>
-        )}
-      </div>
-    </article>
+          <span className={styles.expandHint}>Alt kriteri aç</span>
+        </div>
+      </summary>
+
+      <article className={styles.subcriterionCard}>
+        <div className={styles.subcriterionMetaRow}>
+          <span className={styles.statusChip}>{getDecisionLabel(criterion.decision_status)}</span>
+          <span className={styles.metaChip}>Alt kriter etkisi: eşit</span>
+          <span className={styles.metaChip}>Kapsama: {getCoverageStatusLabel(criterion.coverage_status)}</span>
+        </div>
+
+        <div className={styles.explanationCard}>
+          <p className={styles.explanationLabel}>Kriter Açıklaması</p>
+          <p className={styles.explanationText}>{criterion.title} kriteri için beklenen:</p>
+          <p className={styles.explanationBody}>
+            {formatUserFacingText(
+              criterion.criterion_explanation || criterion.justification || "Açıklama bulunamadı.",
+            )}
+          </p>
+        </div>
+
+        <div className={styles.explanationCard}>
+          <p className={styles.explanationLabel}>Modelin Yorumladığı Açıklama</p>
+          <p className={styles.explanationBody}>
+            {formatUserFacingText(criterion.short_assessment || "Kısa değerlendirme bulunamadı.")}
+          </p>
+        </div>
+
+        <div className={styles.narrativeGrid}>
+          <FindingPanel
+            title="Olumlu Bulgular"
+            tone="positive"
+            items={criterion.positive_findings}
+            evidenceByChunkId={evidenceByChunkId}
+            emptyText="Olumlu bulgu çıkarılmadı."
+          />
+          <FindingPanel
+            title="Zayıflatan Bulgular"
+            tone="danger"
+            items={criterion.negative_findings}
+            evidenceByChunkId={evidenceByChunkId}
+            emptyText="Zayıflatan bulgu çıkarılmadı."
+          />
+        </div>
+
+        <div className={styles.narrativeGrid}>
+          <InfoPanel
+            title="Eksik Bilgiler"
+            tone="warning"
+            items={criterion.missing_information}
+            emptyText="Eksik bilgi işaretlenmedi."
+          />
+          <InfoPanel
+            title="Risk İşaretleri"
+            tone="danger"
+            items={criterion.red_flags}
+            emptyText="Risk işareti yok."
+          />
+        </div>
+
+        {criterion.coverage_notes.length ? (
+          <div className={styles.coverageCard}>
+            <p className={styles.coverageTitle}>Kapsama Notları</p>
+            <ul className={styles.inlineList}>
+              {criterion.coverage_notes.map((item, index) => (
+                <li key={`${criterion.criterion_id}-coverage-${index}`}>{formatUserFacingText(item)}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className={styles.evidenceSection}>
+          <div className={styles.sectionHeaderCompact}>
+            <h6 className={styles.evidenceSectionTitle}>Kanıt Kartları</h6>
+            <p className={styles.evidenceSectionText}>
+              Alıntılar doğrudan kullanılan chunk’lardan gelir; her kart neden önemli olduğunu da
+              açıklar.
+            </p>
+          </div>
+          {criterion.evidence_items.length ? (
+            <div className={styles.evidenceGrid}>
+              {criterion.evidence_items.map((item) => (
+                <EvidenceCard
+                  key={`${criterion.criterion_id}-${item.chunk_id}-${item.evidence_type}`}
+                  item={item}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className={styles.emptyEvidence}>Kanıt kartı bulunamadı.</p>
+          )}
+        </div>
+      </article>
+    </details>
   );
 }
 
@@ -437,17 +597,66 @@ function EvidenceCard({
   item: CriterionEvaluationResult["evidence_items"][number];
 }>) {
   return (
-    <article className={`${styles.evidenceCard} ${styles[`evidenceCard${capitalize(item.evidence_type)}`]}`}>
-      <div className={styles.evidenceCardTop}>
-        <span className={styles.evidenceType}>{getEvidenceTypeLabel(item.evidence_type)}</span>
-        <span className={styles.evidenceChunk}>Chunk {item.chunk_id}</span>
+    <details
+      className={`${styles.evidenceCard} ${styles[`evidenceCard${capitalize(item.evidence_type)}`]}`}
+    >
+      <summary className={styles.evidenceSummary}>
+        <div>
+          <span className={styles.evidenceType}>{getEvidenceTypeLabel(item.evidence_type)}</span>
+          <p className={styles.evidenceLocationCompact}>
+            {formatCompactLocation(item.heading_path)}
+          </p>
+        </div>
+        <span className={styles.expandHint}>Kanıtı aç</span>
+      </summary>
+      <div className={styles.evidenceBody}>
+        <p className={styles.evidenceLocation}>
+          {formatEvidenceLocation(item.heading_path, item.page_start, item.page_end)}
+        </p>
+        <p className={styles.evidenceChunk}>Parça Kimliği: {item.chunk_id}</p>
+        <blockquote className={styles.evidenceQuote}>{formatUserFacingText(item.verbatim_excerpt)}</blockquote>
+        <p className={styles.evidenceWhy}>{formatUserFacingText(item.why_it_matters)}</p>
       </div>
-      <p className={styles.evidenceLocation}>
-        {formatEvidenceLocation(item.heading_path, item.page_start, item.page_end)}
-      </p>
-      <blockquote className={styles.evidenceQuote}>{item.verbatim_excerpt}</blockquote>
-      <p className={styles.evidenceWhy}>{item.why_it_matters}</p>
-    </article>
+    </details>
+  );
+}
+
+function FindingPanel({
+  title,
+  items,
+  emptyText,
+  tone,
+  evidenceByChunkId,
+}: Readonly<{
+  title: string;
+  items: CriterionEvaluationResult["positive_findings"] | CriterionEvaluationResult["negative_findings"];
+  emptyText: string;
+  tone: "positive" | "warning" | "danger";
+  evidenceByChunkId: Map<string, CriterionEvaluationResult["evidence_items"][number]>;
+}>) {
+  return (
+    <div className={`${styles.infoPanel} ${styles[`infoPanel${capitalize(tone)}`]}`}>
+      <p className={styles.infoPanelTitle}>{title}</p>
+      {items.length ? (
+        <div className={styles.findingList}>
+          {items.map((item, index) => {
+            const evidence = evidenceByChunkId.get(item.chunk_id);
+            return (
+              <article key={`${title}-${index}-${item.chunk_id}`} className={styles.findingCard}>
+                {evidence ? (
+                  <p className={styles.findingLocation}>
+                    {formatCompactLocation(evidence.heading_path)}
+                  </p>
+                ) : null}
+                <p className={styles.findingText}>{formatUserFacingText(item.summary)}</p>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <p className={styles.infoPanelEmpty}>{emptyText}</p>
+      )}
+    </div>
   );
 }
 
@@ -468,32 +677,7 @@ function InfoPanel({
       {items.length ? (
         <ul className={styles.inlineList}>
           {items.map((item, index) => (
-            <li key={`${title}-${index}`}>{item}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className={styles.infoPanelEmpty}>{emptyText}</p>
-      )}
-    </div>
-  );
-}
-
-function InfoList({
-  title,
-  items,
-  emptyText,
-}: Readonly<{
-  title: string;
-  items: string[];
-  emptyText: string;
-}>) {
-  return (
-    <div className={styles.heroList}>
-      <p className={styles.heroListTitle}>{title}</p>
-      {items.length ? (
-        <ul className={styles.inlineList}>
-          {items.map((item, index) => (
-            <li key={`${title}-${index}`}>{item}</li>
+            <li key={`${title}-${index}`}>{formatUserFacingText(item)}</li>
           ))}
         </ul>
       ) : (
@@ -520,6 +704,21 @@ function MetricPill({
   );
 }
 
+function ScalePill({
+  label,
+  text,
+}: Readonly<{
+  label: string;
+  text: string;
+}>) {
+  return (
+    <div className={styles.scalePill}>
+      <span className={styles.scalePillLabel}>{label}</span>
+      <p className={styles.scalePillText}>{text}</p>
+    </div>
+  );
+}
+
 function buildReportDimensions(evaluationState: EvaluationState | null): ReportDimension[] {
   if (!evaluationState) {
     return [];
@@ -537,27 +736,53 @@ function buildReportDimensions(evaluationState: EvaluationState | null): ReportD
     subcriteriaByDimension.set(key, current);
   }
 
-  return evaluationState.main_scores.map((item) => ({
-    id: item.main_dimension_id,
-    title: item.title,
-    weight: item.weight,
-    score: item.score,
-    weightedScore: item.weighted_score,
-    summary: item.summary,
-    subcriteria: subcriteriaByDimension.get(item.main_dimension_id) ?? [],
-  })).concat(
-    [...subcriteriaByDimension.entries()]
-      .filter(([dimensionId]) => !titleByDimension.has(dimensionId))
-      .map(([dimensionId, subcriteria]) => ({
-        id: dimensionId,
-        title: dimensionId,
-        weight: 0,
-        score: null,
-        weightedScore: null,
-        summary: "Bu boyut için henüz hesaplanmış skor özeti bulunamadı.",
-        subcriteria,
-      })),
-  );
+  return evaluationState.main_scores
+    .map((item) => ({
+      id: item.main_dimension_id,
+      title: item.title,
+      weight: item.weight,
+      score: item.score,
+      weightedScore: item.weighted_score,
+      summary: item.summary,
+      subcriteria: subcriteriaByDimension.get(item.main_dimension_id) ?? [],
+    }))
+    .concat(
+      [...subcriteriaByDimension.entries()]
+        .filter(([dimensionId]) => !titleByDimension.has(dimensionId))
+        .map(([dimensionId, subcriteria]) => ({
+          id: dimensionId,
+          title: dimensionId,
+          weight: 0,
+          score: null,
+          weightedScore: null,
+          summary: "Bu boyut için henüz hesaplanmış skor özeti bulunamadı.",
+          subcriteria,
+        })),
+    );
+}
+
+function buildRubricGroups(entries: EvaluationState["rubric_table"]): RubricGroup[] {
+  const grouped = new Map<string, RubricGroup>();
+
+  entries.forEach((item) => {
+    const current = grouped.get(item.main_dimension_id);
+    if (current) {
+      current.items.push(item);
+      return;
+    }
+
+    grouped.set(item.main_dimension_id, {
+      mainDimensionId: item.main_dimension_id,
+      mainDimensionTitle: item.main_dimension_title,
+      items: [item],
+    });
+  });
+
+  return Array.from(grouped.values());
+}
+
+function buildCriterionEvidenceMap(criterion: CriterionEvaluationResult) {
+  return new Map(criterion.evidence_items.map((item) => [item.chunk_id, item]));
 }
 
 function isEvaluationRunning(status: EvaluationState["status"]) {
@@ -598,7 +823,25 @@ function getDecisionLabel(status: CriterionEvaluationResult["decision_status"]) 
   return "Başarısız";
 }
 
-function getEvidenceTypeLabel(type: CriterionEvaluationResult["evidence_items"][number]["evidence_type"]) {
+function getCoverageStatusLabel(status: CriterionEvaluationResult["coverage_status"]) {
+  if (status === "complete") {
+    return "Tam";
+  }
+  if (status === "covered") {
+    return "Karşılandı";
+  }
+  if (status === "partial") {
+    return "Kısmi";
+  }
+  if (status === "missing") {
+    return "Eksik";
+  }
+  return "Bilinmiyor";
+}
+
+function getEvidenceTypeLabel(
+  type: CriterionEvaluationResult["evidence_items"][number]["evidence_type"],
+) {
   if (type === "positive") {
     return "Destekleyici Kanıt";
   }
@@ -612,14 +855,16 @@ function formatScore(value: number | null | undefined, scale: number) {
   if (value === null || value === undefined) {
     return "-";
   }
-  return `${value.toFixed(scale === 5 ? 1 : 2)}/${scale}`;
+  const rendered = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+  return `${rendered}/${scale}`;
 }
 
 function formatWeightedContribution(value: number | null | undefined) {
   if (value === null || value === undefined) {
     return "-";
   }
-  return `${value.toFixed(2)} puan`;
+  const rendered = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+  return `${rendered} puan`;
 }
 
 function formatEvidenceLocation(
@@ -635,6 +880,15 @@ function formatEvidenceLocation(
     return `${headingText} · Sayfa ${pageStart}`;
   }
   return `${headingText} · Sayfa ${pageStart}-${pageEnd}`;
+}
+
+function formatCompactLocation(headingPath: string[]) {
+  if (!headingPath.length) {
+    return "Belirsiz bölüm";
+  }
+
+  const tail = headingPath.slice(-2);
+  return tail.join(" · ");
 }
 
 function capitalize(value: string) {

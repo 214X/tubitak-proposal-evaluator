@@ -53,13 +53,16 @@ def _build_docling_converter() -> DocumentConverter:
     # - table structure enabled because tables are first-class output,
     # - formula enrichment disabled because these proposal forms do not need it,
     # - backend text forced so selectable text is preferred,
-    # - page image generation disabled because we do not use page renders.
+    # - picture image generation enabled because the work-schedule bar chart is
+    #   embedded as a picture and needs downstream normalization,
+    # - page image generation disabled because we still do not use full renders.
     pipeline_options = PdfPipelineOptions()
     pipeline_options.do_ocr = False
     pipeline_options.do_table_structure = True
     pipeline_options.do_formula_enrichment = False
     pipeline_options.force_backend_text = True
     pipeline_options.generate_page_images = False
+    pipeline_options.generate_picture_images = True
 
     return DocumentConverter(
         format_options={

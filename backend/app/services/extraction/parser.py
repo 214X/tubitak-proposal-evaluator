@@ -4,6 +4,7 @@ import re
 import unicodedata
 from typing import Any
 
+from app.services.extraction.gantt_chart import normalize_tubitak_gantt_picture
 from app.services.extraction.models.parser_output import (
     HeadingHierarchyNode,
     ParserStreamItem,
@@ -61,6 +62,7 @@ def parse_docling_content_stream(docling_output: dict[str, Any]) -> list[ParserS
     body_children = body.get("children", [])
     content_stream: list[ParserStreamItem] = []
     next_order = 1
+    active_heading_text: str | None = None
 
     for child in body_children:
         ref = _extract_reference(child)
@@ -112,22 +114,29 @@ def parse_docling_content_stream(docling_output: dict[str, Any]) -> list[ParserS
             next_order += 1
             continue
 
-        content = _extract_stream_item_content(item, item_type, docling_output)
+        content = _extract_stream_item_content(
+            item,
+            item_type,
+            docling_output,
+            active_heading_text=active_heading_text,
+        )
         if _should_skip_extracted_item(item_type, label, content):
             continue
 
-        content_stream.append(
-            ParserStreamItem(
-                ref=ref,
-                order=next_order,
-                item_type=item_type,
-                label=label,
-                page_start=page_start,
-                page_end=page_end,
-                content=content,
-            )
+        stream_item = ParserStreamItem(
+            ref=ref,
+            order=next_order,
+            item_type=item_type,
+            label=label,
+            page_start=page_start,
+            page_end=page_end,
+            content=content,
         )
+        content_stream.append(stream_item)
         next_order += 1
+
+        if _parse_heading_candidate(stream_item) is not None:
+            active_heading_text = str(stream_item.content or "")
 
     return content_stream
 
@@ -244,6 +253,7 @@ def _extract_stream_item_content(
     item: dict[str, Any],
     item_type: ParserStreamItemType,
     docling_output: dict[str, Any],
+    active_heading_text: str | None = None,
 ) -> Any | None:
     # Content is intentionally stored in the most useful shape for each item:
     # - text items expose their text directly,
@@ -254,7 +264,9 @@ def _extract_stream_item_content(
         return item.get("text")
     if item_type == "table":
         return item.get("data")
-    if item_type in {"picture", "group", "key_value", "form_item", "unknown"}:
+    if item_type == "picture":
+        return normalize_tubitak_gantt_picture(item, active_heading_text, docling_output) or item
+    if item_type in {"group", "key_value", "form_item", "unknown"}:
         return item
     return None
 

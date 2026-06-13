@@ -36,6 +36,27 @@ export type ParserListContent = {
   items: string[];
 };
 
+export type ParserGanttTask = {
+  label: string;
+  start_week: number;
+  end_week: number;
+  months: string;
+};
+
+export type ParserGanttWorkPackage = {
+  label: string;
+  tasks: ParserGanttTask[];
+};
+
+export type ParserGanttChartContent = {
+  type: "gantt_chart";
+  title: string;
+  months: string[];
+  week_count: number;
+  work_packages: ParserGanttWorkPackage[];
+  image_uri?: string;
+};
+
 export type HeadingHierarchyNode = {
   id: string;
   ref: string;

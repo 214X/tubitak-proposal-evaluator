@@ -69,6 +69,8 @@ def is_table_block(item: ParserStreamItem) -> bool:
     # intentionally lightweight here.
     if item.item_type == "table":
         return True
+    if item.item_type == "picture" and isinstance(item.content, dict):
+        return item.content.get("type") == "gantt_chart"
     return item.label == "table"
 
 

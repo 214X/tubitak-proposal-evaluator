@@ -46,8 +46,8 @@ class EvaluationCriterion(BaseModel):
     description: str
     question: str
     weight: int = Field(ge=1)
-    score_min: int = Field(default=0, ge=0, le=5)
-    score_max: int = Field(default=5, ge=0, le=5)
+    score_min: int = Field(default=0, ge=0, le=100)
+    score_max: int = Field(default=100, ge=0, le=100)
     source_sections: list[str] = Field(default_factory=list, min_length=1)
     required_sections: list[str] = Field(default_factory=list, min_length=1)
     fallback_sections: list[str] = Field(default_factory=list)
@@ -67,6 +67,8 @@ class EvaluationCriterion(BaseModel):
 
     @model_validator(mode="after")
     def apply_compatibility_defaults(self) -> "EvaluationCriterion":
+        if self.score_min == 0 and self.score_max == 5:
+            self.score_max = 100
         if not self.category:
             self.category = self.main_dimension_id
         if not self.allowed_scores:
@@ -184,9 +186,9 @@ class CriterionJudgeResponse(BaseModel):
     criterion_id: str = ""
     main_dimension_id: str | None = None
     title: str = ""
-    score: float | None = Field(default=None, ge=0.0, le=5.0)
-    claim_strength: float | None = Field(default=None, ge=0.0, le=5.0)
-    evidence_quality: float | None = Field(default=None, ge=0.0, le=5.0)
+    score: float | None = Field(default=None, ge=0.0, le=100.0)
+    claim_strength: float | None = Field(default=None, ge=0.0, le=100.0)
+    evidence_quality: float | None = Field(default=None, ge=0.0, le=100.0)
     confidence: float = Field(ge=0.0, le=1.0)
     decision_status: CriterionDecisionStatus
     criterion_explanation: str = ""
@@ -209,12 +211,132 @@ class CriterionJudgeResponse(BaseModel):
             return payload
 
         normalized = dict(payload)
+        proposal_block = normalized.get("proje_oneri")
+        if isinstance(proposal_block, dict):
+            normalized = {
+                **proposal_block,
+                **{key: value for key, value in normalized.items() if key != "proje_oneri"},
+            }
+
+        normalized["criterion_id"] = _first_present(
+            normalized,
+            "criterion_id",
+            "kriter_id",
+            "alt_kriter_id",
+            default="",
+        )
+        normalized["main_dimension_id"] = _first_present(
+            normalized,
+            "main_dimension_id",
+            "ana_boyut",
+            "ana_boyut_id",
+            default=None,
+        )
+        normalized["title"] = _first_present(
+            normalized,
+            "title",
+            "başlık",
+            "baslik",
+            "kriter",
+            default="",
+        )
+        normalized["score"] = _normalize_legacy_score_value(
+            _first_present(normalized, "score", "skor", "puan")
+        )
+        normalized["claim_strength"] = _normalize_legacy_score_value(
+            _first_present(
+                normalized,
+                "claim_strength",
+                "iddia_gucu",
+                "iddia_gücü",
+                "iddia_puani",
+            )
+        )
+        normalized["evidence_quality"] = _normalize_legacy_score_value(
+            _first_present(
+                normalized,
+                "evidence_quality",
+                "kanit_kalitesi",
+                "kanıt_kalitesi",
+                "kanit_gucu",
+                "kanıt_gücü",
+            )
+        )
+        normalized["confidence"] = _normalize_confidence_value(
+            _first_present(normalized, "confidence", "guven", "güven")
+        )
+        normalized["decision_status"] = _normalize_decision_status(
+            _first_present(
+                normalized,
+                "decision_status",
+                "karar_durumu",
+                "degerlendirme_durumu",
+            ),
+            has_score=normalized.get("score") is not None,
+            has_evidence=bool(normalized.get("evidence_items")),
+        )
         justification = str(normalized.get("justification") or "").strip()
+        if not justification:
+            justification = str(
+                _first_present(
+                    normalized,
+                    "gerekce",
+                    "gerekçe",
+                    "aciklama",
+                    "açıklama",
+                    default="",
+                )
+                or ""
+            ).strip()
+            normalized["justification"] = justification
         normalized.setdefault("criterion_explanation", justification)
         normalized.setdefault("short_assessment", justification)
+        normalized["criterion_explanation"] = _first_present(
+            normalized,
+            "criterion_explanation",
+            "kriter_aciklamasi",
+            "kriter_açıklaması",
+            default=normalized.get("criterion_explanation", ""),
+        )
+        normalized["short_assessment"] = _first_present(
+            normalized,
+            "short_assessment",
+            "kisa_degerlendirme",
+            "kısa_değerlendirme",
+            "ozet",
+            "özet",
+            default=normalized.get("short_assessment", ""),
+        )
+        normalized["missing_information"] = _normalize_string_list(
+            _first_present(
+                normalized,
+                "missing_information",
+                "eksik_bilgiler",
+                "eksik_bilgi",
+                default=[],
+            )
+        )
+        normalized["red_flags"] = _normalize_string_list(
+            _first_present(
+                normalized,
+                "red_flags",
+                "risk_isaretleri",
+                "risk_işaretleri",
+                "uyari_isaretleri",
+                default=[],
+            )
+        )
 
         if "positive_findings" not in normalized:
-            normalized["positive_findings"] = [
+            normalized["positive_findings"] = _normalize_findings(
+                _first_present(
+                    normalized,
+                    "positive_findings",
+                    "olumlu_bulgular",
+                    default=normalized.get("supporting_evidence_notes", []),
+                ),
+                positive=True,
+            ) or [
                 {
                     "summary": _payload_get(item, "evidence_text") or _payload_get(item, "why_it_matters") or "",
                     "why_positive": _payload_get(item, "why_it_matters") or "",
@@ -223,7 +345,17 @@ class CriterionJudgeResponse(BaseModel):
                 for item in normalized.get("supporting_evidence_notes", [])
             ]
         if "negative_findings" not in normalized:
-            normalized["negative_findings"] = [
+            normalized["negative_findings"] = _normalize_findings(
+                _first_present(
+                    normalized,
+                    "negative_findings",
+                    "zayiflatan_bulgular",
+                    "zayıflatan_bulgular",
+                    "olumsuz_bulgular",
+                    default=normalized.get("contradicting_evidence_notes", []),
+                ),
+                positive=False,
+            ) or [
                 {
                     "summary": _payload_get(item, "evidence_text") or _payload_get(item, "why_it_matters") or "",
                     "why_negative": _payload_get(item, "why_it_matters") or "",
@@ -231,7 +363,16 @@ class CriterionJudgeResponse(BaseModel):
                 }
                 for item in normalized.get("contradicting_evidence_notes", [])
             ]
-        if "evidence_items" not in normalized:
+        normalized["evidence_items"] = _normalize_evidence_items(
+            _first_present(
+                normalized,
+                "evidence_items",
+                "kanit_ogeleri",
+                "kanıt_ögeleri",
+                default=[],
+            )
+        )
+        if not normalized.get("evidence_items"):
             evidence_items: list[dict[str, Any]] = []
             for item in normalized.get("supporting_evidence_notes", []):
                 evidence_items.append(
@@ -302,9 +443,9 @@ class CriterionEvaluationResult(BaseModel):
     main_dimension_id: str | None = None
     category: str | None = None
     title: str
-    score: float | None = Field(default=None, ge=0.0, le=5.0)
-    claim_strength: float | None = Field(default=None, ge=0.0, le=5.0)
-    evidence_quality: float | None = Field(default=None, ge=0.0, le=5.0)
+    score: float | None = Field(default=None, ge=0.0, le=100.0)
+    claim_strength: float | None = Field(default=None, ge=0.0, le=100.0)
+    evidence_quality: float | None = Field(default=None, ge=0.0, le=100.0)
     weight: int = Field(ge=1)
     weighted_score: float | None = None
     confidence: float = Field(ge=0.0, le=1.0)
@@ -337,6 +478,13 @@ class CriterionEvaluationResult(BaseModel):
 
         normalized = dict(payload)
         normalized.setdefault("main_dimension_id", normalized.get("category"))
+        normalized["score"] = _normalize_legacy_score_value(normalized.get("score"))
+        normalized["claim_strength"] = _normalize_legacy_score_value(
+            normalized.get("claim_strength")
+        )
+        normalized["evidence_quality"] = _normalize_legacy_score_value(
+            normalized.get("evidence_quality")
+        )
 
         justification = str(normalized.get("justification") or "").strip()
         normalized.setdefault("criterion_explanation", justification)
@@ -468,9 +616,15 @@ class RubricTableEntry(BaseModel):
     weight: int = Field(ge=1)
     source_sections: list[str] = Field(default_factory=list)
     ui_label: str = ""
-    score_min: int = Field(default=0, ge=0, le=5)
-    score_max: int = Field(default=5, ge=0, le=5)
+    score_min: int = Field(default=0, ge=0, le=100)
+    score_max: int = Field(default=100, ge=0, le=100)
     ui_explanation: str = ""
+
+    @model_validator(mode="after")
+    def apply_legacy_scale(self) -> "RubricTableEntry":
+        if self.score_min == 0 and self.score_max == 5:
+            self.score_max = 100
+        return self
 
 
 class EvaluationReport(BaseModel):
@@ -505,22 +659,8 @@ class EvaluationReport(BaseModel):
         normalized.setdefault("subcriteria_results", criterion_results)
         normalized.setdefault("major_strengths", normalized.get("strengths", []))
         normalized.setdefault("major_weaknesses", normalized.get("weaknesses", []))
-
-        if "critical_missing_information" not in normalized:
-            missing: list[str] = []
-            for item in criterion_results:
-                for missing_item in item.get("missing_information", []):
-                    if missing_item not in missing:
-                        missing.append(missing_item)
-            normalized["critical_missing_information"] = missing[:5]
-
-        if "red_flags" not in normalized:
-            flags: list[str] = []
-            for item in criterion_results:
-                for flag in item.get("red_flags", []):
-                    if flag not in flags:
-                        flags.append(flag)
-            normalized["red_flags"] = flags[:5]
+        normalized.setdefault("critical_missing_information", [])
+        normalized.setdefault("red_flags", [])
 
         if "overall_score" not in normalized:
             total = normalized.get("total_weighted_score")
@@ -591,27 +731,11 @@ class EvaluationState(BaseModel):
 
     @computed_field
     def critical_missing_information(self) -> list[str]:
-        if self.final_report is not None:
-            return self.final_report.critical_missing_information
-
-        missing: list[str] = []
-        for item in self.criterion_results:
-            for missing_item in item.missing_information:
-                if missing_item not in missing:
-                    missing.append(missing_item)
-        return missing
+        return self.final_report.critical_missing_information if self.final_report is not None else []
 
     @computed_field
     def red_flags(self) -> list[str]:
-        if self.final_report is not None:
-            return self.final_report.red_flags
-
-        flags: list[str] = []
-        for item in self.criterion_results:
-            for flag in item.red_flags:
-                if flag not in flags:
-                    flags.append(flag)
-        return flags
+        return self.final_report.red_flags if self.final_report is not None else []
 
 
 def _format_heading_location(
@@ -631,3 +755,203 @@ def _payload_get(payload: Any, key: str, default: Any = None) -> Any:
     if isinstance(payload, dict):
         return payload.get(key, default)
     return getattr(payload, key, default)
+
+
+def _normalize_legacy_score_value(value: Any) -> Any:
+    if isinstance(value, (int, float)) and 0.0 <= float(value) <= 5.0:
+        return round(float(value) * 20, 2)
+    return value
+
+
+def _first_present(payload: dict[str, Any], *keys: str, default: Any = None) -> Any:
+    for key in keys:
+        if key in payload and payload[key] not in (None, ""):
+            return payload[key]
+    return default
+
+
+def _normalize_confidence_value(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        numeric = float(value)
+        if numeric > 1.0 and numeric <= 100.0:
+            return round(numeric / 100.0, 2)
+        if 0.0 <= numeric <= 1.0:
+            return numeric
+    return 0.55
+
+
+def _normalize_decision_status(
+    value: Any,
+    *,
+    has_score: bool,
+    has_evidence: bool,
+) -> str:
+    if isinstance(value, str):
+        compact = value.strip().lower()
+        status_map = {
+            "scored": "scored",
+            "puanlandi": "scored",
+            "puanlandı": "scored",
+            "basarili": "scored",
+            "başarılı": "scored",
+            "insufficient_evidence": "insufficient_evidence",
+            "kanit_yetersiz": "insufficient_evidence",
+            "kanıt_yetersiz": "insufficient_evidence",
+            "yetersiz_kanit": "insufficient_evidence",
+            "yetersiz_kanıt": "insufficient_evidence",
+            "failed": "failed",
+            "basarisiz": "failed",
+            "başarısız": "failed",
+            "conflicting_evidence": "conflicting_evidence",
+            "celiskili_kanit": "conflicting_evidence",
+            "çelişkili_kanıt": "conflicting_evidence",
+        }
+        if compact in status_map:
+            return status_map[compact]
+    if has_score:
+        return "scored"
+    if has_evidence:
+        return "insufficient_evidence"
+    return "failed"
+
+
+def _normalize_string_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return []
+
+
+def _normalize_findings(value: Any, *, positive: bool) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+
+    findings: list[dict[str, Any]] = []
+    for item in value:
+        if isinstance(item, str):
+            summary = item.strip()
+            if not summary:
+                continue
+            findings.append(
+                {
+                    "summary": summary,
+                    "why_positive" if positive else "why_negative": summary,
+                    "chunk_id": "",
+                }
+            )
+            continue
+
+        if not isinstance(item, dict):
+            continue
+
+        summary = str(
+            _first_present(
+                item,
+                "summary",
+                "ozet",
+                "özet",
+                "bulgu",
+                "metin",
+                default="",
+            )
+            or ""
+        ).strip()
+        rationale = str(
+            _first_present(
+                item,
+                "why_positive" if positive else "why_negative",
+                "neden_olumlu" if positive else "neden_olumsuz",
+                "aciklama",
+                "açıklama",
+                default=summary,
+            )
+            or ""
+        ).strip()
+        chunk_id = str(
+            _first_present(item, "chunk_id", "parca_id", "parça_id", default="")
+            or ""
+        ).strip()
+
+        if not summary and not rationale:
+            continue
+
+        findings.append(
+            {
+                "summary": summary or rationale,
+                "why_positive" if positive else "why_negative": rationale or summary,
+                "chunk_id": chunk_id,
+            }
+        )
+    return findings
+
+
+def _normalize_evidence_items(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+
+    items: list[dict[str, Any]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        evidence_type = str(
+            _first_present(
+                item,
+                "evidence_type",
+                "tur",
+                "tür",
+                default="context",
+            )
+            or "context"
+        ).strip().lower()
+        type_map = {
+            "positive": "positive",
+            "destekleyici": "positive",
+            "olumlu": "positive",
+            "negative": "negative",
+            "zayiflatan": "negative",
+            "zayıflatan": "negative",
+            "olumsuz": "negative",
+            "context": "context",
+            "baglam": "context",
+            "bağlam": "context",
+        }
+        items.append(
+            {
+                "chunk_id": str(
+                    _first_present(item, "chunk_id", "parca_id", "parça_id", default="")
+                    or ""
+                ).strip(),
+                "evidence_type": type_map.get(evidence_type, "context"),
+                "verbatim_excerpt": str(
+                    _first_present(
+                        item,
+                        "verbatim_excerpt",
+                        "dogrudan_alinti",
+                        "doğrudan_alıntı",
+                        "excerpt",
+                        "metin",
+                        default="",
+                    )
+                    or ""
+                ).strip(),
+                "heading_path": _normalize_string_list(
+                    _first_present(item, "heading_path", "konum", "baslik_yolu", default=[])
+                ),
+                "page_start": _first_present(item, "page_start", "sayfa_baslangic", default=None),
+                "page_end": _first_present(item, "page_end", "sayfa_bitis", default=None),
+                "why_it_matters": str(
+                    _first_present(
+                        item,
+                        "why_it_matters",
+                        "neden_onemli",
+                        "neden_önemli",
+                        "aciklama",
+                        "açıklama",
+                        default="",
+                    )
+                    or ""
+                ).strip(),
+            }
+        )
+    return items

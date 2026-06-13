@@ -33,7 +33,7 @@ def _build_system_prompt() -> str:
         "Dış bilgi kullanma. Eksik bilgileri uydurma. "
         "Başvuru sahibinin iddiasını ve bunu destekleyen kanıt gücünü ayrı değerlendir. "
         "Kanıt zayıfsa veya eksikse bunu açıkça belirt. "
-        "0 ile 5 arasında skor ver. "
+        "Tüm puan alanlarını 0 ile 100 arasında ver. "
         "Tüm alanları Türkçe üret. "
         "JSON dışında hiçbir çıktı verme."
     )
@@ -47,9 +47,9 @@ def _build_user_prompt(
         "criterion_id": "string",
         "main_dimension_id": "string",
         "title": "string",
-        "score": "0.0-5.0 veya null",
-        "claim_strength": "0.0-5.0 veya null",
-        "evidence_quality": "0.0-5.0 veya null",
+        "score": "0.0-100.0 veya null",
+        "claim_strength": "0.0-100.0 veya null",
+        "evidence_quality": "0.0-100.0 veya null",
         "decision_status": "scored | insufficient_evidence | failed",
         "criterion_explanation": "Türkçe kısa açıklama",
         "short_assessment": "Türkçe kısa değerlendirme",
@@ -91,26 +91,25 @@ def _build_user_prompt(
         f"- başlık: {criterion.title}\n"
         f"- soru: {criterion.question}\n"
         f"- açıklama: {criterion.description}\n"
-        f"- ağırlık: {criterion.weight}\n"
         f"- skor_aralığı: {criterion.score_min}-{criterion.score_max}\n\n"
         "Puanlama rehberi:\n"
-        "- 0: İddia yok veya kanıt yok denecek kadar zayıf.\n"
-        "- 1: İddia var ama ciddi ölçüde eksik, soyut veya kanıtsız.\n"
-        "- 2: Kısmi iddia ve sınırlı kanıt var; ikna gücü düşük.\n"
-        "- 3: Makul iddia ve orta düzey kanıt var; bazı boşluklar mevcut.\n"
-        "- 4: Güçlü iddia ve iyi düzeyde kanıt var; küçük eksikler mevcut.\n"
-        "- 5: Çok güçlü, açık ve iyi kanıtlanmış iddia.\n\n"
-        f"Coverage durumu: {evidence.coverage_status}\n"
-        f"Coverage notları:\n{_format_note_block(evidence.coverage_notes)}\n\n"
-        f"Primary section chunks:\n{_format_evidence_block(evidence.primary_section_chunks)}\n\n"
-        f"Semantic support chunks:\n{_format_evidence_block(evidence.semantic_support_chunks)}\n\n"
-        f"Fallback context chunks:\n{_format_evidence_block(evidence.fallback_context_chunks)}\n\n"
+        "- 0-19: İddia yok veya kanıt yok denecek kadar zayıf.\n"
+        "- 20-39: İddia var ama ciddi ölçüde eksik, soyut veya kanıtsız.\n"
+        "- 40-59: Kısmi iddia ve sınırlı kanıt var; ikna gücü düşük.\n"
+        "- 60-79: Makul veya güçlü iddia var; ancak hâlâ belirgin boşluklar mevcut.\n"
+        "- 80-100: Çok güçlü, açık ve iyi kanıtlanmış iddia.\n\n"
+        f"Kapsama durumu: {evidence.coverage_status}\n"
+        f"Kapsama notları:\n{_format_note_block(evidence.coverage_notes)}\n\n"
+        f"Birincil bölüm kanıtları:\n{_format_evidence_block(evidence.primary_section_chunks)}\n\n"
+        f"Anlamsal destek kanıtları:\n{_format_evidence_block(evidence.semantic_support_chunks)}\n\n"
+        f"Yedek bağlam kanıtları:\n{_format_evidence_block(evidence.fallback_context_chunks)}\n\n"
         "Görev:\n"
         "- Önce başvuru sahibinin bu kriter için ne iddia ettiğini çıkar.\n"
         "- Sonra bu iddiayı destekleyen kanıtın ne kadar güçlü olduğunu değerlendir.\n"
         "- Kanıttaki boşlukları, eksikleri ve iddiayı zayıflatan unsurları açıkla.\n"
-        "- Score, claim_strength ve evidence_quality alanlarını 0-5 aralığında ver.\n"
-        "- Coverage missing veya kanıt çok zayıf ise decision_status alanını insufficient_evidence yap ve skorları null bırakabilirsin.\n"
+        "- Zorunlu birincil bölüm eksikse yine de diğer kanıtları kullanarak puan üret; ancak bu eksikliği puanı düşüren önemli bir zayıflık olarak ele al.\n"
+        "- Score, claim_strength ve evidence_quality alanlarını 0-100 aralığında ver.\n"
+        "- Yalnızca gerçekten hiçbir kullanılabilir kanıt yoksa decision_status alanını insufficient_evidence yap ve skorları null bırak.\n"
         "- Sadece verilen chunk_id değerlerini kullan.\n"
         "- evidence_items alanında yalnızca gerçekten kullandığın kanıtları ekle.\n"
         "- evidence_type değeri sadece positive, negative veya context olabilir.\n"
@@ -127,7 +126,7 @@ def _format_note_block(notes: list[str]) -> str:
 
 def _format_evidence_block(evidence_items) -> str:
     if not evidence_items:
-        return "- none"
+        return "- yok"
 
     lines: list[str] = []
     for index, item in enumerate(evidence_items, start=1):
