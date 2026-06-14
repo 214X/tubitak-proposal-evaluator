@@ -7,7 +7,7 @@
     radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 26%),
     radial-gradient(circle at 84% 20%, color-mix(in srgb, #ef8765 18%, transparent), transparent 28%),
     radial-gradient(circle at 50% 88%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 32%),
-    linear-gradient(180deg, color-mix(in srgb, #fff4f0 52%, var(--app-bg)) 0%, color-mix(in srgb, #ffe6df 34%, var(--app-bg)) 36%, color-mix(in srgb, var(--accent) 10%, var(--app-bg)) 100%);
+    linear-gradient(180deg, color-mix(in srgb, #fff4f0 20%, var(--app-bg)) 0%, color-mix(in srgb, #ffe6df 14%, var(--app-bg)) 36%, color-mix(in srgb, var(--accent) 10%, var(--app-bg)) 100%);
   isolation: isolate;
 }
 

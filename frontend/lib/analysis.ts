@@ -272,12 +272,14 @@ export type CriterionEvaluationResult = {
     summary: string;
     why_positive: string | null;
     why_negative: string | null;
+    quote: string | null;
     chunk_id: string;
   }>;
   negative_findings: Array<{
     summary: string;
     why_positive: string | null;
     why_negative: string | null;
+    quote: string | null;
     chunk_id: string;
   }>;
   supporting_chunk_ids: string[];
@@ -519,6 +521,30 @@ export async function startCurrentEvaluation(apiBaseUrl: string, sessionId: stri
   }
 
   return (await response.json()) as EvaluationState;
+}
+
+export async function setNotificationEmail(
+  apiBaseUrl: string,
+  sessionId: string,
+  email: string,
+) {
+  const response = await fetch(`${apiBaseUrl}/api/uploads/current/email`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Session-Id": sessionId,
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new Error(payload?.detail ?? `E-posta kaydedilemedi (Durum: ${response.status}).`);
+  }
+}
+
+export function reportPdfDownloadUrl(apiBaseUrl: string, sessionId: string) {
+  return `${apiBaseUrl}/api/evaluation/current/report.pdf?session_id=${encodeURIComponent(sessionId)}`;
 }
 
 export async function searchCurrentEmbeddings(

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, Header, HTTPException, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from app.services.upload.schemas import UploadSessionResponse
 from app.services.upload.service import (
@@ -7,10 +8,15 @@ from app.services.upload.service import (
     get_session_upload,
     get_session_upload_path,
     save_upload,
+    set_notification_email,
     touch_session_upload,
 )
 
 router = APIRouter()
+
+
+class NotificationEmailRequest(BaseModel):
+    email: str
 
 
 def resolve_session_id(
@@ -56,6 +62,16 @@ def heartbeat_current_upload(
     x_session_id: str = Header(..., alias="X-Session-Id"),
 ) -> Response:
     touch_session_upload(x_session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.put("/current/email", status_code=status.HTTP_204_NO_CONTENT)
+def set_current_notification_email(
+    payload: NotificationEmailRequest,
+    x_session_id: str = Header(..., alias="X-Session-Id"),
+) -> Response:
+    """Değerlendirme tamamlandığında rapor gönderilecek e-posta adresini oturuma kaydeder."""
+    set_notification_email(x_session_id, payload.email)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

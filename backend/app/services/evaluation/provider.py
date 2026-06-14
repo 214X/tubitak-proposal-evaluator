@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import difflib
 import json
+import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 from urllib import error, request
@@ -216,10 +219,17 @@ class OllamaAyaProvider:
             reason = _clean_text(item.get("reason"))
             if not summary and not reason:
                 continue
+            # Grounding güvencesi: bulgu, atıf yaptığı kanıttan BİREBİR bir alıntı taşımalı
+            # ve bu alıntı gerçekten o chunk'ın metninde geçmeli. Aksi halde bulgu uydurma
+            # sayılır ve rapora hiç girmez (en katı anti-halüsinasyon politikası).
+            quote = _strip_ref_markers(_clean_text(item.get("quote")))
+            if not quote or not _quote_is_grounded(quote, chunk.text_for_embedding):
+                continue
             findings.append(
                 {
                     "summary": summary or reason,
                     reason_key: reason or fallback_reason,
+                    "quote": quote,
                     "chunk_id": chunk.chunk_id,
                 }
             )
@@ -244,9 +254,12 @@ class OllamaAyaProvider:
             if key in seen:
                 continue
             seen.add(key)
-            excerpt = _clean_text(item.get("verbatim_excerpt")) or self._summarize_chunk_text(
-                chunk.text_for_embedding
-            )
+            # Kanıt göstergesi: chunk_id ref ile zaten yapısal doğru. Modelin alıntısı
+            # chunk'ta doğrulanamıyorsa düşürmek yerine chunk'ın KENDİ metniyle değiştir;
+            # böylece gösterilen alıntı her zaman belgeyle birebir kalır.
+            excerpt = _strip_ref_markers(_clean_text(item.get("verbatim_excerpt")))
+            if not excerpt or not _quote_is_grounded(excerpt, chunk.text_for_embedding):
+                excerpt = self._summarize_chunk_text(chunk.text_for_embedding)
             items.append(
                 {
                     "chunk_id": chunk.chunk_id,
@@ -494,6 +507,40 @@ def _normalize_score_scale(value: float | None) -> float | None:
     if 0.0 <= value <= 5.0:
         return round(value * 20, 2)
     return value
+
+
+_MATCH_NON_ALNUM_PATTERN = re.compile(r"[^a-z0-9]+")
+_LEADING_REF_MARKER_PATTERN = re.compile(r"^\s*(?:\[\s*[Kk]\s*\d+\s*\]\s*)+")
+
+
+def _strip_ref_markers(value: str) -> str:
+    """Modelin alıntıya kopyaladığı baştaki [K#] etiketlerini temizler (kozmetik)."""
+    return _LEADING_REF_MARKER_PATTERN.sub("", value).strip()
+
+
+def _normalize_for_match(value: str) -> str:
+    collapsed = " ".join(value.split()).strip().casefold()
+    decomposed = unicodedata.normalize("NFKD", collapsed)
+    without_marks = "".join(char for char in decomposed if not unicodedata.combining(char))
+    return _MATCH_NON_ALNUM_PATTERN.sub(" ", without_marks).strip()
+
+
+def _quote_is_grounded(quote: str, chunk_text: str, threshold: float = 0.85) -> bool:
+    """Modelin alıntısının chunk metninde gerçekten geçip geçmediğini doğrular.
+
+    Normalize edildikten sonra önce substring; değilse alıntının chunk içinde bulunan en
+    uzun bitişik bloğunun oranı eşiği aşıyorsa grounded sayılır (küçük biçim sapmalarına
+    tolerans). Halüsinasyon edilmiş alıntı bu kontrolü geçemez.
+    """
+    norm_quote = _normalize_for_match(quote)
+    norm_chunk = _normalize_for_match(chunk_text)
+    if not norm_quote or not norm_chunk:
+        return False
+    if norm_quote in norm_chunk:
+        return True
+    matcher = difflib.SequenceMatcher(None, norm_quote, norm_chunk, autojunk=False)
+    match = matcher.find_longest_match(0, len(norm_quote), 0, len(norm_chunk))
+    return (match.size / len(norm_quote)) >= threshold
 
 
 def _blend_score(

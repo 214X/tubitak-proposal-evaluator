@@ -63,6 +63,61 @@ def metadata_to_response(payload: dict[str, str | int]) -> UploadSessionResponse
     )
 
 
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def is_valid_email(email: str) -> bool:
+    return bool(EMAIL_PATTERN.fullmatch(email.strip()))
+
+
+def set_notification_email(session_id: str, email: str) -> None:
+    """Oturum metadata'sına bildirim e-postasını yazar (değerlendirme tamamlanınca kullanılır)."""
+    normalized = email.strip()
+    if not is_valid_email(normalized):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Geçersiz e-posta adresi.",
+        )
+    current_metadata_path = metadata_path(session_id)
+    with lock:
+        if not current_metadata_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Aktif yükleme oturumu bulunamadı.",
+            )
+        payload = read_metadata_payload(current_metadata_path)
+        payload["notification_email"] = normalized
+        payload.pop("notification_sent_at", None)
+        write_metadata_payload(current_metadata_path, payload)
+
+
+def get_notification_email(session_id: str) -> str | None:
+    current_metadata_path = metadata_path(session_id)
+    if not current_metadata_path.exists():
+        return None
+    payload = read_metadata_payload(current_metadata_path)
+    value = payload.get("notification_email")
+    return str(value) if value else None
+
+
+def is_notification_sent(session_id: str) -> bool:
+    current_metadata_path = metadata_path(session_id)
+    if not current_metadata_path.exists():
+        return False
+    payload = read_metadata_payload(current_metadata_path)
+    return bool(payload.get("notification_sent_at"))
+
+
+def mark_notification_sent(session_id: str) -> None:
+    current_metadata_path = metadata_path(session_id)
+    with lock:
+        if not current_metadata_path.exists():
+            return
+        payload = read_metadata_payload(current_metadata_path)
+        payload["notification_sent_at"] = timestamp_now()
+        write_metadata_payload(current_metadata_path, payload)
+
+
 def prune_expired_sessions() -> None:
     ensure_upload_storage()
     now = datetime.now(UTC)

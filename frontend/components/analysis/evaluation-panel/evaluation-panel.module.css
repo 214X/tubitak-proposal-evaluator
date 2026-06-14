@@ -11,13 +11,13 @@
   --report-surface-soft: color-mix(in srgb, var(--app-panel-strong) 88%, transparent);
   --report-muted-surface: color-mix(in srgb, var(--surface-muted) 82%, var(--app-panel));
   --report-green: #2f7d4f;
-  --report-green-soft: #edf7ef;
+  --report-green-soft: color-mix(in srgb, #2f7d4f 14%, var(--app-panel));
   --report-amber: #946714;
-  --report-amber-soft: #fff7e4;
+  --report-amber-soft: color-mix(in srgb, #946714 14%, var(--app-panel));
   --report-red: #b0443e;
-  --report-red-soft: #fff0ed;
+  --report-red-soft: color-mix(in srgb, #b0443e 14%, var(--app-panel));
   --report-blue: #3f6678;
-  --report-blue-soft: #eef5f7;
+  --report-blue-soft: color-mix(in srgb, #3f6678 14%, var(--app-panel));
   display: grid;
   gap: 28px;
   width: 100%;
@@ -34,6 +34,21 @@
     0 24px 60px rgba(26, 22, 19, 0.08),
     inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 70%, transparent);
   backdrop-filter: blur(12px);
+}
+
+/* Koyu temada semantik renkleri parlatarak kontrastı korur (soft zeminler
+   color-mix ile zaten app-panel'e göre koyulaşır). data-theme global attribute'u
+   AppShell tarafından set edilir; modüller arası tek güvenilir dark hedefleme yolu. */
+:global([data-theme="dark"]) .panel {
+  --report-green: #5fb47e;
+  --report-amber: #d9a441;
+  --report-red: #e07a73;
+  --report-blue: #7aa6bc;
+  --report-border: rgba(244, 239, 236, 0.14);
+  --report-border-strong: rgba(244, 239, 236, 0.22);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 40%, transparent);
 }
 
 .metaChip,
@@ -138,10 +153,33 @@
 }
 
 .heroCard {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 18px;
   padding: 24px;
+}
+
+.heroDownloadButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  white-space: nowrap;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 200ms ease, transform 160ms ease;
+}
+
+.heroDownloadButton:hover {
+  background: var(--button-bg-hover);
+  transform: translateY(-1px);
 }
 
 .tableSection {
@@ -184,7 +222,7 @@
   padding: 18px 20px;
   border: 1px solid var(--report-border);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .heroEvidenceLabel {
@@ -362,7 +400,7 @@
 
 .rubricCloseButton {
   border: 1px solid var(--report-border);
-  background: #ffffff;
+  background: var(--app-panel);
   color: var(--accent-strong);
 }
 
@@ -536,7 +574,7 @@
   overflow: auto;
   border: 1px solid var(--report-border);
   border-radius: 14px;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .table {
@@ -568,7 +606,7 @@
 
 .dimensionAccordion {
   overflow: hidden;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .dimensionSummary {
@@ -649,7 +687,7 @@
 .subcriterionAccordion {
   overflow: hidden;
   margin-top: 18px;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .subcriterionSummary {
@@ -709,7 +747,7 @@
   gap: 18px;
   padding: 18px;
   border-top: 0;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .criterionModalBackdrop {
@@ -823,7 +861,7 @@
   padding: 14px;
   border: 1px solid var(--report-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .explanationSubLabel,
@@ -947,7 +985,7 @@
 
 .evidenceCard {
   overflow: hidden;
-  background: #ffffff;
+  background: var(--app-panel);
 }
 
 .evidenceCardPositive {
@@ -1094,4 +1132,76 @@
   .rubricModal {
     padding: 18px;
   }
+}
+
+/* İncelenen Kanıtlar (report-enrichment O1) */
+.reviewedSection {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.reviewedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.reviewedItem {
+  border: 1px solid var(--app-panel-border);
+  border-radius: 12px;
+  background: var(--app-panel-strong);
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+.reviewedItemTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reviewedTypeBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--app-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--app-panel-border);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.reviewedCitedBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-strong);
+  background: var(--accent-soft-strong);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.reviewedContextBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--app-muted);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.reviewedLocation {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-muted);
+}
+
+.reviewedText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--app-text);
 }

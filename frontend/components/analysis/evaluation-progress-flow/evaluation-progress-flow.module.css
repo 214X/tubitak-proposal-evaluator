@@ -415,7 +415,7 @@
 }
 
 .completedCard .actionButton {
-  background: #ffffff;
+  background: var(--app-panel);
   color: var(--accent-strong);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
@@ -425,7 +425,7 @@
 }
 
 .completedCard .actionButton:hover {
-  background: #fff3f3;
+  background: color-mix(in srgb, var(--accent) 10%, var(--app-panel));
   color: var(--accent-strong);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
 }

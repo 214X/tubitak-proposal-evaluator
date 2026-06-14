@@ -1,0 +1,386 @@
+@page {
+  size: A4;
+  margin: 20mm 15mm;
+  @bottom-center {
+    content: "TÜBİTAK Proje Öneri Değerlendirme Raporu — sayfa " counter(page) " / " counter(pages);
+    font-size: 8pt;
+    color: #9a8c87;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Helvetica Neue", Arial, "DejaVu Sans", sans-serif;
+  color: #171312;
+  font-size: 10pt;
+  line-height: 1.55;
+  margin: 0;
+  background: #f6f2ee;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0;
+  color: #171312;
+}
+
+.muted {
+  color: #726460;
+}
+
+.accent {
+  color: #a9343b;
+}
+
+/* Hero */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 16px;
+  border: 1px solid rgba(205, 69, 76, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #fcf6f4 100%);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-size: 16pt;
+  font-weight: 800;
+}
+
+.hero-subtitle {
+  font-size: 9pt;
+  color: #726460;
+  margin-top: 4px;
+}
+
+.hero-score {
+  text-align: right;
+}
+
+.hero-score-label {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #726460;
+}
+
+.hero-score-value {
+  font-size: 26pt;
+  font-weight: 800;
+  color: #cd454c;
+  line-height: 1;
+}
+
+.hero-evidence {
+  font-size: 9pt;
+  color: #726460;
+  margin-top: 6px;
+}
+
+/* Section */
+.section {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 12pt;
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid rgba(205, 69, 76, 0.18);
+}
+
+.summary-box {
+  background: #ffffff;
+  border: 1px solid rgba(205, 69, 76, 0.16);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 10pt;
+}
+
+/* Main dimension cards */
+.dim-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dim-card {
+  flex: 1 1 28%;
+  border: 1px solid rgba(205, 69, 76, 0.18);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px 12px;
+}
+
+.dim-card-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  color: #726460;
+}
+
+.dim-card-id {
+  font-weight: 800;
+  color: #cd454c;
+}
+
+.dim-card-title {
+  font-size: 9.5pt;
+  font-weight: 600;
+  margin: 4px 0;
+}
+
+.dim-card-value {
+  font-size: 15pt;
+  font-weight: 800;
+}
+
+/* Rubric table */
+table.rubric {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+}
+
+table.rubric th,
+table.rubric td {
+  border: 1px solid rgba(205, 69, 76, 0.16);
+  padding: 5px 7px;
+  text-align: left;
+  vertical-align: top;
+}
+
+table.rubric th {
+  background: #faf1ef;
+  font-weight: 700;
+}
+
+/* Criterion card */
+.criterion {
+  border: 1px solid rgba(205, 69, 76, 0.2);
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  page-break-inside: avoid;
+}
+
+.criterion-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.criterion-id {
+  font-size: 8pt;
+  font-weight: 800;
+  color: #cd454c;
+  letter-spacing: 0.04em;
+}
+
+.criterion-title {
+  font-size: 11.5pt;
+  font-weight: 700;
+}
+
+.criterion-score {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.criterion-score-value {
+  font-size: 16pt;
+  font-weight: 800;
+}
+
+.subscores {
+  font-size: 8pt;
+  color: #726460;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 7.5pt;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 4px;
+}
+
+.badge-salvaged {
+  background: #eef5f7;
+  color: #3f6678;
+}
+
+.badge-insufficient {
+  background: #fff7e4;
+  color: #946714;
+}
+
+.badge-missing {
+  background: #fff0ed;
+  color: #b0443e;
+}
+
+.block {
+  margin-top: 8px;
+}
+
+.block-label {
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #a9343b;
+  margin-bottom: 3px;
+}
+
+.block-text {
+  font-size: 9.5pt;
+}
+
+.two-col {
+  display: flex;
+  gap: 10px;
+}
+
+.two-col > div {
+  flex: 1;
+}
+
+.finding {
+  border-left: 3px solid rgba(205, 69, 76, 0.3);
+  padding: 4px 0 4px 8px;
+  margin-bottom: 6px;
+}
+
+.finding.positive {
+  border-left-color: #2f7d4f;
+}
+
+.finding.negative {
+  border-left-color: #b0443e;
+}
+
+.finding-summary {
+  font-size: 9.5pt;
+  font-weight: 600;
+}
+
+.finding-reason {
+  font-size: 9pt;
+  color: #726460;
+}
+
+.finding-quote {
+  font-size: 8.5pt;
+  font-style: italic;
+  color: #726460;
+  border-left: 2px solid rgba(0, 0, 0, 0.12);
+  padding-left: 6px;
+  margin: 3px 0 0 0;
+}
+
+ul.info-list {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 9pt;
+}
+
+ul.info-list li {
+  margin-bottom: 3px;
+}
+
+/* Evidence cards */
+.evidence-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evidence-card {
+  flex: 1 1 46%;
+  border: 1px solid rgba(63, 102, 120, 0.26);
+  border-radius: 10px;
+  background: #fbfafa;
+  padding: 8px 10px;
+}
+
+.evidence-type {
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #3f6678;
+}
+
+.evidence-loc {
+  font-size: 8pt;
+  color: #726460;
+  margin: 2px 0;
+}
+
+.evidence-quote {
+  font-size: 8.5pt;
+  font-style: italic;
+  margin: 4px 0;
+}
+
+.evidence-why {
+  font-size: 8.5pt;
+  color: #726460;
+}
+
+/* Reviewed evidence */
+.reviewed-item {
+  border: 1px solid rgba(205, 69, 76, 0.14);
+  border-radius: 10px;
+  background: #fcf8f7;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.reviewed-top {
+  font-size: 7.5pt;
+}
+
+.reviewed-type {
+  font-weight: 700;
+  background: rgba(205, 69, 76, 0.1);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.reviewed-cited {
+  font-weight: 700;
+  color: #a9343b;
+  margin-left: 6px;
+}
+
+.reviewed-context {
+  color: #726460;
+  margin-left: 6px;
+}
+
+.reviewed-loc {
+  font-size: 8pt;
+  color: #726460;
+  margin: 3px 0;
+}
+
+.reviewed-text {
+  font-size: 8.5pt;
+}
+
+.empty {
+  font-size: 9pt;
+  color: #9a8c87;
+  font-style: italic;
+}

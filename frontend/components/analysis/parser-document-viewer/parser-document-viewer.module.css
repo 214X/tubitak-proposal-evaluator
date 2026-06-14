@@ -47,7 +47,7 @@
   margin: 0 auto;
   padding: 36px;
   border-radius: 32px;
-  background: #fbf8f4;
+  background: var(--app-panel);
   color: #201a19;
   box-shadow: 0 24px 60px rgba(18, 14, 13, 0.14);
 }
@@ -384,7 +384,7 @@
   overflow: auto;
   border-radius: 18px;
   border: 1px solid rgba(32, 26, 25, 0.1);
-  background: #fffdfa;
+  background: var(--app-panel);
 }
 
 .table {
@@ -623,7 +623,7 @@
   width: 100%;
   border-radius: 16px;
   border: 1px solid rgba(32, 26, 25, 0.12);
-  background: #fff;
+  background: var(--app-panel);
 }
 
 .fallbackBlock {

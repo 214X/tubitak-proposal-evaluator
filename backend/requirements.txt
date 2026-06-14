@@ -6,3 +6,7 @@ docling>=2.99,<3.0
 chromadb>=1.0,<2.0
 torch>=2.2,<3.0
 transformers>=4.34,<6.0
+weasyprint>=62,<63
+pydyf>=0.11,<0.12
+jinja2>=3.1,<4.0
+python-dotenv>=1.0,<2.0

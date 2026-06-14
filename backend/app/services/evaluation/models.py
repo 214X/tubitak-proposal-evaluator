@@ -120,6 +120,7 @@ class CriterionFinding(BaseModel):
     summary: str
     why_positive: str | None = None
     why_negative: str | None = None
+    quote: str | None = None
     chunk_id: str
 
     @model_validator(mode="after")

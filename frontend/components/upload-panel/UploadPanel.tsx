@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { setNotificationEmail } from "../../lib/analysis";
 import {
   getOrCreateSessionId,
   replaceSessionId,
@@ -39,6 +40,9 @@ export function UploadPanel({
   const [isUploading, setIsUploading] = useState(false);
   const [isResettingSession, setIsResettingSession] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [notificationEmail, setNotificationEmailValue] = useState("");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [emailMessage, setEmailMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -133,6 +137,33 @@ export function UploadPanel({
   function handleSelectedFileChange(file: File | null) {
     setSelectedFile(file);
     setUploadError("");
+  }
+
+  async function handleSaveEmail() {
+    const trimmed = notificationEmail.trim();
+    if (!trimmed) {
+      setEmailStatus("idle");
+      setEmailMessage("");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmed)) {
+      setEmailStatus("error");
+      setEmailMessage("Geçerli bir e-posta adresi girin.");
+      return;
+    }
+    if (!sessionId) {
+      return;
+    }
+    setEmailStatus("saving");
+    setEmailMessage("");
+    try {
+      await setNotificationEmail(apiBaseUrl, sessionId, trimmed);
+      setEmailStatus("saved");
+      setEmailMessage("Rapor bu adrese gönderilecek. Sekmeyi kapatabilirsiniz.");
+    } catch (error) {
+      setEmailStatus("error");
+      setEmailMessage(error instanceof Error ? error.message : "E-posta kaydedilemedi.");
+    }
   }
 
   function clearSelectedFile() {
@@ -274,6 +305,49 @@ export function UploadPanel({
         <div className={styles.uploadedState}>
           <p className={styles.uploadedLabel}>Mevcut oturum dosyası</p>
           <p className={styles.uploadedName}>{uploadState.file_name}</p>
+        </div>
+      ) : null}
+
+      {uploadState ? (
+        <div className={styles.emailCard}>
+          <p className={styles.emailLabel}>Sonuç e-postası (isteğe bağlı)</p>
+          <p className={styles.emailHint}>
+            Değerlendirme tamamlandığında rapor PDF olarak bu adrese gönderilir; sekmeyi
+            kapatsanız bile çalışır.
+          </p>
+          <div className={styles.emailRow}>
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="ornek@eposta.com"
+              className={styles.emailInput}
+              value={notificationEmail}
+              onChange={(event) => {
+                setNotificationEmailValue(event.target.value);
+                setEmailStatus("idle");
+                setEmailMessage("");
+              }}
+              onBlur={() => void handleSaveEmail()}
+            />
+            <button
+              type="button"
+              className={styles.emailButton}
+              onClick={() => void handleSaveEmail()}
+              disabled={emailStatus === "saving" || !sessionId}
+            >
+              {emailStatus === "saving" ? "Kaydediliyor..." : "Kaydet"}
+            </button>
+          </div>
+          {emailMessage ? (
+            <p
+              className={
+                emailStatus === "error" ? styles.emailError : styles.emailSuccess
+              }
+            >
+              {emailMessage}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

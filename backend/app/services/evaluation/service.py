@@ -216,6 +216,19 @@ def _run_evaluation_pipeline(
                 error=None,
             )
         )
+
+        # Tamamlanma bildirimi: sunucu tarafında, tarayıcı sekmesinden bağımsız çalışır.
+        # Yalnızca context hâlâ güncelse (session superseded değilse) gönderilir; mail
+        # hatası değerlendirmeyi etkilemez (send_report_email kendi içinde yutar).
+        if _is_evaluation_context_current(
+            session_id, expected_uploaded_at, expected_analysis_started_at
+        ):
+            try:
+                from app.services.reporting.email_sender import send_report_email
+
+                send_report_email(session_id, final_report)
+            except Exception:  # noqa: BLE001 - bildirim hatası akışı bozmamalı
+                pass
     except Exception as exc:
         if isinstance(exc, SessionSupersededError) or not _is_evaluation_context_current(
             session_id,

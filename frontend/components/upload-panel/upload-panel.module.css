@@ -517,3 +517,81 @@
     border-radius: 22px;
   }
 }
+
+/* Sonuç e-postası alanı (mail bildirim) */
+.emailCard {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--app-panel-border);
+  border-radius: 14px;
+  background: var(--app-panel-strong);
+}
+
+.emailLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.emailHint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--app-muted);
+}
+
+.emailRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.emailInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--app-panel-border);
+  background: var(--surface-tint);
+  color: var(--app-text);
+  font-size: 14px;
+}
+
+.emailInput:focus {
+  outline: 2px solid var(--accent-soft-strong);
+  border-color: var(--accent);
+}
+
+.emailButton {
+  white-space: nowrap;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.emailButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.emailSuccess {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.emailError {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0443e;
+}

@@ -6,7 +6,9 @@ import { createPortal } from "react-dom";
 import {
   type CriterionEvaluationResult,
   type EvaluationState,
+  type EvidenceChunk,
   fetchCurrentEvaluation,
+  reportPdfDownloadUrl,
 } from "../../../lib/analysis";
 import { readSessionId, subscribeToSessionIdChange } from "../../../lib/session";
 import styles from "./evaluation-panel.module.css";
@@ -282,6 +284,16 @@ export function EvaluationReportViewer({
           </strong>
           <span className={styles.heroEvidenceText}>kanıt</span>
         </div>
+        {evaluationState?.final_report && sessionId ? (
+          <a
+            className={styles.heroDownloadButton}
+            href={reportPdfDownloadUrl(apiBaseUrl, sessionId)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span aria-hidden="true">⬇</span> PDF İndir
+          </a>
+        ) : null}
       </section>
 
       <section className={styles.mainScoreSection}>
@@ -635,6 +647,8 @@ function SubcriterionCard({
             <p className={styles.emptyEvidence}>Kanıt kartı bulunamadı.</p>
           )}
         </div>
+
+        <ReviewedEvidenceSection criterion={criterion} />
                 </article>
               </div>
             </div>,
@@ -642,6 +656,52 @@ function SubcriterionCard({
           )
         : null}
     </article>
+  );
+}
+
+function ReviewedEvidenceSection({
+  criterion,
+}: Readonly<{ criterion: CriterionEvaluationResult }>) {
+  const reviewed = useMemo(() => collectReviewedEvidence(criterion), [criterion]);
+  if (!reviewed.length) {
+    return null;
+  }
+  return (
+    <div className={styles.reviewedSection}>
+      <div className={styles.sectionHeaderCompact}>
+        <h6 className={styles.evidenceSectionTitle}>İncelenen Kanıtlar ({reviewed.length})</h6>
+        <p className={styles.evidenceSectionText}>
+          Bu kriter için belgeden getirilen tüm kanıtlar. Modelin doğrudan atıf yaptıkları
+          işaretlidir; geri kalanlar bağlam olarak incelenmiştir.
+        </p>
+      </div>
+      <ul className={styles.reviewedList}>
+        {reviewed.map((entry) => (
+          <li key={entry.chunk.chunk_id} className={styles.reviewedItem}>
+            <div className={styles.reviewedItemTop}>
+              <span className={styles.reviewedTypeBadge}>
+                {getChunkTypeLabel(entry.chunk.chunk_type)}
+              </span>
+              {entry.cited ? (
+                <span className={styles.reviewedCitedBadge}>✓ Modelce kullanıldı</span>
+              ) : (
+                <span className={styles.reviewedContextBadge}>Bağlam</span>
+              )}
+            </div>
+            <p className={styles.reviewedLocation}>
+              {formatEvidenceLocation(
+                entry.chunk.heading_path_titles,
+                entry.chunk.page_start,
+                entry.chunk.page_end,
+              )}
+            </p>
+            <p className={styles.reviewedText}>
+              {clampText(formatUserFacingText(entry.chunk.text_for_embedding), 240)}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -705,6 +765,7 @@ function FindingPanel({
           {items.map((item, index) => {
             const evidence = evidenceByChunkId.get(item.chunk_id);
             const reason = item.why_positive ?? item.why_negative ?? null;
+            const quote = item.quote ?? evidence?.verbatim_excerpt ?? null;
             return (
               <article key={`${title}-${index}-${item.chunk_id}`} className={styles.findingCard}>
                 {evidence ? (
@@ -716,9 +777,9 @@ function FindingPanel({
                 {reason ? (
                   <p className={styles.findingReason}>{formatUserFacingText(reason)}</p>
                 ) : null}
-                {evidence ? (
+                {quote ? (
                   <blockquote className={styles.findingQuote}>
-                    {clampText(formatUserFacingText(evidence.verbatim_excerpt), 160)}
+                    {clampText(formatUserFacingText(quote), 180)}
                   </blockquote>
                 ) : null}
               </article>
@@ -916,6 +977,47 @@ function getEvidenceTypeLabel(
     return "Zayıflatan Kanıt";
   }
   return "Bağlam";
+}
+
+function getChunkTypeLabel(type: EvidenceChunk["chunk_type"]) {
+  switch (type) {
+    case "table":
+      return "📊 Tablo";
+    case "list":
+      return "• Liste";
+    case "qa":
+      return "❓ Soru-Cevap";
+    default:
+      return "¶ Anlatı";
+  }
+}
+
+type ReviewedEvidenceEntry = { chunk: EvidenceChunk; cited: boolean };
+
+function collectReviewedEvidence(
+  criterion: CriterionEvaluationResult,
+): ReviewedEvidenceEntry[] {
+  const citedIds = new Set<string>([
+    ...criterion.evidence_items.map((item) => item.chunk_id),
+    ...criterion.positive_findings.map((item) => item.chunk_id),
+    ...criterion.negative_findings.map((item) => item.chunk_id),
+  ]);
+  // Tier önceliği primary > semantic > fallback; aynı chunk yalnızca bir kez gösterilir.
+  const ordered: EvidenceChunk[] = [
+    ...criterion.primary_section_chunks,
+    ...criterion.semantic_support_chunks,
+    ...criterion.fallback_context_chunks,
+  ];
+  const seen = new Set<string>();
+  const entries: ReviewedEvidenceEntry[] = [];
+  for (const chunk of ordered) {
+    if (seen.has(chunk.chunk_id)) {
+      continue;
+    }
+    seen.add(chunk.chunk_id);
+    entries.push({ chunk, cited: citedIds.has(chunk.chunk_id) });
+  }
+  return entries;
 }
 
 function formatScore(value: number | null | undefined, scale: number) {

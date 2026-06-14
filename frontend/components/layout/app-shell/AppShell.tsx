@@ -56,7 +56,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <AppShellProvider value={{ theme, toggleTheme }}>
-      <div className={shellClassName} data-shell>
+      <div className={shellClassName} data-shell data-theme={theme}>
         <div className={styles.content} data-content>
           <div className={styles.contentInner}>{children}</div>
         </div>

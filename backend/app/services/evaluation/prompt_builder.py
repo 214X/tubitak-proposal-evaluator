@@ -48,9 +48,10 @@ def build_judge_format_schema() -> dict:
         "properties": {
             "summary": {"type": "string"},
             "reason": {"type": "string"},
+            "quote": {"type": "string"},
             "ref": {"type": "integer"},
         },
-        "required": ["summary", "reason", "ref"],
+        "required": ["summary", "reason", "quote", "ref"],
     }
     return {
         "type": "object",
@@ -140,6 +141,10 @@ def _build_user_prompt(
                     "Bu bulgunun kriteri NEDEN güçlendirdiğini açıkla: kanıttaki somut ayrıntıya "
                     "(sayı, bölüm, terim) bağla ve kriterin ne istediğiyle ilişkilendir. 1-2 cümle."
                 ),
+                "quote": (
+                    "Bu bulgunun dayandığı kanıttan BİREBİR kopyalanmış kısa ifade; "
+                    "ref ile gösterdiğin [K#] kanıtının metnindeki kelimeleri DEĞİŞTİRME, parafraz ETME."
+                ),
                 "ref": "kanıt numarası (tam sayı)",
             }
         ],
@@ -150,12 +155,17 @@ def _build_user_prompt(
                     "Bu bulgunun kriteri NEDEN zayıflattığını açıkla: kanıttaki somut ayrıntıya "
                     "(sayı, bölüm, terim) bağla ve kriterin ne istediğiyle ilişkilendir. 1-2 cümle."
                 ),
+                "quote": (
+                    "Bu bulgunun dayandığı kanıttan BİREBİR kopyalanmış kısa ifade; "
+                    "ref ile gösterdiğin [K#] kanıtının metnindeki kelimeleri DEĞİŞTİRME, parafraz ETME."
+                ),
                 "ref": "kanıt numarası (tam sayı)",
             }
         ],
         "missing_information": [
-            "Eksik olan bilgi VE bunun kriter açısından neden önemli olduğu "
-            "(örn. 'X verisi yok; kriter Y'yi sorduğu için bu boşluk skoru düşürüyor')."
+            "Eksik olan bilgi + bunun kriter açısından neden önemli olduğu + (belgede ilgili "
+            "bölüm varsa) nereye eklenmesi gerektiği (örn. 'Kalem bazlı bütçe dayanağı yok; "
+            "kriter maliyet-etkinliği sorduğu için bu boşluk skoru düşürüyor; B.2 bütçe bölümüne eklenmeli')."
         ],
         "red_flags": ["Türkçe risk işareti"],
         "evidence_items": [
@@ -203,8 +213,10 @@ def _build_user_prompt(
         "Ancak konu yalnızca farklı bir başlık adı veya bölüm numarası altında işlenmişse "
         "bunu eksiklik sayma; içerik mevcutsa normal değerlendir.\n"
         "- score, claim_strength ve evidence_quality alanlarını 0-100 aralığında ver.\n"
-        "- Kanıt destekliyorsa en az 2, en fazla 4 olumlu ve 2-4 zayıflatan bulgu çıkar; "
+        "- Kanıt destekliyorsa en az 3, en fazla 6 olumlu ve 3-6 zayıflatan bulgu çıkar; "
         "ancak kanıtta gerçekten karşılığı olmayan bulgu UYDURMA. Kanıt sınırlıysa daha az bulgu çıkar.\n"
+        "- Her bulgu için 'quote' alanına, ref ile gösterdiğin kanıtın metninden BİREBİR kısa bir ifade "
+        "kopyala (parafraz değil). Birebir alıntı veremiyorsan o bulguyu hiç çıkarma.\n"
         "- Her bulgu ve kanıt için yalnızca yukarıdaki listede gerçekten var olan bir [K#] "
         "numarasını ref olarak kullan; numara uydurma.\n"
         "- evidence_items alanında yalnızca gerçekten kullandığın kanıtları ekle.\n"

@@ -40,14 +40,14 @@ export function Homepage() {
                 Değerlendirmeye Başla
               </a>
             </div>
-
-            <a href="#how-it-works" className={styles.scrollCue} aria-label="Nasıl çalışır bölümüne git">
-              <span className={styles.scrollMouse} aria-hidden="true">
-                <span className={styles.scrollWheel} />
-              </span>
-              <span className={styles.scrollLabel}>Kaydır</span>
-            </a>
           </div>
+
+          <a href="#how-it-works" className={styles.scrollCue} aria-label="Nasıl çalışır bölümüne git">
+            <span className={styles.scrollMouse} aria-hidden="true">
+              <span className={styles.scrollWheel} />
+            </span>
+            <span className={styles.scrollLabel}>Kaydır</span>
+          </a>
         </div>
 
         <FeaturesSection />

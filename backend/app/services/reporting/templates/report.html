@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>Değerlendirme Raporu</title>
+  <style>{{ css_text }}</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div>
+      <div class="hero-title">Kriter Bazlı Değerlendirme Raporu</div>
+      <div class="hero-subtitle">
+        Rubric: {{ report.rubric_id }} (v{{ report.rubric_version }})
+        {% if report.scored_criteria_count is not none %}· {{ report.scored_criteria_count }} kriter puanlandı{% endif %}
+      </div>
+      <div class="hero-evidence">Belge Kanıtı: <strong>{{ evidence_count }}</strong> kanıt</div>
+    </div>
+    <div class="hero-score">
+      <div class="hero-score-label">Genel Skor</div>
+      <div class="hero-score-value">{{ report.overall_score | score }}</div>
+    </div>
+  </div>
+
+  {% if report.final_summary %}
+  <div class="section">
+    <div class="summary-box">{{ report.final_summary }}</div>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-title">Ana Boyut Skorları</div>
+    <div class="dim-grid">
+      {% for dim in report.main_scores %}
+      <div class="dim-card">
+        <div class="dim-card-top">
+          <span class="dim-card-id">{{ dim.main_dimension_id }}</span>
+          <span>Ağırlık %{{ dim.weight }}</span>
+        </div>
+        <div class="dim-card-title">{{ dim.title }}</div>
+        <div class="dim-card-value">{{ dim.score | score }}</div>
+        {% if dim.summary %}<div class="muted" style="font-size:8pt;margin-top:4px;">{{ dim.summary }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if report.rubric_table %}
+  <div class="section">
+    <div class="section-title">Rubric Detayı</div>
+    <table class="rubric">
+      <thead>
+        <tr><th>Kod</th><th>Kriter</th><th>Ağırlık</th><th>Kaynak Bölümler</th><th>Aralık</th></tr>
+      </thead>
+      <tbody>
+        {% for row in report.rubric_table %}
+        <tr>
+          <td>{{ row.criterion_id }}</td>
+          <td>{{ row.criterion_title }}</td>
+          <td>%{{ row.weight }}</td>
+          <td>{{ row.source_sections | join(", ") }}</td>
+          <td>{{ row.score_min }}-{{ row.score_max }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <div class="section-title">Alt Kriter Değerlendirmeleri</div>
+
+    {% for c in results %}
+    <div class="criterion">
+      <div class="criterion-head">
+        <div>
+          <div class="criterion-id">{{ c.criterion_id }}{% if c.main_dimension_id %} · {{ c.main_dimension_id }}{% endif %}</div>
+          <div class="criterion-title">{{ c.title }}</div>
+          <div>
+            {% if c.is_salvaged %}<span class="badge badge-salvaged">Otomatik tamamlandı</span>{% endif %}
+            {% if c.decision_status == "insufficient_evidence" %}<span class="badge badge-insufficient">Kanıt yetersiz</span>{% endif %}
+            {% if c.coverage_status == "missing" %}<span class="badge badge-missing">Kapsama cezası</span>{% endif %}
+          </div>
+        </div>
+        <div class="criterion-score">
+          <div class="criterion-score-value">{{ c.score | score }}</div>
+          <div class="subscores">
+            İddia {{ c.claim_strength | score }} · Kanıt {{ c.evidence_quality | score }}
+          </div>
+        </div>
+      </div>
+
+      {% if c.criterion_explanation %}
+      <div class="block">
+        <div class="block-label">Kriterin beklentisi</div>
+        <div class="block-text">{{ c.criterion_explanation }}</div>
+      </div>
+      {% endif %}
+      {% if c.short_assessment %}
+      <div class="block">
+        <div class="block-label">Bu öneride ne bulundu?</div>
+        <div class="block-text">{{ c.short_assessment }}</div>
+      </div>
+      {% endif %}
+      {% if c.justification %}
+      <div class="block">
+        <div class="block-label">Gerekçe</div>
+        <div class="block-text">{{ c.justification }}</div>
+      </div>
+      {% endif %}
+
+      <div class="two-col">
+        <div>
+          <div class="block-label" style="margin-top:8px;">Olumlu Bulgular</div>
+          {% if c.positive_findings %}
+            {% for f in c.positive_findings %}
+            <div class="finding positive">
+              <div class="finding-summary">{{ f.summary }}</div>
+              {% if f | finding_reason %}<div class="finding-reason">{{ f | finding_reason }}</div>{% endif %}
+              {% if f.quote %}<div class="finding-quote">“{{ f.quote }}”</div>{% endif %}
+            </div>
+            {% endfor %}
+          {% else %}<div class="empty">Olumlu bulgu yok.</div>{% endif %}
+        </div>
+        <div>
+          <div class="block-label" style="margin-top:8px;">Zayıflatan Bulgular</div>
+          {% if c.negative_findings %}
+            {% for f in c.negative_findings %}
+            <div class="finding negative">
+              <div class="finding-summary">{{ f.summary }}</div>
+              {% if f | finding_reason %}<div class="finding-reason">{{ f | finding_reason }}</div>{% endif %}
+              {% if f.quote %}<div class="finding-quote">“{{ f.quote }}”</div>{% endif %}
+            </div>
+            {% endfor %}
+          {% else %}<div class="empty">Zayıflatan bulgu yok.</div>{% endif %}
+        </div>
+      </div>
+
+      {% if c.missing_information %}
+      <div class="block">
+        <div class="block-label">Eksik Bilgi</div>
+        <ul class="info-list">{% for m in c.missing_information %}<li>{{ m }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      {% if c.red_flags %}
+      <div class="block">
+        <div class="block-label">Risk İşaretleri</div>
+        <ul class="info-list">{% for r in c.red_flags %}<li>{{ r }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+
+      {% if c.evidence_items %}
+      <div class="block">
+        <div class="block-label">Kanıt Kartları</div>
+        <div class="evidence-grid">
+          {% for e in c.evidence_items %}
+          <div class="evidence-card">
+            <div class="evidence-type">{{ e.evidence_type | evidence_type_label }}</div>
+            <div class="evidence-loc">{{ e.heading_path | location(e.page_start, e.page_end) }}</div>
+            <div class="evidence-quote">“{{ e.verbatim_excerpt }}”</div>
+            <div class="evidence-why">{{ e.why_it_matters }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% set reviewed = reviewed_for(c) %}
+      {% if reviewed %}
+      <div class="block">
+        <div class="block-label">İncelenen Kanıtlar ({{ reviewed | length }})</div>
+        {% for entry in reviewed %}
+        <div class="reviewed-item">
+          <div class="reviewed-top">
+            <span class="reviewed-type">{{ entry.chunk.chunk_type | chunk_type_label }}</span>
+            {% if entry.cited %}<span class="reviewed-cited">✓ Modelce kullanıldı</span>{% else %}<span class="reviewed-context">Bağlam</span>{% endif %}
+          </div>
+          <div class="reviewed-loc">{{ entry.chunk.heading_path_titles | location(entry.chunk.page_start, entry.chunk.page_end) }}</div>
+          <div class="reviewed-text">{{ entry.text }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if c.coverage_notes %}
+      <div class="block">
+        <div class="block-label">Kapsama Notları</div>
+        <ul class="info-list">{% for n in c.coverage_notes %}<li>{{ n }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+</body>
+</html>
