@@ -13,10 +13,13 @@ export function EvaluationReportPage({
 }: EvaluationReportPageProps) {
   return (
     <main className={styles.page}>
-      <div className={styles.backdropOrb} aria-hidden="true" />
-      <div className={styles.backdropBeam} aria-hidden="true" />
-      <div className={styles.backdropGlow} aria-hidden="true" />
       <EvaluationTopbar />
+      <header className={styles.hero}>
+        <h1 className={styles.title}>Kriter Bazlı Değerlendirme Raporu</h1>
+        <p className={styles.description}>
+          Proje önerisinin ana skorlarını, değerlendirme gerekçelerini ve belge kanıtlarını özetler.
+        </p>
+      </header>
       <EvaluationReportViewer apiBaseUrl={apiBaseUrl} initialSessionId={initialSessionId} />
     </main>
   );

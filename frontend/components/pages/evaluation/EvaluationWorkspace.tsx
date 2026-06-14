@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { UploadState } from "../../upload-panel/UploadPanel";
 import { UploadPanel } from "../../upload-panel/UploadPanel";
 import { EvaluationProgressFlow, type EvaluationStep } from "../../analysis/evaluation-progress-flow/EvaluationProgressFlow";
-import { SudokuBoard } from "./SudokuBoard";
 import {
   fetchCurrentAnalysis,
   fetchCurrentEvaluation,
@@ -32,7 +31,6 @@ export function EvaluationWorkspace({ apiBaseUrl }: EvaluationWorkspaceProps) {
   const [error, setError] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const [isFlowActive, setIsFlowActive] = useState(false);
-  const [isSudokuEngaged, setIsSudokuEngaged] = useState(false);
   const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
   const previousVisibleStepCountRef = useRef(0);
@@ -433,7 +431,6 @@ export function EvaluationWorkspace({ apiBaseUrl }: EvaluationWorkspaceProps) {
 
   useEffect(() => {
     if (!hasStartedWorkflow) {
-      setIsSudokuEngaged(false);
       previousVisibleStepCountRef.current = 0;
       return;
     }
@@ -493,7 +490,7 @@ export function EvaluationWorkspace({ apiBaseUrl }: EvaluationWorkspaceProps) {
                 {analysisState?.status === "completed" && 
                  (!evaluationState || evaluationState.status === "idle" || evaluationState.status === "failed") && 
                  !isWorkflowBusy && (
-                  <div className={styles.startCard} style={{ padding: "24px", gap: "12px" }}>
+                 <div className={styles.startCard} style={{ padding: "24px", gap: "12px" }}>
                     <p className={styles.startDescription} style={{ fontSize: "13.5px" }}>
                       Belge analiz adımları tamamlandı. Kriter bazlı değerlendirme sürecini başlatın.
                     </p>
@@ -507,8 +504,6 @@ export function EvaluationWorkspace({ apiBaseUrl }: EvaluationWorkspaceProps) {
                     </button>
                   </div>
                 )}
-
-                <SudokuBoard onEngagementChange={setIsSudokuEngaged} />
 
                 <EvaluationProgressFlow
                   steps={steps}

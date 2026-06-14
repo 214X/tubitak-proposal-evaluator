@@ -203,6 +203,7 @@ class CriterionJudgeResponse(BaseModel):
     contradicting_chunk_ids: list[str] = Field(default_factory=list)
     supporting_evidence_notes: list[EvidenceNarrative] = Field(default_factory=list)
     contradicting_evidence_notes: list[EvidenceNarrative] = Field(default_factory=list)
+    is_salvaged: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -469,6 +470,7 @@ class CriterionEvaluationResult(BaseModel):
     contradicting_evidence: list[EvidenceChunk] = Field(default_factory=list)
     supporting_evidence_notes: list[EvidenceNarrative] = Field(default_factory=list)
     contradicting_evidence_notes: list[EvidenceNarrative] = Field(default_factory=list)
+    is_salvaged: bool = False
 
     @model_validator(mode="before")
     @classmethod

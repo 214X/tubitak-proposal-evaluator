@@ -302,6 +302,7 @@ export type CriterionEvaluationResult = {
   contradicting_evidence: EvidenceChunk[];
   supporting_evidence_notes: EvidenceNarrative[];
   contradicting_evidence_notes: EvidenceNarrative[];
+  is_salvaged: boolean;
 };
 
 export type EvaluationReport = {

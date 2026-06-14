@@ -1,13 +1,13 @@
 .page {
   position: relative;
   min-height: 100vh;
-  padding: 32px 28px 40px;
+  padding: 32px 28px 44px;
   background:
-    radial-gradient(circle at 50% 8%, color-mix(in srgb, #f4a261 24%, transparent), transparent 22%),
-    radial-gradient(circle at 20% 18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 24%),
-    radial-gradient(circle at 86% 24%, color-mix(in srgb, #ef8765 18%, transparent), transparent 26%),
-    linear-gradient(180deg, color-mix(in srgb, #fff5f1 58%, var(--app-bg)) 0%, color-mix(in srgb, #ffe8e1 38%, var(--app-bg)) 34%, color-mix(in srgb, var(--accent) 10%, var(--app-bg)) 100%);
-  overflow: hidden;
+    radial-gradient(circle at 50% 6%, color-mix(in srgb, #f4a261 22%, transparent), transparent 22%),
+    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 26%),
+    radial-gradient(circle at 84% 20%, color-mix(in srgb, #ef8765 18%, transparent), transparent 28%),
+    radial-gradient(circle at 50% 88%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 32%),
+    linear-gradient(180deg, color-mix(in srgb, #fff4f0 52%, var(--app-bg)) 0%, color-mix(in srgb, #ffe6df 34%, var(--app-bg)) 36%, color-mix(in srgb, var(--accent) 10%, var(--app-bg)) 100%);
   isolation: isolate;
 }
 
@@ -19,54 +19,63 @@
     linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
   background-size: 44px 44px;
-  opacity: 0.18;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent 86%);
+  opacity: 0.17;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.86), transparent 88%);
   pointer-events: none;
   z-index: -1;
 }
 
-.backdropOrb,
-.backdropBeam,
-.backdropGlow {
-  position: absolute;
-  pointer-events: none;
-  z-index: -1;
+.hero {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 1140px);
+  margin: 0 auto;
+  padding: 118px 0 34px;
+  text-align: center;
 }
 
-.backdropOrb {
-  width: 520px;
-  height: 520px;
-  top: 6%;
-  right: -170px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--accent) 44%, transparent) 0%, color-mix(in srgb, #ef8765 22%, transparent) 44%, transparent 74%);
-  filter: blur(14px);
+.title {
+  margin: 0;
+  max-width: 15ch;
+  font-family:
+    "Iowan Old Style",
+    "Palatino Linotype",
+    "Book Antiqua",
+    Georgia,
+    serif;
+  font-size: clamp(2.7rem, 6vw, 5.1rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--app-text);
+  text-wrap: balance;
 }
 
-.backdropBeam {
-  width: min(88vw, 1120px);
-  height: 260px;
-  top: 4%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 30%, transparent) 12%, color-mix(in srgb, #f19b4f 24%, transparent) 42%, color-mix(in srgb, #ef8765 28%, transparent) 64%, color-mix(in srgb, var(--accent) 32%, transparent) 88%, transparent 100%);
-  filter: blur(52px);
-}
-
-.backdropGlow {
-  width: 360px;
-  height: 360px;
-  left: -120px;
-  bottom: -80px;
-  border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, #f19b4f 24%, transparent), color-mix(in srgb, var(--accent) 14%, transparent) 44%, transparent 74%);
-  filter: blur(22px);
+.description {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--app-muted);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  text-wrap: pretty;
 }
 
 @media (max-width: 720px) {
   .page {
-    padding: 88px 16px 24px;
+    padding: 88px 14px 24px;
+  }
+
+  .hero {
+    padding: 26px 0 24px;
+  }
+
+  .title {
+    font-size: clamp(2.35rem, 12vw, 3.6rem);
+    letter-spacing: -0.035em;
+  }
+
+  .description {
+    font-size: 0.95rem;
   }
 }

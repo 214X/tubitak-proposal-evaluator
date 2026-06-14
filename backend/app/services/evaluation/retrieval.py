@@ -4,6 +4,7 @@ import re
 import unicodedata
 from collections.abc import Iterable
 
+from app.core.config import settings
 from app.services.analysis.service import get_current_analysis_state
 from app.services.chunking.models import BaseChunk, ChunkOutput
 from app.services.embedding.models import EmbeddingSearchRequest, EmbeddingSearchResult
@@ -12,6 +13,12 @@ from app.services.evaluation.models import CriterionEvidence, EvidenceChunk, Eva
 
 SECTION_CODE_PATTERN = re.compile(r"^[A-Z](?:\.\d+)*$")
 NON_ALNUM_PATTERN = re.compile(r"[^a-z0-9]+")
+
+# Tier önceliği: primary section-match en güvenilir, semantic orta, fallback en zayıf.
+_PRIMARY_TIER = 3
+_SEMANTIC_TIER = 2
+_FALLBACK_TIER = 1
+DEFAULT_RANKED_EVIDENCE_LIMIT = 7
 
 
 def retrieve_evidence_for_subcriterion(
@@ -34,6 +41,9 @@ def retrieve_evidence_for_subcriterion(
         chunk_index=chunk_index,
         exclude_chunk_ids={chunk.chunk_id for chunk in primary_section_chunks},
     )
+    # Catch-all gürültü yolu yalnızca primary ve semantic tamamen boşsa devreye girsin;
+    # aksi halde zaten yeterli kanıt varken alakasız chunk'lar bağlamı kirletmesin.
+    has_primary_or_semantic = bool(primary_section_chunks or semantic_support_chunks)
     fallback_context_chunks = get_fallback_context(
         session_id=session_id,
         subcriterion=subcriterion,
@@ -41,10 +51,12 @@ def retrieve_evidence_for_subcriterion(
         exclude_chunk_ids={
             chunk.chunk_id for chunk in [*primary_section_chunks, *semantic_support_chunks]
         },
+        allow_catch_all=not has_primary_or_semantic,
     )
     coverage_status, coverage_notes = validate_coverage(
         subcriterion=subcriterion,
         primary_chunks=primary_section_chunks,
+        semantic_chunks=semantic_support_chunks,
     )
 
     supporting_evidence = _dedupe_and_limit_chunks(
@@ -144,6 +156,7 @@ def get_fallback_context(
     subcriterion: EvaluationCriterion,
     chunk_output: ChunkOutput | None = None,
     exclude_chunk_ids: set[str] | None = None,
+    allow_catch_all: bool = True,
 ) -> list[EvidenceChunk]:
     resolved_chunk_output = chunk_output or _get_current_chunk_output(session_id)
     excluded = exclude_chunk_ids or set()
@@ -160,6 +173,11 @@ def get_fallback_context(
     if filtered_fallback:
         return _dedupe_and_limit_chunks(filtered_fallback, top_k=subcriterion.evidence_top_k)
 
+    # Son çare: section eşleşmesi de yoksa ve elimizde başka hiç kanıt yoksa
+    # (primary + semantic boş) recall'ı kurtarmak için düşük güvenli geniş tarama yap.
+    if not allow_catch_all:
+        return []
+
     chunk_candidates = [
         _chunk_to_evidence_chunk(chunk, similarity_score=0.25)
         for chunk in resolved_chunk_output.chunks
@@ -169,41 +187,88 @@ def get_fallback_context(
     return _dedupe_and_limit_chunks(chunk_candidates, top_k=subcriterion.evidence_top_k)
 
 
+def build_ranked_evidence(
+    evidence: CriterionEvidence,
+    limit: int = DEFAULT_RANKED_EVIDENCE_LIMIT,
+) -> list[EvidenceChunk]:
+    """Üç kanıt havuzunu tek, önceliğe göre sıralı ve dedupe edilmiş listeye indirger.
+
+    Modele giden tek kanıt bloğu budur. Tier (primary > semantic > fallback) birincil,
+    similarity ikincil sıralama anahtarıdır. Aynı chunk birden fazla havuzda görünürse
+    en yüksek tier'da tutulur.
+    """
+    best_by_chunk_id: dict[str, tuple[int, EvidenceChunk]] = {}
+
+    for tier, chunks in (
+        (_PRIMARY_TIER, evidence.primary_section_chunks),
+        (_SEMANTIC_TIER, evidence.semantic_support_chunks),
+        (_FALLBACK_TIER, evidence.fallback_context_chunks),
+    ):
+        for chunk in chunks:
+            existing = best_by_chunk_id.get(chunk.chunk_id)
+            if existing is None or tier > existing[0]:
+                best_by_chunk_id[chunk.chunk_id] = (tier, chunk)
+
+    ranked = sorted(
+        best_by_chunk_id.values(),
+        key=lambda pair: (pair[0], pair[1].similarity_score, -(pair[1].page_start or 0)),
+        reverse=True,
+    )
+    return [chunk for _, chunk in ranked[:limit]]
+
+
 def validate_coverage(
     subcriterion: EvaluationCriterion,
     primary_chunks: list[EvidenceChunk],
+    semantic_chunks: list[EvidenceChunk] | None = None,
 ) -> tuple[str, list[str]]:
     if not subcriterion.required_sections:
         return ("complete", [])
 
+    all_chunks = list(primary_chunks) + list(semantic_chunks or [])
     covered_sections: list[str] = []
     missing_sections: list[str] = []
 
     for required_section in subcriterion.required_sections:
-        if any(_evidence_chunk_matches_section(chunk, required_section) for chunk in primary_chunks):
+        if any(_evidence_chunk_matches_section(chunk, required_section) for chunk in all_chunks):
             covered_sections.append(required_section)
         else:
             missing_sections.append(required_section)
 
-    if not covered_sections:
+    if not missing_sections:
         return (
-            "missing",
-            [
-                "Zorunlu bölümler için birincil section-first eşleşmesi bulunamadı.",
-                f"Eksik zorunlu bölümler: {', '.join(missing_sections)}",
-            ],
+            "complete",
+            [f"Tüm zorunlu bölümler karşılandı: {', '.join(covered_sections)}"],
         )
-    if missing_sections:
-        return (
-            "partial",
-            [
-                f"Karşılanan zorunlu bölümler: {', '.join(covered_sections)}",
-                f"Eksik zorunlu bölümler: {', '.join(missing_sections)}",
-            ],
-        )
+
+    # Heading eşleşmesi başarısız olan bölümler için semantik kontrol: semantic_chunks
+    # içindeki en yüksek benzerlik skoru eşiği aşıyorsa konu belgede mevcut sayılır.
+    semantic_best = max(
+        (chunk.similarity_score for chunk in (semantic_chunks or [])),
+        default=0.0,
+    )
+    semantically_present = semantic_best >= settings.coverage_semantic_threshold
+
+    if covered_sections or semantically_present:
+        note_parts: list[str] = [
+            "Konu belgede mevcut (başlık ve/veya anlamsal eşleşme); "
+            "template bölüm kodu birebir uyuşmasa da kapsama yeterli sayıldı."
+        ]
+        if covered_sections:
+            note_parts.append(f"Başlık eşleşmesiyle karşılanan bölümler: {', '.join(covered_sections)}")
+        if missing_sections:
+            note_parts.append(
+                f"Başlık eşleşmesi bulunmayan bölümler (semantik olarak karşılandı): "
+                f"{', '.join(missing_sections)}"
+            )
+        return ("covered", note_parts)
+
     return (
-        "complete",
-        [f"Tüm zorunlu bölümler karşılandı: {', '.join(covered_sections)}"],
+        "missing",
+        [
+            "Konu belgede ne başlık ne de anlamsal olarak bulunamadı.",
+            f"Eksik zorunlu bölümler: {', '.join(missing_sections)}",
+        ],
     )
 
 

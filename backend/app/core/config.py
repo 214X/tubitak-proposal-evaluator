@@ -16,6 +16,16 @@ class Settings:
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model_name: str = "aya-expanse:8b"
     ollama_request_timeout_seconds: int = 120
+    ollama_temperature: float = 0.0
+    # Hakeme giden tek kanıt bloğundaki maksimum chunk sayısı ve chunk başına karakter sınırı.
+    # Düşük değerler 8B modelde bağlam kaymasını (context drift) ve süreyi azaltır.
+    judge_evidence_limit: int = 10
+    judge_evidence_char_limit: int = 700
+    # Model geçerli atıf üretemediğinde skora uygulanan tavan (kanıtsız yüksek puanı engeller).
+    judge_uncited_score_cap: float = 65.0
+    # Coverage: bir zorunlu konunun "semantik olarak mevcut" sayılması için gereken
+    # minimum cosine benzerliği. similarity_score = 1 - cosine_distance (0-1).
+    coverage_semantic_threshold: float = 0.55
     upload_session_timeout_seconds: int = 120
     allowed_origins: tuple[str, ...] = (
         "http://localhost:3000",

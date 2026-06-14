@@ -28,7 +28,6 @@ from app.services.upload.service import get_session_upload, validate_session_id
 RUNNER_LOCK = Lock()
 ACTIVE_RUNNERS: dict[str, Thread] = {}
 MISSING_COVERAGE_SCORE_PENALTY = 15.0
-PARTIAL_COVERAGE_SCORE_PENALTY = 7.0
 
 
 class SessionSupersededError(RuntimeError):
@@ -260,10 +259,7 @@ def _build_no_evidence_result(
         confidence=0.15,
         decision_status="scored",
         justification="Bu kriter için kullanılabilir kanıt bulunamadığı için taban puan verildi.",
-        criterion_explanation=(
-            "Kriteri destekleyecek veya zayıflatacak kullanılabilir chunk bulunamadı. "
-            "Bu nedenle kriter değerlendirmesi en düşük puan seviyesinden sonuçlandırıldı."
-        ),
+        criterion_explanation=criterion.ui_explanation or criterion.description,
         short_assessment="Kullanılabilir kanıt bulunamadı; kriter taban puanla sonuçlandırıldı.",
         coverage_status=evidence.coverage_status,
         coverage_notes=evidence.coverage_notes,
@@ -292,7 +288,8 @@ def _finalize_result(
     evidence: CriterionEvidence,
     result: CriterionEvaluationResult,
 ) -> CriterionEvaluationResult:
-    if result.decision_status == "failed":
+    # Kurtarılmış sonuçlar kapsama cezasını zaten içinde barındırır; tekrar uygulanmamalı.
+    if result.decision_status == "failed" or result.is_salvaged:
         return result
 
     evidence_count = _total_evidence_count(evidence)
@@ -310,10 +307,6 @@ def _finalize_result(
         f"{result.justification} "
         f"Birincil bölüm kapsaması '{evidence.coverage_status}' olduğu için {penalty:.0f} puan ceza uygulandı."
     ).strip()
-    updated_explanation = (
-        f"{result.criterion_explanation} "
-        f"Zorunlu bölüm kapsamasındaki eksiklik skora ceza olarak yansıtıldı."
-    ).strip()
     updated_missing_information = _dedupe_strings(
         [*result.missing_information, *_coverage_penalty_notes(evidence.coverage_status)]
     )
@@ -324,7 +317,6 @@ def _finalize_result(
             "weighted_score": adjusted_score,
             "decision_status": "scored",
             "justification": updated_justification,
-            "criterion_explanation": updated_explanation,
             "missing_information": updated_missing_information,
         }
     )
@@ -345,10 +337,7 @@ def _build_penalized_fallback_result(
             "weighted_score": base_score,
             "confidence": max(result.confidence, 0.2),
             "decision_status": "scored",
-            "criterion_explanation": (
-                "Birincil bölüm eşleşmesi bulunamadı; kriter mevcut anlamsal ve bağlamsal "
-                "kanıtlarla ihtiyatlı biçimde puanlandı."
-            ),
+            "criterion_explanation": criterion.ui_explanation or criterion.description,
             "short_assessment": "Birincil bölüm eksik olsa da diğer kanıtlarla düşük güvenli puan üretildi.",
             "justification": (
                 "Zorunlu bölüm eşleşmesi eksik kaldı. Buna rağmen anlamsal destek ve bağlam "
@@ -364,8 +353,6 @@ def _build_penalized_fallback_result(
 def _coverage_penalty(coverage_status: str) -> float:
     if coverage_status == "missing":
         return MISSING_COVERAGE_SCORE_PENALTY
-    if coverage_status == "partial":
-        return PARTIAL_COVERAGE_SCORE_PENALTY
     return 0.0
 
 
@@ -373,10 +360,6 @@ def _coverage_penalty_notes(coverage_status: str) -> list[str]:
     if coverage_status == "missing":
         return [
             "Zorunlu birincil bölüm bulunamadı; bu nedenle skora ilave kapsama cezası uygulandı."
-        ]
-    if coverage_status == "partial":
-        return [
-            "Zorunlu birincil bölümlerin bir kısmı eksik kaldı; bu nedenle skora kısmi kapsama cezası uygulandı."
         ]
     return []
 
@@ -512,13 +495,20 @@ def _build_main_dimension_summary(
         return f"{dimension.dimension_id} boyutunda yeterli puanlanmış alt kriter bulunamadı."
 
     unscored_count = sum(1 for item in dimension_results if item.score is None)
+    salvaged_count = sum(1 for item in dimension_results if item.is_salvaged)
     penalized_count = sum(
-        1 for item in dimension_results if item.coverage_status in {"missing", "partial"}
+        1 for item in dimension_results if item.coverage_status in {"missing"}
     )
     if unscored_count:
         return (
             f"{dimension.dimension_id} boyutu {score}/100 hesaplandı. "
             f"{unscored_count} alt kriter model hatası veya sıfır kanıt nedeniyle puansız kaldı."
+        )
+    if salvaged_count:
+        return (
+            f"{dimension.dimension_id} boyutu {score}/100 hesaplandı. "
+            f"{salvaged_count} alt kriterde model yanıtı kullanılamadığı için kriter kanıtlardan "
+            f"otomatik tamamlandı."
         )
     if penalized_count:
         return (
@@ -539,8 +529,9 @@ def _build_final_summary(
         return "Puanlanmış alt kriter bulunamadığı için genel skor hesaplanamadı."
 
     unscored_count = sum(1 for item in results if item.score is None)
+    salvaged_count = sum(1 for item in results if item.is_salvaged)
     penalized_count = sum(
-        1 for item in results if item.coverage_status in {"missing", "partial"}
+        1 for item in results if item.coverage_status in {"missing"}
     )
     available_dimensions = [item.main_dimension_id for item in main_scores if item.score is not None]
     if unscored_count:
@@ -548,6 +539,12 @@ def _build_final_summary(
             f"Genel skor {overall_score}/100. "
             f"Skor {', '.join(available_dimensions)} boyutlarındaki puanlanmış alt kriterlerden matematiksel olarak üretildi. "
             f"{unscored_count} alt kriter model hatası veya sıfır kanıt nedeniyle puansız kaldı."
+        )
+    if salvaged_count:
+        return (
+            f"Genel skor {overall_score}/100. "
+            f"{salvaged_count} alt kriterde model yanıtı kullanılamadığı için kriter, mevcut kanıtlardan "
+            f"otomatik ve ihtiyatlı biçimde tamamlandı."
         )
     if penalized_count:
         return (
