@@ -30,6 +30,9 @@ export function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    // data-theme'i <html>'e de yaz; böylece document.body'ye portallanan
+    // modaller (rubric / alt kriter detayı) doğru token setini miras alır.
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const shellClassName = [styles.shell, theme === "dark" ? styles.themeDark : ""]

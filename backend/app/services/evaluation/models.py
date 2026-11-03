@@ -195,6 +195,7 @@ class CriterionJudgeResponse(BaseModel):
     criterion_explanation: str = ""
     short_assessment: str = ""
     justification: str = ""
+    score_rationale: str = ""
     positive_findings: list[CriterionFinding] = Field(default_factory=list)
     negative_findings: list[CriterionFinding] = Field(default_factory=list)
     missing_information: list[str] = Field(default_factory=list)
@@ -407,6 +408,8 @@ class CriterionJudgeResponse(BaseModel):
     def apply_legacy_judge_views(self) -> "CriterionJudgeResponse":
         if not self.justification:
             self.justification = self.short_assessment or self.criterion_explanation
+        if not self.score_rationale:
+            self.score_rationale = self.justification or self.short_assessment
         if not self.supporting_chunk_ids:
             self.supporting_chunk_ids = [
                 item.chunk_id for item in self.evidence_items if item.evidence_type == "positive"
@@ -455,6 +458,7 @@ class CriterionEvaluationResult(BaseModel):
     criterion_explanation: str = ""
     short_assessment: str = ""
     justification: str = ""
+    score_rationale: str = ""
     positive_findings: list[CriterionFinding] = Field(default_factory=list)
     negative_findings: list[CriterionFinding] = Field(default_factory=list)
     missing_information: list[str] = Field(default_factory=list)
@@ -562,6 +566,8 @@ class CriterionEvaluationResult(BaseModel):
             self.category = self.main_dimension_id
         if not self.justification:
             self.justification = self.short_assessment or self.criterion_explanation
+        if not self.score_rationale:
+            self.score_rationale = self.justification or self.short_assessment
         if not self.supporting_chunk_ids:
             self.supporting_chunk_ids = [
                 item.chunk_id for item in self.evidence_items if item.evidence_type == "positive"

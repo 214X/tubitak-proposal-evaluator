@@ -268,6 +268,7 @@ export type CriterionEvaluationResult = {
   criterion_explanation: string;
   short_assessment: string;
   justification: string;
+  score_rationale: string;
   positive_findings: Array<{
     summary: string;
     why_positive: string | null;

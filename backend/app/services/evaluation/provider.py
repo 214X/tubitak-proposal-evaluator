@@ -168,16 +168,24 @@ class OllamaAyaProvider:
         # rubric'ten doğrudan alınır (token tasarrufu + sapma riskinin önlenmesi).
         criterion_explanation = criterion.ui_explanation or criterion.description
 
-        model_score = _normalize_score_scale(_coerce_float(raw.get("score")))
+        # Eksenler 1-5 ayrık seviye olarak gelir; _normalize_score_scale bunları 0-100'e
+        # ölçekler (1->20 .. 5->100). gap_severity 1-5 ham kalır (skor düşürme faktörü).
         claim_strength = _normalize_score_scale(_coerce_float(raw.get("claim_strength")))
         evidence_quality = _normalize_score_scale(_coerce_float(raw.get("evidence_quality")))
-        blended_score = _blend_score(model_score, claim_strength, evidence_quality)
+        gap_severity = _coerce_int(raw.get("gap_severity"))
+        # Bulgu dengesi (grounded sayılar) skoru deterministik olarak etkiler.
+        derived_score = _derive_score(
+            claim_strength,
+            evidence_quality,
+            gap_severity,
+            positive_count=len(positive_findings),
+            negative_count=len(negative_findings),
+        )
 
         payload = {
             "criterion_id": criterion.criterion_id,
             "main_dimension_id": criterion.main_dimension_id,
             "title": criterion.title,
-            "score": blended_score,
             "claim_strength": claim_strength,
             "evidence_quality": evidence_quality,
             "confidence": _coerce_confidence(raw.get("confidence")),
@@ -185,13 +193,18 @@ class OllamaAyaProvider:
             "criterion_explanation": criterion_explanation,
             "short_assessment": short_assessment,
             "justification": justification or short_assessment,
+            "score_rationale": _clean_text(raw.get("score_rationale")) or justification or short_assessment,
             "positive_findings": positive_findings,
             "negative_findings": negative_findings,
             "missing_information": _clean_text_list(raw.get("missing_information")),
             "red_flags": _clean_text_list(raw.get("red_flags")),
             "evidence_items": evidence_items,
         }
-        return CriterionJudgeResponse.model_validate(payload)
+        # Skoru payload'a koymuyoruz: legacy migrate validator'ı [0,5] aralığındaki
+        # değerleri ×20 ölçeklerdi ve meşru düşük türetilmiş skorları (örn. 4.8) yanlışça
+        # şişirirdi. Bu yüzden doğrulamadan SONRA model_copy ile birebir set ediyoruz.
+        parsed = CriterionJudgeResponse.model_validate(payload)
+        return parsed.model_copy(update={"score": derived_score})
 
     def _resolve_findings(
         self,
@@ -353,6 +366,7 @@ class OllamaAyaProvider:
             criterion_explanation=parsed.criterion_explanation,
             short_assessment=parsed.short_assessment,
             justification=parsed.justification,
+            score_rationale=parsed.score_rationale,
             positive_findings=parsed.positive_findings,
             negative_findings=parsed.negative_findings,
             missing_information=parsed.missing_information,
@@ -543,26 +557,50 @@ def _quote_is_grounded(quote: str, chunk_text: str, threshold: float = 0.85) -> 
     return (match.size / len(norm_quote)) >= threshold
 
 
-def _blend_score(
-    model_score: float | None,
+def _findings_balance_factor(positive_count: int, negative_count: int) -> float:
+    """Olumlu/zayıflatan bulgu dengesini ölçülü bir skor çarpanına çevirir.
+
+    Asimetriktir: zayıflatan bulgu fazlası daha güçlü ceza (en çok -%12), olumlu fazlası
+    küçük ödül (en çok +%6). gap_severity zaten negatifleri kısmen yansıttığından çarpan
+    bilinçli olarak ölçülü tutulur; amaç ana türetmeyi bozmadan bulgu dengesini de skora
+    yansıtmaktır. Yalnızca grounded (kanıta bağlanmış) bulgular sayılır.
+    """
+    net = positive_count - negative_count
+    if net >= 0:
+        adjustment = min(0.06, 0.015 * net)
+    else:
+        adjustment = max(-0.12, 0.03 * net)
+    return 1.0 + adjustment
+
+
+def _derive_score(
     claim_strength: float | None,
     evidence_quality: float | None,
+    gap_severity: int | None,
+    positive_count: int = 0,
+    negative_count: int = 0,
 ) -> float | None:
-    """Modelin cömert holistik skorunu, iddia gücü ile kanıt kalitesinin çarpımıyla harmanlar.
+    """Nihai 0-100 skoru, modelin serbest sayısından DEĞİL, ayrık eksenlerden + bulgu
+    dengesinden türetir.
 
-    Çarpım (claim x evidence / 100) "iddia ancak arkasındaki kanıt kadar değerlidir"
-    ilkesini uygular ve doğal olarak daha katıdır. Final skor, modelin yargısını
-    yarı yarıya koruyan bir harman olarak hesaplanır. Bileşenler eksikse zarafetle
-    eldeki sinyale düşer.
+    Serbest holistik skor 8B modelde tek bir değere (anchor) çöküyordu. Bunun yerine
+    skor, modelin niteliksel analizinden sonra verdiği ayrık eksenlerden hesaplanır:
+
+        taban = (claim_pct x evidence_pct) / 100        # "iddia ancak kanıt kadar değerli"
+        skor  = taban x (1 - 0.10 x (gap_severity-1))    # zayıflık ciddiyeti skoru düşürür
+                     x bulgu_dengesi_faktörü             # olumlu/zayıflatan bulgu dengesi
+
+    gap_severity 1->faktör 1.0 (ceza yok) ... 5->faktör 0.6. Bulgu dengesi faktörü
+    [0.88, 1.06] aralığında ölçülü etki eder. Böylece farklı kriterler belirgin biçimde
+    farklı skorlar alır.
     """
-    product: float | None = None
-    if claim_strength is not None and evidence_quality is not None:
-        product = claim_strength * evidence_quality / 100.0
-    if model_score is None:
-        return round(product, 2) if product is not None else None
-    if product is None:
-        return model_score
-    return round(0.5 * model_score + 0.5 * product, 2)
+    if claim_strength is None or evidence_quality is None:
+        return None
+    base = claim_strength * evidence_quality / 100.0
+    severity = gap_severity if gap_severity is not None and 1 <= gap_severity <= 5 else 2
+    factor = 1.0 - 0.10 * (severity - 1)
+    balance = _findings_balance_factor(positive_count, negative_count)
+    return round(max(0.0, min(100.0, base * factor * balance)), 2)
 
 
 def _coerce_int(value: Any) -> int | None:

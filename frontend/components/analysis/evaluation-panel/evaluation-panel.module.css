@@ -33,7 +33,6 @@
   box-shadow:
     0 24px 60px rgba(26, 22, 19, 0.08),
     inset 0 1px 0 color-mix(in srgb, var(--surface-tint) 70%, transparent);
-  backdrop-filter: blur(12px);
 }
 
 /* Koyu temada semantik renkleri parlatarak kontrastı korur (soft zeminler
@@ -61,7 +60,7 @@
   padding: 7px 12px;
   border: 1px solid var(--report-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--app-panel);
   color: var(--app-muted);
   font-size: 12px;
   font-weight: 600;
@@ -69,7 +68,7 @@
 
 .statusChip {
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
-  background: color-mix(in srgb, var(--accent) 8%, white);
+  background: color-mix(in srgb, var(--accent) 12%, var(--app-panel));
   color: var(--accent-strong);
 }
 
@@ -157,6 +156,11 @@
   align-items: center;
   gap: 18px;
   padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--report-border));
+  border-left: 5px solid var(--accent);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 14%, transparent), transparent 46%),
+    linear-gradient(180deg, var(--app-panel), color-mix(in srgb, var(--accent) 6%, var(--app-panel-strong)));
 }
 
 .heroDownloadButton {
@@ -167,19 +171,21 @@
   white-space: nowrap;
   padding: 12px 18px;
   border-radius: 14px;
-  border: 1px solid transparent;
-  background: var(--button-bg);
-  color: var(--button-text);
+  border: 1px solid var(--accent-strong);
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: #ffffff;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
-  transition: background 200ms ease, transform 160ms ease;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 32%, transparent);
+  transition: filter 200ms ease, transform 160ms ease, box-shadow 200ms ease;
 }
 
 .heroDownloadButton:hover {
-  background: var(--button-bg-hover);
+  filter: brightness(1.05);
   transform: translateY(-1px);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--accent) 42%, transparent);
 }
 
 .tableSection {
@@ -190,9 +196,10 @@
   padding: 20px 22px;
   border: 1px solid var(--report-border);
   border-radius: 18px;
+  border-left: 4px solid var(--accent);
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 42%),
-    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 90%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 9%, transparent), transparent 42%),
+    var(--app-panel-strong);
 }
 
 .heroScore {
@@ -266,6 +273,8 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.25;
+  padding-bottom: 8px;
+  border-bottom: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .scoreGrid {
@@ -287,7 +296,7 @@
 .evidenceCard {
   border: 1px solid var(--report-border);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--app-panel);
 }
 
 .scoreCard {
@@ -296,6 +305,7 @@
   gap: 14px;
   min-height: 210px;
   padding: 18px;
+  border-top: 4px solid var(--accent);
 }
 
 .scoreCardTop {
@@ -411,8 +421,8 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, rgba(18, 15, 13, 0.46) 82%, var(--accent));
-  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, rgba(18, 15, 13, 0.72) 86%, var(--accent));
+  backdrop-filter: blur(10px);
 }
 
 .rubricModal {
@@ -422,12 +432,16 @@
   max-height: min(88vh, 1000px);
   overflow: auto;
   padding: 24px;
-  border: 1px solid var(--report-border);
+  border: 2px solid color-mix(in srgb, var(--accent) 42%, var(--app-panel-border));
+  border-top: 5px solid var(--accent);
   border-radius: 24px;
+  /* Tam opak zemin: arka içerik kesinlikle sızmaz. */
   background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 9%, transparent), transparent 38%),
-    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 96%, transparent), color-mix(in srgb, var(--app-panel-strong) 98%, transparent));
-  box-shadow: 0 34px 90px rgba(18, 15, 13, 0.24);
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 44%),
+    var(--app-panel);
+  box-shadow:
+    0 34px 90px rgba(18, 15, 13, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
   scrollbar-width: none;
 }
 
@@ -460,10 +474,10 @@
   gap: 12px;
   align-items: flex-start;
   padding: 16px;
-  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--app-panel-border));
+  border-top: 3px solid var(--accent);
   border-radius: 16px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 86%, transparent), color-mix(in srgb, var(--app-panel-strong) 94%, transparent));
+  background: color-mix(in srgb, var(--accent) 7%, var(--app-panel-strong));
 }
 
 .rubricGroupList,
@@ -476,8 +490,10 @@
   display: grid;
   gap: 14px;
   padding: 18px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 88%, transparent), color-mix(in srgb, var(--app-panel-strong) 96%, transparent));
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--app-panel-border));
+  border-left: 4px solid var(--accent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--app-panel-strong));
 }
 
 .rubricGroupHeader {
@@ -516,6 +532,10 @@
   display: grid;
   gap: 12px;
   padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--app-panel-border));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 14px;
+  background: var(--app-panel);
 }
 
 .rubricItemTitle {
@@ -532,7 +552,7 @@
   align-items: center;
   padding: 7px 10px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 8%, white);
+  background: color-mix(in srgb, var(--accent) 12%, var(--app-panel));
   color: var(--accent-strong);
   font-size: 12px;
   font-weight: 600;
@@ -688,6 +708,13 @@
   overflow: hidden;
   margin-top: 18px;
   background: var(--app-panel);
+  border-left: 4px solid var(--accent);
+  transition: box-shadow 200ms ease, transform 160ms ease;
+}
+
+.subcriterionAccordion:hover {
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 18%, transparent);
+  transform: translateY(-1px);
 }
 
 .subcriterionSummary {
@@ -709,15 +736,11 @@
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
-.metricPillGrid,
-.assessmentMetrics {
+.metricPillGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(120px, 180px);
+  justify-content: end;
   gap: 8px;
-}
-
-.assessmentMetrics {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .metricPill {
@@ -732,7 +755,7 @@
 
 .metricPillAccent {
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
-  background: color-mix(in srgb, var(--accent) 8%, white);
+  background: color-mix(in srgb, var(--accent) 12%, var(--app-panel));
 }
 
 .metricValue {
@@ -757,8 +780,9 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, rgba(18, 15, 13, 0.5) 82%, var(--accent));
-  backdrop-filter: blur(12px);
+  /* Yalnızca arka karartma + blur burada; modal panelinin kendisi TAM OPAK. */
+  background: color-mix(in srgb, rgba(18, 15, 13, 0.72) 86%, var(--accent));
+  backdrop-filter: blur(10px);
 }
 
 .criterionModal {
@@ -767,12 +791,13 @@
   width: min(1040px, 100%);
   max-height: min(88vh, 980px);
   overflow: auto;
-  border: 1px solid var(--report-border);
+  border: 2px solid color-mix(in srgb, var(--accent) 42%, var(--app-panel-border));
   border-radius: 24px;
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 36%),
-    linear-gradient(180deg, color-mix(in srgb, var(--app-panel) 96%, transparent), color-mix(in srgb, var(--app-panel-strong) 98%, transparent));
-  box-shadow: 0 30px 80px rgba(18, 15, 13, 0.24);
+  /* Tam opak zemin: arka içerik kesinlikle sızmaz. */
+  background: var(--app-panel);
+  box-shadow:
+    0 30px 90px rgba(18, 15, 13, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -790,9 +815,14 @@
   gap: 18px;
   align-items: flex-start;
   padding: 20px 22px;
-  border-bottom: 1px solid var(--report-border);
-  background: color-mix(in srgb, var(--app-panel) 88%, transparent);
-  backdrop-filter: blur(12px);
+  border-top: 4px solid var(--accent);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 24%, var(--app-panel-border));
+  /* Opak + hafif kırmızı kimlik; blur YOK. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 10%, var(--app-panel-strong)),
+    var(--app-panel-strong)
+  );
 }
 
 .criterionModalTitleWrap {
@@ -847,6 +877,34 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* Puanın gerekçesi: eksenlere dayalı "neden bu puan" anlatısı. Skorla görsel
+   bağ için belirgin accent kimliği taşır. */
+.scoreRationaleCard {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--app-panel-border));
+  border-left: 4px solid var(--accent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--app-panel-strong));
+}
+
+.scoreRationaleLabel {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.scoreRationaleBody {
+  margin: 0;
+  color: var(--app-text);
+  font-size: 14.5px;
+  line-height: 1.7;
 }
 
 .explanationGrid {
@@ -930,7 +988,7 @@
   display: grid;
   gap: 8px;
   padding: 13px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--app-panel);
 }
 
 .findingReason {
@@ -942,7 +1000,7 @@
   padding: 10px 12px;
   border-left: 3px solid var(--report-border-strong);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--app-panel);
   color: var(--app-muted);
   font-size: 13px;
   font-style: italic;

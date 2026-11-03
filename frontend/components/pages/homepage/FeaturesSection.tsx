@@ -3,35 +3,59 @@ import styles from "./features-section.module.css";
 const FEATURES = [
   {
     step: "1",
-    title: "Belgeyi Yapısal Olarak Okur",
+    title: "Proje Önerinizi Baştan Sona Okur",
     description:
-      "Sistem proje öneri formunu yalnızca düz metin olarak ele almaz; başlıkları, alt bölümleri, tabloları ve belge içindeki ilişkili alanları ayrıştırarak okunabilir bir yapı oluşturur.",
-    highlight: "Dağınık içerik yerine tutarlı bir belge haritası çıkarılır.",
+      "Hazırladığınız proje öneri formunu PDF olarak yüklemeniz yeterli. Sistem belgeyi bütün olarak okur; başlıkları, alt bölümleri, tabloları ve birbirine bağlı kısımları tek tek tarar. Hiçbir sayfayı atlamaz, hiçbir bölümü gözden kaçırmaz.",
+    highlight: "Formunuzun tamamı, dağınık metin yığını değil; düzenli bir bütün olarak ele alınır.",
     icon: <StructureIcon />,
   },
   {
     step: "2",
-    title: "İçeriği Anlamlandırır",
+    title: "Söylediklerinizi Anlamaya Çalışır",
     description:
-      "Teknik anlatım, problem tanımı, çözüm yaklaşımı, iş planı ve beklenen çıktıların birbiriyle ne kadar uyumlu olduğu yapay zeka destekli analiz katmanlarında incelenir.",
-    highlight: "Metnin yalnızca ne söylediği değil, nasıl kurgulandığı da değerlendirilir.",
+      "Projenizin amacı, çözmek istediği problem, izlediği yöntem, iş planı ve beklenen sonuçlar birbiriyle ne kadar tutarlı, ne kadar inandırıcı? Sistem bu soruların yanıtını yalnızca belgenizdeki ifadelere bakarak arar; dışarıdan bilgi eklemez, varsayımda bulunmaz.",
+    highlight: "Yorumların hepsi sizin yazdıklarınıza dayanır; uydurma veya tahmin yoktur.",
     icon: <SparkIcon />,
   },
   {
     step: "3",
-    title: "Güçlü ve Zayıf Noktaları Ayıklar",
+    title: "Güçlü ve Zayıf Yönleri Tek Tek Çıkarır",
     description:
-      "Açık anlatılmış bölümler, eksik bırakılmış noktalar, belirsiz ifadeler ve ikna gücünü düşüren alanlar ayrıştırılarak kullanıcıya anlaşılır bir çerçevede sunulur.",
-    highlight: "Karar vericinin dikkat edeceği kırılgan alanlar daha görünür hale gelir.",
+      "İyi anlatılmış bölümler, eksik bırakılan noktalar, belirsiz kalan ifadeler ve değerlendirmede sizi zorlayabilecek yerler ayrı ayrı listelenir. Her tespitin yanında, bunu belgenizin hangi cümlesine dayandırdığı da gösterilir.",
+    highlight: "Neyin güçlü, neyin zayıf olduğunu ve bunun nedenini açıkça görürsünüz.",
     icon: <ReportIcon />,
   },
   {
     step: "4",
-    title: "Raporu Eyleme Dönüştürür",
+    title: "Anlaşılır Bir Puan ve Rapora Dönüştürür",
     description:
-      "Çıktılar yalnızca tespit listesi olarak bırakılmaz; kullanıcıya üzerinde çalışabileceği net bir değerlendirme özeti ve rapor akışı halinde sunulur.",
-    highlight: "Böylece değerlendirme ekranı, belgeyi yeniden güçlendirmek için doğrudan kullanılabilir bir çalışma alanına dönüşür.",
+      "Her kriter için bir puan, her puanın arkasında \"neden bu puan?\" açıklaması ve tüm önerinin genel değerlendirmesi tek bir raporda toplanır. Raporu ekranda inceleyebilir, PDF olarak indirebilir veya e-posta ile paylaşabilirsiniz.",
+    highlight: "Sonuç, başvurunuzu göndermeden önce eksiklerinizi görüp düzeltebileceğiniz net bir yol haritasıdır.",
     icon: <RouteIcon />,
+  },
+] as const;
+
+const DIMENSIONS = [
+  {
+    badge: "A",
+    weight: "%45",
+    title: "Ar-Ge ve Yenilikçilik",
+    description:
+      "Projenizin gerçekten yeni bir teknik problemi çözüp çözmediğine, hedeflediği teknoloji düzeyine ve yenilikçi yönüne bakar. Değerlendirmede en yüksek ağırlığa sahip, yani en belirleyici boyut budur.",
+  },
+  {
+    badge: "B",
+    weight: "%30",
+    title: "Plan, Ekip ve Altyapı",
+    description:
+      "Projenin uygulanabilir bir iş planıyla, işin altından kalkabilecek bir ekiple ve yeterli kurumsal imkânlarla gerçekten yürütülebilir olup olmadığını inceler.",
+  },
+  {
+    badge: "C",
+    weight: "%25",
+    title: "Ekonomik ve Ulusal Katkı",
+    description:
+      "Proje çıktılarının pazarda karşılık bulma, ekonomik fayda üretme ve ülkeye kazanım sağlama potansiyelini değerlendirir.",
   },
 ] as const;
 
@@ -45,12 +69,14 @@ export function FeaturesSection() {
       <div className={styles.header}>
         <p className={styles.eyebrow}>Nasıl çalışır</p>
         <h2 id="homepage-features-title" className={styles.title}>
-          Belgeden rapora uzanan değerlendirme akışı
+          Proje önerinizi yüklemekten rapora dört adım
         </h2>
         <p className={styles.intro}>
-          Ana sayfa ürünü tanıtır; gerçek çalışma Evaluation ekranında başlar. Aşağıdaki
-          akış, sistemin proje önerinizi nasıl okuyup anlamlandırdığını ve çıktıya nasıl
-          dönüştürdüğünü özetler.
+          Bu asistan, TÜBİTAK 1501 ve 1507 sanayi Ar-Ge destek programlarına hazırlanan
+          proje önerilerini değerlendirmek için tasarlandı. Başvurunuzu göndermeden önce
+          güçlü ve zayıf yönlerinizi görmenizi, eksiklerinizi fark etmenizi sağlar.
+          Aşağıda, yüklediğiniz belgenin nasıl bir değerlendirmeye dönüştüğünü adım adım
+          görebilirsiniz.
         </p>
       </div>
 
@@ -78,6 +104,36 @@ export function FeaturesSection() {
             </div>
           </article>
         ))}
+      </div>
+
+      <div className={styles.scope}>
+        <div className={styles.header}>
+          <p className={styles.eyebrow}>Neyi değerlendirir</p>
+          <h2 className={styles.title}>Önerinizi üç temel boyutta inceler</h2>
+          <p className={styles.intro}>
+            Bir hakemin proje önerinize bakarken sorduğu temel sorular üç ana başlıkta
+            toplanır. Sistem de aynı çerçeveyi kullanır: her boyut kendi alt başlıklarına
+            ayrılır ve her biri, belgenizden bulduğu kanıtlara dayanarak ayrı ayrı puanlanır.
+          </p>
+        </div>
+
+        <div className={styles.dimensionGrid}>
+          {DIMENSIONS.map((dimension) => (
+            <article key={dimension.badge} className={styles.dimensionCard}>
+              <div className={styles.dimensionTop}>
+                <span className={styles.dimensionBadge}>{dimension.badge}</span>
+                <span className={styles.weightChip}>{dimension.weight} ağırlık</span>
+              </div>
+              <h3 className={styles.dimensionTitle}>{dimension.title}</h3>
+              <p className={styles.dimensionText}>{dimension.description}</p>
+            </article>
+          ))}
+        </div>
+
+        <p className={styles.scopeNote}>
+          Bu boyutların toplam ağırlığı genel puanınızı oluşturur. Böylece projenizin hangi
+          alanda öne çıktığını, hangi alanda güçlenmesi gerektiğini tek bakışta görürsünüz.
+        </p>
       </div>
     </section>
   );

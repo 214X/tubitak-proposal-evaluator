@@ -1,3 +1,72 @@
+/* Tema token'ları :root'ta global tanımlanır; böylece document.body'ye
+   createPortal ile render edilen modaller (rubric / alt kriter detayı) de
+   --app-* / --accent / --report-* değişkenlerini miras alır ve zeminleri
+   TAM OPAK olur. data-theme attribute'u AppShell tarafından <html>'e yazılır. */
+:root {
+  --app-bg: #f6f2ee;
+  --app-text: #171312;
+  --app-muted: #726460;
+  --app-panel: #ffffff;
+  --app-panel-strong: #fcfaf8;
+  --app-panel-border: rgba(205, 69, 76, 0.22);
+  --app-shadow: 0 18px 48px rgba(18, 14, 13, 0.08);
+  --accent: #cd454c;
+  --accent-strong: #a9343b;
+  --accent-soft: rgba(205, 69, 76, 0.1);
+  --accent-soft-strong: rgba(205, 69, 76, 0.16);
+  --surface-tint: #ffffff;
+  --surface-muted: #f7f2ef;
+  --button-bg: #171312;
+  --button-bg-hover: #2a2422;
+  --button-text: #fffaf8;
+
+  --report-display-font:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --report-border: rgba(37, 34, 31, 0.1);
+  --report-border-strong: rgba(37, 34, 31, 0.16);
+  --report-surface: color-mix(in srgb, var(--app-panel) 92%, transparent);
+  --report-surface-soft: color-mix(in srgb, var(--app-panel-strong) 88%, transparent);
+  --report-muted-surface: color-mix(in srgb, var(--surface-muted) 82%, var(--app-panel));
+  --report-green: #2f7d4f;
+  --report-green-soft: color-mix(in srgb, #2f7d4f 14%, var(--app-panel));
+  --report-amber: #946714;
+  --report-amber-soft: color-mix(in srgb, #946714 14%, var(--app-panel));
+  --report-red: #b0443e;
+  --report-red-soft: color-mix(in srgb, #b0443e 14%, var(--app-panel));
+  --report-blue: #3f6678;
+  --report-blue-soft: color-mix(in srgb, #3f6678 14%, var(--app-panel));
+}
+
+:root[data-theme="dark"] {
+  --app-bg: #1a1615;
+  --app-text: #f4efec;
+  --app-muted: #b4a7a1;
+  --app-panel: #26201f;
+  --app-panel-strong: #2d2625;
+  --app-panel-border: rgba(214, 83, 90, 0.24);
+  --app-shadow: 0 20px 56px rgba(0, 0, 0, 0.28);
+  --accent: #d6535a;
+  --accent-strong: #b5444b;
+  --accent-soft: rgba(214, 83, 90, 0.14);
+  --accent-soft-strong: rgba(214, 83, 90, 0.2);
+  --surface-tint: #26201f;
+  --surface-muted: #211b1a;
+  --button-bg: #f4efec;
+  --button-bg-hover: #ffffff;
+  --button-text: #1a1615;
+
+  --report-green: #5fb47e;
+  --report-green-soft: color-mix(in srgb, #5fb47e 16%, var(--app-panel));
+  --report-amber: #d9a441;
+  --report-amber-soft: color-mix(in srgb, #d9a441 16%, var(--app-panel));
+  --report-red: #e07a73;
+  --report-red-soft: color-mix(in srgb, #e07a73 16%, var(--app-panel));
+  --report-blue: #7aa6bc;
+  --report-blue-soft: color-mix(in srgb, #7aa6bc 16%, var(--app-panel));
+  --report-border: rgba(244, 239, 236, 0.14);
+  --report-border-strong: rgba(244, 239, 236, 0.22);
+}
+
 ::view-transition-old(app-shell),
 ::view-transition-new(app-shell),
 ::view-transition-old(app-content),

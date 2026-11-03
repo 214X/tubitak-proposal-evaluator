@@ -500,8 +500,6 @@ function SubcriterionCard({
         <div className={styles.subcriterionSummaryAside}>
           <div className={styles.metricPillGrid}>
             <MetricPill label="Skor" value={formatScore(criterion.score, 100)} accent />
-            <MetricPill label="Kanıt Durumu" value={getCoverageStatusLabel(criterion.coverage_status)} />
-            <MetricPill label="Güven" value={formatConfidence(criterion.confidence)} />
           </div>
           <span className={styles.expandHint}>Alt kriteri aç</span>
         </div>
@@ -570,10 +568,18 @@ function SubcriterionCard({
               </p>
             </div>
           </div>
-          <div className={styles.assessmentMetrics}>
-            <MetricPill label="İddia Gücü" value={formatScore(criterion.claim_strength, 100)} />
-            <MetricPill label="Kanıt Kalitesi" value={formatScore(criterion.evidence_quality, 100)} />
-          </div>
+        </div>
+
+        <div className={styles.scoreRationaleCard}>
+          <p className={styles.scoreRationaleLabel}>Neden bu puan?</p>
+          <p className={styles.scoreRationaleBody}>
+            {formatUserFacingText(
+              criterion.score_rationale ||
+                criterion.justification ||
+                criterion.short_assessment ||
+                "Puan gerekçesi bulunamadı.",
+            )}
+          </p>
         </div>
 
         <section className={styles.findingsSection}>
@@ -597,21 +603,6 @@ function SubcriterionCard({
               items={criterion.negative_findings}
               evidenceByChunkId={evidenceByChunkId}
               emptyText="Zayıflatan bulgu çıkarılmadı."
-            />
-          </div>
-
-          <div className={styles.narrativeGrid}>
-            <InfoPanel
-              title="Eksik Bilgiler"
-              tone="warning"
-              items={criterion.missing_information}
-              emptyText="Eksik bilgi işaretlenmedi."
-            />
-            <InfoPanel
-              title="Risk İşaretleri"
-              tone="danger"
-              items={criterion.red_flags}
-              emptyText="Risk işareti yok."
             />
           </div>
         </section>
@@ -779,40 +770,13 @@ function FindingPanel({
                 ) : null}
                 {quote ? (
                   <blockquote className={styles.findingQuote}>
-                    {clampText(formatUserFacingText(quote), 180)}
+                    {clampText(formatUserFacingText(quote), 220)}
                   </blockquote>
                 ) : null}
               </article>
             );
           })}
         </div>
-      ) : (
-        <p className={styles.infoPanelEmpty}>{emptyText}</p>
-      )}
-    </div>
-  );
-}
-
-function InfoPanel({
-  title,
-  items,
-  emptyText,
-  tone,
-}: Readonly<{
-  title: string;
-  items: string[];
-  emptyText: string;
-  tone: "positive" | "warning" | "danger";
-}>) {
-  return (
-    <div className={`${styles.infoPanel} ${styles[`infoPanel${capitalize(tone)}`]}`}>
-      <p className={styles.infoPanelTitle}>{title}</p>
-      {items.length ? (
-        <ul className={styles.inlineList}>
-          {items.map((item, index) => (
-            <li key={`${title}-${index}`}>{formatUserFacingText(item)}</li>
-          ))}
-        </ul>
       ) : (
         <p className={styles.infoPanelEmpty}>{emptyText}</p>
       )}
@@ -1034,13 +998,6 @@ function formatWeightedContribution(value: number | null | undefined) {
   }
   const rendered = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
   return `${rendered} puan`;
-}
-
-function formatConfidence(value: number | null | undefined) {
-  if (value === null || value === undefined) {
-    return "-";
-  }
-  return `${Math.round(value * 100)}%`;
 }
 
 function formatEvidenceLocation(

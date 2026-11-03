@@ -53,22 +53,17 @@ def build_judge_format_schema() -> dict:
         },
         "required": ["summary", "reason", "quote", "ref"],
     }
+    # ÖNEMLI: Alan sırası bilinçlidir. Önce niteliksel analiz (assessment, bulgular,
+    # eksikler) üretilir; SONRA bu analize dayanan ayrık (1-5) puan eksenleri gelir.
+    # Böylece model sayıyı gerekçeden önce vermez (anchor/mod-çöküşü kırılır). Nihai
+    # 0-100 skor modelden ALINMAZ; bu eksenlerden provider'da deterministik türetilir.
     return {
         "type": "object",
         "properties": {
-            "score": {"type": "integer", "minimum": 0, "maximum": 100},
-            "claim_strength": {"type": "integer", "minimum": 0, "maximum": 100},
-            "evidence_quality": {"type": "integer", "minimum": 0, "maximum": 100},
-            "decision_status": {
-                "type": "string",
-                "enum": ["scored", "insufficient_evidence"],
-            },
             "short_assessment": {"type": "string"},
             "justification": {"type": "string"},
             "positive_findings": {"type": "array", "items": finding_schema},
             "negative_findings": {"type": "array", "items": finding_schema},
-            "missing_information": {"type": "array", "items": {"type": "string"}},
-            "red_flags": {"type": "array", "items": {"type": "string"}},
             "evidence_items": {
                 "type": "array",
                 "items": {
@@ -85,18 +80,27 @@ def build_judge_format_schema() -> dict:
                     "required": ["ref", "evidence_type", "verbatim_excerpt", "why_it_matters"],
                 },
             },
+            "claim_strength": {"type": "integer", "minimum": 1, "maximum": 5},
+            "evidence_quality": {"type": "integer", "minimum": 1, "maximum": 5},
+            "gap_severity": {"type": "integer", "minimum": 1, "maximum": 5},
+            "score_rationale": {"type": "string"},
+            "decision_status": {
+                "type": "string",
+                "enum": ["scored", "insufficient_evidence"],
+            },
             "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
         },
         "required": [
-            "score",
-            "claim_strength",
-            "evidence_quality",
-            "decision_status",
             "short_assessment",
             "justification",
             "positive_findings",
             "negative_findings",
             "evidence_items",
+            "claim_strength",
+            "evidence_quality",
+            "gap_severity",
+            "score_rationale",
+            "decision_status",
             "confidence",
         ],
     }
@@ -110,8 +114,9 @@ def _build_system_prompt() -> str:
         "Değerlendirdiğin proje yalnızca aşağıdaki kanıtlarda anlatılan projedir; "
         "başka bir proje hayal etme. "
         "Başvuru sahibinin iddiasını ve bunu destekleyen kanıt gücünü ayrı değerlendir. "
-        "Kanıt zayıfsa veya eksikse bunu açıkça belirt ve puanı buna göre düşür. "
-        "Tüm puan alanlarını 0 ile 100 arasında ver. "
+        "Kanıt zayıfsa veya eksikse bunu açıkça belirt. "
+        "Önce niteliksel analizini (değerlendirme, bulgular, eksikler) yaz; SONRA puan "
+        "eksenlerini (claim_strength, evidence_quality, gap_severity) bu analizine göre 1-5 arası ver. "
         "Bir kanıta atıf yaparken yalnızca kanıt numarasını (ref) kullan. "
         "Tüm metinleri Türkçe üret. JSON dışında hiçbir çıktı verme."
     )
@@ -123,23 +128,20 @@ def _build_user_prompt(
     ranked: list[EvidenceChunk],
 ) -> str:
     schema = {
-        "score": "0-100 arası tam sayı",
-        "claim_strength": "0-100 arası tam sayı",
-        "evidence_quality": "0-100 arası tam sayı",
-        "decision_status": "scored | insufficient_evidence",
         "short_assessment": (
             "Bu önerinin kriteri ne ölçüde karşıladığını, kanıttan somut bir ayrıntıya "
             "(sayı, bölüm adı veya terim) dayanarak 1-2 cümlede söyle."
         ),
         "justification": (
-            "Skorun gerekçesini, hangi kanıtın iddiayı ne kadar desteklediğine atıfla 1-2 cümlede açıkla."
+            "Değerlendirmenin gerekçesini, hangi kanıtın iddiayı ne kadar desteklediğine atıfla 1-2 cümlede açıkla."
         ),
         "positive_findings": [
             {
                 "summary": "Türkçe bulgu özeti",
                 "reason": (
-                    "Bu bulgunun kriteri NEDEN güçlendirdiğini açıkla: kanıttaki somut ayrıntıya "
-                    "(sayı, bölüm, terim) bağla ve kriterin ne istediğiyle ilişkilendir. 1-2 cümle."
+                    "Bu bulgunun kriteri NEDEN güçlendirdiğini açıkla: kanıttaki somut ayrıntıyı "
+                    "(sayı, bölüm adı, terim) AKTAR, kriterin ne istediğiyle ilişkilendir ve bunun "
+                    "değerlendirmeye etkisini söyle. 2-3 cümle, dolu ve açıklayıcı."
                 ),
                 "quote": (
                     "Bu bulgunun dayandığı kanıttan BİREBİR kopyalanmış kısa ifade; "
@@ -152,8 +154,9 @@ def _build_user_prompt(
             {
                 "summary": "Türkçe bulgu özeti",
                 "reason": (
-                    "Bu bulgunun kriteri NEDEN zayıflattığını açıkla: kanıttaki somut ayrıntıya "
-                    "(sayı, bölüm, terim) bağla ve kriterin ne istediğiyle ilişkilendir. 1-2 cümle."
+                    "Bu bulgunun kriteri NEDEN zayıflattığını açıkla: eksik/yetersiz olan somut ayrıntıyı "
+                    "(hangi sayı, bölüm, kanıt eksik) AKTAR, kriterin ne istediğiyle ilişkilendir ve bunun "
+                    "değerlendirmeye etkisini söyle. 2-3 cümle, dolu ve açıklayıcı."
                 ),
                 "quote": (
                     "Bu bulgunun dayandığı kanıttan BİREBİR kopyalanmış kısa ifade; "
@@ -162,12 +165,6 @@ def _build_user_prompt(
                 "ref": "kanıt numarası (tam sayı)",
             }
         ],
-        "missing_information": [
-            "Eksik olan bilgi + bunun kriter açısından neden önemli olduğu + (belgede ilgili "
-            "bölüm varsa) nereye eklenmesi gerektiği (örn. 'Kalem bazlı bütçe dayanağı yok; "
-            "kriter maliyet-etkinliği sorduğu için bu boşluk skoru düşürüyor; B.2 bütçe bölümüne eklenmeli')."
-        ],
-        "red_flags": ["Türkçe risk işareti"],
         "evidence_items": [
             {
                 "ref": "kanıt numarası (tam sayı)",
@@ -176,6 +173,30 @@ def _build_user_prompt(
                 "why_it_matters": "Türkçe açıklama",
             }
         ],
+        "claim_strength": (
+            "Yukarıdaki analizine göre iddianın gücü (1-5 TAM SAYI): "
+            "5=çok net, iddialı ve kritere tam oturan iddia · 4=güçlü ama küçük boşluklar · "
+            "3=makul ama kısmi · 2=zayıf/belirsiz · 1=iddia yok denecek kadar zayıf. "
+            "Her kriter için bağımsız ve dürüst seç; otomatik 4-5 verme."
+        ),
+        "evidence_quality": (
+            "Kanıtın somutluğu/doğrulanabilirliği (1-5 TAM SAYI): "
+            "5=birden çok sayısal/doğrulanabilir veri (rakam, tablo, ölçüt) · 4=somut ama sınırlı · "
+            "3=kısmen somut · 2=çoğunlukla genel ifade · 1=neredeyse hiç somut kanıt yok. "
+            "Belgede bu kritere dair sayısal/somut veri yoksa 3'ten yukarı VERME."
+        ),
+        "gap_severity": (
+            "Listelediğin zayıflık ve eksiklerin CİDDİYETİ (1-5 TAM SAYI): "
+            "1=kayda değer eksik yok · 3=belirgin boşluklar var · 5=kritik eksikler skoru ciddi düşürmeli. "
+            "negative_findings ile tutarlı olmalı."
+        ),
+        "score_rationale": (
+            "Yukarıda verdiğin claim_strength, evidence_quality ve gap_severity değerlerine DAYANARAK "
+            "bu kriterin neden bu düzeyde değerlendirildiğini 2-3 cümlede açıkla: iddianın gücü, kanıtın "
+            "somutluğu ve eksiklerin etkisi nasıl birleşiyor? Kanıttan somut bir ayrıntıya değin; "
+            "okuyucu puanın gerekçesini buradan net anlamalı."
+        ),
+        "decision_status": "scored | insufficient_evidence",
         "confidence": "0.0 ile 1.0 arasında sayı",
     }
 
@@ -193,28 +214,28 @@ def _build_user_prompt(
         f"Kapsama notları:\n{_format_note_block(evidence.coverage_notes)}\n\n"
         f"Kanıtlar (atıf yaparken yalnızca [K#] numarasını ref olarak kullan):\n"
         f"{_format_ranked_evidence_block(ranked)}\n\n"
-        "Puanlama rehberi (KATI değerlendir; hakemler cömert değildir):\n"
-        "- 0-19: İddia yok veya kanıt yok denecek kadar zayıf.\n"
-        "- 20-39: İddia var ama ciddi ölçüde eksik, soyut veya kanıtsız.\n"
-        "- 40-59: Kısmi iddia ve sınırlı kanıt; ikna gücü düşük. ÇOĞU ÖNERİ BURADADIR.\n"
-        "- 60-79: Makul/güçlü iddia ama hâlâ belirgin boşluklar mevcut; iyi öneriler buraya girer.\n"
-        "- 80-100: YALNIZCA kusursuz, somut sayısal/doğrulanabilir kanıtla desteklenen istisnai iddia. Nadir kullan.\n"
-        "- Kanıtta herhangi bir boşluk, belirsizlik veya doğrulanamayan iddia varsa 70 ÜSTÜ VERME.\n\n"
+        "Puanlama yöntemi (KATI değerlendir; hakemler cömert değildir):\n"
+        "- Nihai 0-100 skoru SEN vermezsin; o, senin verdiğin 1-5 eksenlerinden otomatik hesaplanır.\n"
+        "- Bu yüzden eksenleri (claim_strength, evidence_quality, gap_severity) dürüst ve KRİTERE ÖZGÜ ver; "
+        "her kritere refleksle aynı değeri (örn. hep 4-5) verme. Farklı kriterler farklı değerler almalı.\n"
+        "- Çoğu gerçek öneride evidence_quality ve claim_strength 2-4 bandındadır; 5 yalnızca istisnai, "
+        "somut sayısal kanıtla desteklenen durumlar içindir.\n\n"
         "Görev:\n"
         "- Önce başvuru sahibinin bu kriter için ne iddia ettiğini kanıtlardan çıkar.\n"
-        "- ÖNCE zayıflıkları, boşlukları ve eksikleri belirle (negative_findings + missing_information); "
-        "SONRA bunları yansıtan bir skor ver. Zayıflıkları görmeden skoru yüksek tutma.\n"
-        "- Sonra bu iddiayı destekleyen kanıtın ne kadar güçlü olduğunu değerlendir.\n"
-        "- Kanıttaki boşlukları, eksikleri ve iddiayı zayıflatan unsurları açıkla.\n"
-        "- claim_strength: iddianın ne kadar net ve iddialı olduğu. evidence_quality: bu iddiayı destekleyen "
-        "kanıtın somutluğu ve doğrulanabilirliği. İKİSİNİ DE KATI puanla; belgede somut sayı/veri yoksa "
-        "evidence_quality için 60 üstü verme.\n"
-        "- Bir konu belgede gerçekten ele alınmamışsa bunu puanı düşüren bir zayıflık say. "
+        "- ÖNCE zayıflıkları, boşlukları ve eksikleri belirle; bunların TAMAMINI negative_findings "
+        "olarak çıkar (eksik bir bilgi de bir zayıflıktır). Eksenleri SONRA, bu analizine dayanarak ver. "
+        "Zayıflık varsa gap_severity'yi yükselt.\n"
+        "- Sonra iddiayı destekleyen kanıtın ne kadar güçlü olduğunu değerlendir.\n"
+        "- Bir konu belgede gerçekten ele alınmamışsa bunu bir zayıflık say (gap_severity'ye yansıt). "
         "Ancak konu yalnızca farklı bir başlık adı veya bölüm numarası altında işlenmişse "
         "bunu eksiklik sayma; içerik mevcutsa normal değerlendir.\n"
-        "- score, claim_strength ve evidence_quality alanlarını 0-100 aralığında ver.\n"
+        "- claim_strength, evidence_quality ve gap_severity'yi 1-5 TAM SAYI olarak, yukarıdaki "
+        "seviye tanımlarına göre ver; SONRA score_rationale'da bu üç değere dayanarak puanın "
+        "gerekçesini açıkça anlat.\n"
         "- Kanıt destekliyorsa en az 3, en fazla 6 olumlu ve 3-6 zayıflatan bulgu çıkar; "
-        "ancak kanıtta gerçekten karşılığı olmayan bulgu UYDURMA. Kanıt sınırlıysa daha az bulgu çıkar.\n"
+        "ancak kanıtta gerçekten karşılığı olmayan bulgu UYDURMA. Kanıt sınırlıysa daha az bulgu çıkar. "
+        "Çıkardığın olumlu ve zayıflatan bulguların dengesi nihai puana da yansır; bu yüzden her iki tarafı "
+        "da dürüst ve eksiksiz çıkar.\n"
         "- Her bulgu için 'quote' alanına, ref ile gösterdiğin kanıtın metninden BİREBİR kısa bir ifade "
         "kopyala (parafraz değil). Birebir alıntı veremiyorsan o bulguyu hiç çıkarma.\n"
         "- Her bulgu ve kanıt için yalnızca yukarıdaki listede gerçekten var olan bir [K#] "
